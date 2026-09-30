@@ -1,0 +1,57 @@
+{
+  "users": [
+    {
+      "id": "13bda7df67ee9bb2785dee87f5e8a1083ec946694a1db046",
+      "email": "ryan@helixkinglabs.test",
+      "name": "Ryan",
+      "salt": "b37a80d1b1d540eb0b9091437b6cfaa0",
+      "derived": "b7133bdafb2b135bc39ec59dba6c0d33d7fd0c258a3c4644baf4ea737e64eaa5",
+      "provider": "password",
+      "firstOrderUsed": false,
+      "age": true,
+      "terms": true,
+      "created": "2026-09-28T15:11:28.201Z",
+      "role": "ops"
+    },
+    {
+      "id": "d03fa8be17222a2c76bd5a09693d2c3d34627857b2ff88b9",
+      "email": "test@gmail.com",
+      "name": "Test",
+      "salt": "1776d93db738010320523a623424e9e0",
+      "derived": "e97ed9ef0f83fc59fd5ce864c5613fb30b9cb3cdbf6a0008138903448b91937e",
+      "provider": "password",
+      "providers": [
+        "password"
+      ],
+      "firstOrderUsed": false,
+      "age": true,
+      "terms": true,
+      "created": "2026-09-30T05:38:04.998Z"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "918ac433ed8d58652356760e5e418d3acc0fb49ae724ff12",
+      "userId": "13bda7df67ee9bb2785dee87f5e8a1083ec946694a1db046",
+      "exp": 1791817888533
+    },
+    {
+      "id": "5281f132b3785deb54dab6bd88f6e1b1767106b55d16b56b",
+      "userId": "d03fa8be17222a2c76bd5a09693d2c3d34627857b2ff88b9",
+      "exp": 1791956285001
+    }
+  ],
+  "captures": [],
+  "orders": [],
+  "rate": {
+    "::ffff:127.0.0.1:reg": {
+      "n": 1,
+      "t": 1790608288031
+    },
+    "::1:reg": {
+      "n": 1,
+      "t": 1790746684913
+    }
+  },
+  "affiliates": []
+}

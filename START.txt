@@ -1,0 +1,118 @@
+Helix King Labs — storefront shell
+
+LOCAL SETUP
+-----------
+From the project folder, run:
+
+  node server.js
+
+Then open:
+
+  http://localhost:4173
+
+Requires Node.js 18 or newer. Zero npm dependencies.
+
+IMPLEMENTED
+-----------
+1. Gate modal: 21+ and permitted-use confirmation; optional email; demo Google path.
+2. Ticker and sticky header with Certificates as a first-class item.
+3. Proof homepage: documentation headline, proof line, hard number, and hero SKU.
+4. Catalog: research-name families with dose options; ops SKUs on order lines;
+   no public price guide.
+5. Product template: lot-specific certificate links, specifications, and
+   volume table.
+6. Certificate index: search by lot and product; one record per lot.
+7. Policy pages: terms, shipping, privacy, and permitted use.
+8. Popup and footer email signup using the same documentation offer.
+9. Copy deck: data/copy-deck.json.
+10. Cart rules: volume tiers of 2, 4, and 10+; first-order HELIX10;
+    no sitewide sale.
+
+OUT OF SCOPE
+------------
+Payments, payment processors, supply, and category-legality decisions are
+not implemented by this storefront shell.
+
+CONTENT AND RELEASE NOTES
+-------------------------
+Generated product photography is in public/img/.
+
+Replace demonstration certificate numbers and documents with verified,
+lot-matched laboratory reports before any commercial release.
+
+Public shop plan:
+  - Research vials only. Selank and Semax remain in the planned catalog.
+  - Keep BAC water, AL-Kemi, H7, Snake, T2.5 tallow, Lights Out,
+    Joint Juice, Lipo-C, L-Carnitine, and Sleepy/CBD off the public shop.
+  - Incoming COAs in data/coas/incoming are operations-only. Do not publish
+    them automatically or present them as verified reports on /testing.
+  - Powder only; no reconstituted SKUs.
+  - Public COAs remain off until reviewed.
+  - Planned QR target: /testing?lot=XXXX on this domain.
+  - Tools: /tools/label and /tools/calculator.
+
+AUTHENTICATION
+--------------
+Email/password authentication uses scrypt and an httpOnly session cookie.
+
+Google ID-token verification is enabled only when GOOGLE_CLIENT_ID is set.
+Without it, the Google path remains a local demo. Confirm that the demo path
+cannot authenticate visitors on a public deployment.
+
+Apple Sign In is not enabled. Do not enable it until its configuration,
+cost, and implementation are reviewed.
+
+Set configuration values in the hosting environment, not in this file or
+in GitHub:
+
+  GOOGLE_CLIENT_ID
+  HKL_PUBLIC_ORIGIN
+  HKL_SECURE_COOKIES
+  HKL_SECRET
+  HKL_AUTH_DEMO
+
+For a production deployment:
+  - Set HKL_PUBLIC_ORIGIN to the site's actual HTTPS origin.
+  - Enable secure cookies.
+  - Disable demo authentication.
+  - Generate a new, independent application/session secret.
+  - Keep all secret values out of the repository and public/ directory.
+
+Google Cloud configuration must use the site's actual HTTPS origin.
+Keep any OAuth client secret in secure server-side configuration only;
+never put it in frontend JavaScript or commit it to Git.
+
+If an OAuth client secret has been pasted into chat, included in a commit,
+or otherwise exposed, rotate it in Google Cloud before production use.
+
+EMAIL
+-----
+Configure the intended sending address and SMTP service only after the
+domain's email and DNS records are ready. Do not put SMTP passwords in
+this repository.
+
+ANALYTICS
+---------
+Analytics and advertising IDs remain unset in public/index.html until
+their properties are created and the consent behavior is tested.
+Do not publish tracking tags solely to test a draft storefront.
+
+ORDER HANDLING
+--------------
+This catalog records an order; it does not take card or crypto payments.
+Keep operations-only contact and settlement details off public pages and
+out of the repository. Do not present an off-site handoff as an integrated
+payment checkout.
+
+Before launch, verify the actual order flow, product and certificate
+accuracy, privacy/consent behavior, and applicable legal requirements.
+
+GIT AND DEPLOYMENT
+------------------
+Review every file before committing. Do not commit credentials, .env files,
+real customer/subscriber data, private operations records, or unpublished
+documents. A private GitHub repository is not a substitute for secure
+secret storage.
+
+The Node app should be deployed to the host's Node.js Apps feature and
+tested privately before making the storefront public.

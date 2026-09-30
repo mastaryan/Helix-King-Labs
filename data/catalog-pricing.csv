@@ -1,0 +1,55 @@
+sku,family,name,size,lot,purity,category,useClass,customer_price,unit_cost,margin_dollars,margin_percent,notes
+RT10,pgl-gic1,PGL-GIC1,10 mg,HK-2701,99.41%,documented,research,54,,,,PLACEHOLDER — enter customer_price and unit_cost
+RT20,pgl-gic1,PGL-GIC1,20 mg,HK-2702,99.38%,documented,research,78,,,,PLACEHOLDER — enter customer_price and unit_cost
+RT30,pgl-gic1,PGL-GIC1,30 mg,HK-2703,99.44%,documented,research,96,,,,PLACEHOLDER — enter customer_price and unit_cost
+TR10,pgl-gi1,PGL-GI1,10 mg,HK-2704,99.36%,documented,research,52,,,,PLACEHOLDER — enter customer_price and unit_cost
+TR20,pgl-gi1,PGL-GI1,20 mg,HK-2705,99.29%,documented,research,74,,,,PLACEHOLDER — enter customer_price and unit_cost
+TR30,pgl-gi1,PGL-GI1,30 mg,HK-2706,99.33%,documented,research,92,,,,PLACEHOLDER — enter customer_price and unit_cost
+SM10,pgl-g1,PGL-G1,10 mg,HK-2707,99.27%,documented,research,48,,,,PLACEHOLDER — enter customer_price and unit_cost
+SM20,pgl-g1,PGL-G1,20 mg,HK-2708,99.31%,documented,research,68,,,,PLACEHOLDER — enter customer_price and unit_cost
+SM30,pgl-g1,PGL-G1,30 mg,HK-2709,99.22%,documented,research,86,,,,PLACEHOLDER — enter customer_price and unit_cost
+CGL5,cgl-1,CGL-1,5 mg,HK-2718,99.17%,documented,research,58,,,,PLACEHOLDER — enter customer_price and unit_cost
+CGL10,cgl-1,CGL-1,10 mg,HK-2719,99.21%,documented,research,88,,,,PLACEHOLDER — enter customer_price and unit_cost
+BPC5,bpc-157,BPC-157,5 mg,HK-2611,99.27%,documented,research,46,,,,PLACEHOLDER — enter customer_price and unit_cost
+BPC10,bpc-157,BPC-157,10 mg,HK-2714,99.34%,documented,research,72,,,,PLACEHOLDER — enter customer_price and unit_cost
+TB5,tb-500,TB-500,5 mg,HK-2720,99.22%,documented,research,,,,,PLACEHOLDER — enter customer_price and unit_cost
+TB10,tb-500,TB-500,10 mg,HK-2721,99.19%,documented,research,,,,,PLACEHOLDER — enter customer_price and unit_cost
+CU50,ghk-cu,GHK-Cu,50 mg,HK-2740,99.38%,documented,research,48,,,,PLACEHOLDER — enter customer_price and unit_cost
+CU100,ghk-cu,GHK-Cu,100 mg,HK-2720,99.42%,documented,research,64,,,,PLACEHOLDER — enter customer_price and unit_cost
+IPA10,ipamorelin,Ipamorelin,10 mg,HK-2741,99.05%,documented,research,52,,,,PLACEHOLDER — enter customer_price and unit_cost
+IPA20,ipamorelin,Ipamorelin,20 mg,HK-2742,99.11%,documented,research,78,,,,PLACEHOLDER — enter customer_price and unit_cost
+SER5,sermorelin,Sermorelin,5 mg,HK-2743,99.41%,documented,research,44,,,,PLACEHOLDER — enter customer_price and unit_cost
+SER10,sermorelin,Sermorelin,10 mg,HK-2744,99.36%,documented,research,62,,,,PLACEHOLDER — enter customer_price and unit_cost
+SER20,sermorelin,Sermorelin,20 mg,HK-2745,99.29%,documented,research,88,,,,PLACEHOLDER — enter customer_price and unit_cost
+TSM10,tesamorelin,Tesamorelin,10 mg,HK-2715,99.08%,documented,research,74,,,,PLACEHOLDER — enter customer_price and unit_cost
+TSM20,tesamorelin,Tesamorelin,20 mg,HK-2716,99.11%,documented,research,118,,,,PLACEHOLDER — enter customer_price and unit_cost
+MS10,mots-c,MOTS-c,10 mg,HK-2726,98.45%,documented,research,49,,,,PLACEHOLDER — enter customer_price and unit_cost
+MS20,mots-c,MOTS-c,20 mg,HK-2727,98.61%,documented,research,78,,,,PLACEHOLDER — enter customer_price and unit_cost
+NJ500,nad,NAD+,500 mg,HK-2607,99.05%,documented,research,62,,,,PLACEHOLDER — enter customer_price and unit_cost
+NJ1000,nad,NAD+,1000 mg,HK-2717,99.12%,documented,research,98,,,,PLACEHOLDER — enter customer_price and unit_cost
+5AM,5-amino-1mq,5-Amino-1MQ,5 mg,HK-2710,99.48%,documented,research,42,,,,PLACEHOLDER — enter customer_price and unit_cost
+10AM,5-amino-1mq,5-Amino-1MQ,10 mg,HK-2711,99.52%,documented,research,64,,,,PLACEHOLDER — enter customer_price and unit_cost
+2S10,ss-31,SS-31,10 mg,HK-2712,99.19%,documented,research,58,,,,PLACEHOLDER — enter customer_price and unit_cost
+2S50,ss-31,SS-31,50 mg,HK-2713,99.24%,documented,research,148,,,,PLACEHOLDER — enter customer_price and unit_cost
+KPV5,kpv,KPV,5 mg,HK-2721,99.80%,documented,research,42,,,,PLACEHOLDER — enter customer_price and unit_cost
+KPV10,kpv,KPV,10 mg,HK-2722,99.76%,documented,research,64,,,,PLACEHOLDER — enter customer_price and unit_cost
+H12,pgl-sr1,PGL-SR1,12 IU,HK-2728,99.14%,documented,research,72,,,,PLACEHOLDER — enter customer_price and unit_cost
+H24,pgl-sr1,PGL-SR1,24 IU,HK-2729,99.18%,documented,research,118,,,,PLACEHOLDER — enter customer_price and unit_cost
+H36,pgl-sr1,PGL-SR1,36 IU,HK-2730,99.09%,documented,research,154,,,,PLACEHOLDER — enter customer_price and unit_cost
+BB20,bpc-tb,Wolverine,BPC-157 10 mg + TB-500 10 mg,HK-2725,99.50%,blends,research,70,,,,PLACEHOLDER — enter customer_price and unit_cost
+GLOW,glow,GLOW,70 mg,HK-2724,99.50%,blends,research,109,,,,PLACEHOLDER — enter customer_price and unit_cost
+KLOW,klow,KLOW,80 mg,HK-2723,99.50%,blends,research,128,,,,PLACEHOLDER — enter customer_price and unit_cost
+BAC3,bac-water,Bacteriostatic Water,3 mL,HK-2731,Vehicle lot,reconstitution,research,8,,,,PLACEHOLDER — enter customer_price and unit_cost
+BAC10,bac-water,Bacteriostatic Water,10 mL,HK-2732,Vehicle lot,reconstitution,research,12,,,,PLACEHOLDER — enter customer_price and unit_cost
+ALK30,al-kemi,AL-Kemi 3GHK Facial Serum,30 mL,HK-S-201,Cosmetic lot,serums,cosmetic,96,,,,PLACEHOLDER — enter customer_price and unit_cost
+H7,h7-hair,H7 GHK/AHK Hair Serum,30 mL,HK-S-208,Cosmetic lot,serums,cosmetic,88,,,,PLACEHOLDER — enter customer_price and unit_cost
+FSS30,snake-serum,Facial Snake Serum,30 mL,HK-S-214,Cosmetic lot,serums,cosmetic,92,,,,PLACEHOLDER — enter customer_price and unit_cost
+SEL10,selank-ns,Selank Nasal Spray,10 mg / 10 mL,HK-2733,99.71%,serums,research,40,,,,PLACEHOLDER — enter customer_price and unit_cost
+SMX10,semax-ns,Semax Nasal Spray,10 mg / 10 mL,HK-2734,99.47%,serums,research,42,,,,PLACEHOLDER — enter customer_price and unit_cost
+T25,t25-tallow,T2.5 GHK Infused Bio-Tallow,60 mL,HK-T-041,Cosmetic lot,barrier,cosmetic,54,,,,PLACEHOLDER — enter customer_price and unit_cost
+LO25,lights-out,Lights Out,2.5 mg melatonin complex,HK-N-011,Identity pass,night,wellness,36,,,,PLACEHOLDER — enter customer_price and unit_cost
+JJ1,joint-juice,Joint Juice,30 mL,HK-N-018,Identity pass,night,wellness,38,,,,PLACEHOLDER — enter customer_price and unit_cost
+LC30,lipo-c,Lipo C+,30 mL,HK-N-022,Identity pass,night,wellness,44,,,,PLACEHOLDER — enter customer_price and unit_cost
+CRN30,l-carnitine,L-Carnitine,30 mL,HK-N-023,Identity pass,night,wellness,32,,,,PLACEHOLDER — enter customer_price and unit_cost
+SCBD,sleepy-cbd,Sleepy CBD,30 mL,HK-N-030,Potency pass,night,wellness,48,,,,PLACEHOLDER — enter customer_price and unit_cost
+CBD30,cbd,CBD,30 mL,HK-N-031,Potency pass,night,wellness,42,,,,PLACEHOLDER — enter customer_price and unit_cost

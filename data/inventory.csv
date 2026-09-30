@@ -1,0 +1,63 @@
+sku,family,name,size,lot,on_hand,reserved,available,threshold,status,notes
+RT10,pgl-gic1,PGL-GIC1,10 mg,HK-2701,40,0,40,3,ok,Edit on_hand. Status recalculates on save / order.
+RT15,pgl-gic1,PGL-GIC1,15 mg,HK-2748,24,0,24,3,ok,Edit on_hand. Status recalculates on save / order.
+RT20,pgl-gic1,PGL-GIC1,20 mg,HK-2702,36,0,36,3,ok,Edit on_hand. Status recalculates on save / order.
+RT30,pgl-gic1,PGL-GIC1,30 mg,HK-2703,28,0,28,3,ok,Edit on_hand. Status recalculates on save / order.
+TR10,pgl-gi1,PGL-GI1,10 mg,HK-2704,44,0,44,3,ok,Edit on_hand. Status recalculates on save / order.
+TR15,pgl-gi1,PGL-GI1,15 mg,HK-2749,24,0,24,3,ok,Edit on_hand. Status recalculates on save / order.
+TR20,pgl-gi1,PGL-GI1,20 mg,HK-2705,32,0,32,3,ok,Edit on_hand. Status recalculates on save / order.
+TR30,pgl-gi1,PGL-GI1,30 mg,HK-2706,24,0,24,3,ok,Edit on_hand. Status recalculates on save / order.
+SM5,pgl-g1,PGL-G1,5 mg,HK-2750,32,0,32,3,ok,Edit on_hand. Status recalculates on save / order.
+SM10,pgl-g1,PGL-G1,10 mg,HK-2707,48,0,48,3,ok,Edit on_hand. Status recalculates on save / order.
+SM20,pgl-g1,PGL-G1,20 mg,HK-2708,30,0,30,3,ok,Edit on_hand. Status recalculates on save / order.
+SM30,pgl-g1,PGL-G1,30 mg,HK-2709,22,0,22,3,ok,Edit on_hand. Status recalculates on save / order.
+CGL5,cgl-1,CGL-1,5 mg,HK-2718,30,0,30,3,ok,Edit on_hand. Status recalculates on save / order.
+CGL10,cgl-1,CGL-1,10 mg,HK-2719,22,0,22,3,ok,Edit on_hand. Status recalculates on save / order.
+BPC5,bpc-157,BPC-157,5 mg,HK-2611,36,0,36,3,ok,Edit on_hand. Status recalculates on save / order.
+BPC10,bpc-157,BPC-157,10 mg,HK-2714,28,0,28,3,ok,Edit on_hand. Status recalculates on save / order.
+BPC20,bpc-157,BPC-157,20 mg,HK-2751,20,0,20,3,ok,Edit on_hand. Status recalculates on save / order.
+TB5,tb-500,TB-500,5 mg,HK-2720,40,0,40,3,ok,Edit on_hand. Status recalculates on save / order.
+TB10,tb-500,TB-500,10 mg,HK-2721,40,0,40,3,ok,Edit on_hand. Status recalculates on save / order.
+CU50,ghk-cu,GHK-Cu,50 mg,HK-2740,60,0,60,3,ok,Edit on_hand. Status recalculates on save / order.
+CU100,ghk-cu,GHK-Cu,100 mg,HK-2720,54,0,54,3,ok,Edit on_hand. Status recalculates on save / order.
+IPA5,ipamorelin,Ipamorelin,5 mg,HK-2752,32,0,32,3,ok,Edit on_hand. Status recalculates on save / order.
+IPA10,ipamorelin,Ipamorelin,10 mg,HK-2741,36,0,36,3,ok,Edit on_hand. Status recalculates on save / order.
+SER5,sermorelin,Sermorelin,5 mg,HK-2743,40,0,40,3,ok,Edit on_hand. Status recalculates on save / order.
+SER10,sermorelin,Sermorelin,10 mg,HK-2744,32,0,32,3,ok,Edit on_hand. Status recalculates on save / order.
+TSM5,tesamorelin,Tesamorelin,5 mg,HK-2753,24,0,24,3,ok,Edit on_hand. Status recalculates on save / order.
+TSM10,tesamorelin,Tesamorelin,10 mg,HK-2715,26,0,26,3,ok,Edit on_hand. Status recalculates on save / order.
+MS10,mots-c,MOTS-c,10 mg,HK-2726,24,0,24,3,ok,Edit on_hand. Status recalculates on save / order.
+MS20,mots-c,MOTS-c,20 mg,HK-2727,16,0,16,3,ok,Edit on_hand. Status recalculates on save / order.
+MS40,mots-c,MOTS-c,40 mg,HK-2757,16,0,16,3,ok,Edit on_hand. Status recalculates on save / order.
+NJ100,nad,NAD+,100 mg,HK-2754,32,0,32,3,ok,Edit on_hand. Status recalculates on save / order.
+NJ500,nad,NAD+,500 mg,HK-2607,28,0,28,3,ok,Edit on_hand. Status recalculates on save / order.
+NJ1000,nad,NAD+,1000 mg,HK-2717,16,0,16,3,ok,Edit on_hand. Status recalculates on save / order.
+5AM,5-amino-1mq,5-Amino-1MQ,5 mg,HK-2710,50,0,50,3,ok,Edit on_hand. Status recalculates on save / order.
+10AM,5-amino-1mq,5-Amino-1MQ,10 mg,HK-2711,40,0,40,3,ok,Edit on_hand. Status recalculates on save / order.
+50AM,5-amino-1mq,5-Amino-1MQ,50 mg,HK-2758,16,0,16,3,ok,Edit on_hand. Status recalculates on save / order.
+2S10,ss-31,SS-31,10 mg,HK-2712,34,0,34,3,ok,Edit on_hand. Status recalculates on save / order.
+2S50,ss-31,SS-31,50 mg,HK-2713,18,0,18,3,ok,Edit on_hand. Status recalculates on save / order.
+KPV5,kpv,KPV,5 mg,HK-2721,38,0,38,3,ok,Edit on_hand. Status recalculates on save / order.
+KPV10,kpv,KPV,10 mg,HK-2722,26,0,26,3,ok,Edit on_hand. Status recalculates on save / order.
+KPV20,kpv,KPV,20 mg,HK-2755,20,0,20,3,ok,Edit on_hand. Status recalculates on save / order.
+H12,pgl-sr1,PGL-SR1,12 IU,HK-2728,20,0,20,3,ok,Edit on_hand. Status recalculates on save / order.
+H24,pgl-sr1,PGL-SR1,24 IU,HK-2729,16,0,16,3,ok,Edit on_hand. Status recalculates on save / order.
+H36,pgl-sr1,PGL-SR1,36 IU,HK-2730,12,0,12,3,ok,Edit on_hand. Status recalculates on save / order.
+BB10,bpc-tb,Wolverine,BPC-157 5 mg + TB-500 5 mg,HK-2756,24,0,24,3,ok,Edit on_hand. Status recalculates on save / order.
+BB20,bpc-tb,Wolverine,BPC-157 10 mg + TB-500 10 mg,HK-2725,30,0,30,3,ok,Edit on_hand. Status recalculates on save / order.
+GLOW,glow,GLOW,70 mg,HK-2724,22,0,22,3,ok,Edit on_hand. Status recalculates on save / order.
+KLOW,klow,KLOW,80 mg,HK-2723,20,0,20,3,ok,Edit on_hand. Status recalculates on save / order.
+BAC3,bac-water,Bacteriostatic Water,3 mL,HK-2731,80,0,80,3,ok,Edit on_hand. Status recalculates on save / order.
+BAC10,bac-water,Bacteriostatic Water,10 mL,HK-2732,80,0,80,3,ok,Edit on_hand. Status recalculates on save / order.
+ALK30,al-kemi,AL-Kemi 3GHK Facial Serum,30 mL,HK-S-201,90,0,90,3,ok,Edit on_hand. Status recalculates on save / order.
+H7,h7-hair,H7 GHK/AHK Hair Serum,30 mL,HK-S-208,70,0,70,3,ok,Edit on_hand. Status recalculates on save / order.
+FSS30,snake-serum,Facial Snake Serum,30 mL,HK-S-214,64,0,64,3,ok,Edit on_hand. Status recalculates on save / order.
+SEL10,selank-ns,Selank Nasal Spray,10 mg / 10 mL,HK-2733,34,0,34,3,ok,Edit on_hand. Status recalculates on save / order.
+SMX10,semax-ns,Semax Nasal Spray,10 mg / 10 mL,HK-2734,34,0,34,3,ok,Edit on_hand. Status recalculates on save / order.
+T25,t25-tallow,T2.5 GHK Infused Bio-Tallow,60 mL,HK-T-041,58,0,58,3,ok,Edit on_hand. Status recalculates on save / order.
+LO25,lights-out,Lights Out,2.5 mg melatonin complex,HK-N-011,120,0,120,3,ok,Edit on_hand. Status recalculates on save / order.
+JJ1,joint-juice,Joint Juice,30 mL,HK-N-018,48,0,48,3,ok,Edit on_hand. Status recalculates on save / order.
+LC30,lipo-c,Lipo C+,30 mL,HK-N-022,40,0,40,3,ok,Edit on_hand. Status recalculates on save / order.
+CRN30,l-carnitine,L-Carnitine,30 mL,HK-N-023,40,0,40,3,ok,Edit on_hand. Status recalculates on save / order.
+SCBD,sleepy-cbd,Sleepy CBD,30 mL,HK-N-030,70,0,70,3,ok,Edit on_hand. Status recalculates on save / order.
+CBD30,cbd,CBD,30 mL,HK-N-031,80,0,80,3,ok,Edit on_hand. Status recalculates on save / order.

@@ -1,0 +1,23 @@
+{
+  "publicNote": "This catalog records the order and the lots. Settlement is off this site. Payment instructions go to the account email after the order is recorded.",
+  "checkoutLabel": "Record order",
+  "checkoutHint": "No card rail on this catalog. Group buys and crypto settlement stay off-site.",
+  "ops": {
+    "telegram": {
+      "label": "Telegram (off-site)",
+      "handle": "",
+      "note": "Group buys and payments live in the Telegram group. Do not publish the invite on this shop."
+    },
+    "crypto": {
+      "label": "Exodus wallet",
+      "asset": "",
+      "address": "",
+      "note": "Receive address stays in ops until you paste it. Never print a wallet on a public page."
+    },
+    "domain": {
+      "expected": "helixkinglabs.com",
+      "eta": "about 2 days",
+      "smtp": "parked until the domain is live"
+    }
+  }
+}

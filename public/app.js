@@ -1,0 +1,1850 @@
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const app = $("#app");
+  const state = {
+    user: null,
+    catalog: null,
+    copy: null,
+    cart: JSON.parse(localStorage.getItem("hkl_cart") || "[]"),
+    aff: (localStorage.getItem("hkl_aff") || "").toUpperCase(),
+    gateOk: localStorage.getItem("hkl_gate") === "1",
+    captureOk: localStorage.getItem("hkl_capture") === "1",
+    popupDismissed: sessionStorage.getItem("hkl_popup_dismissed") === "1",
+    auth: { password: true, google: false, apple: false, demo: true },
+    site: { channels: { publicNote: "", checkoutLabel: "Record order", checkoutHint: "" } },
+  };
+
+  let popupShowTimer = null;
+  let popupHideTimer = null;
+
+  const money = (n) =>
+    n == null
+      ? null
+      : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+
+  function saveCart() {
+    localStorage.setItem("hkl_cart", JSON.stringify(state.cart));
+    $("#cartCount").textContent = state.cart.reduce((a, l) => a + l.qty, 0);
+  }
+
+  function toast(msg) {
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = msg;
+    $("#toasts").appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+      ...opts,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || "request_failed");
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  function pathOf() {
+    return location.pathname.replace(/\/+$/, "") || "/";
+  }
+
+  function go(href) {
+    history.pushState({}, "", href);
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") dismissPopup();
+  });
+
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("[data-link]");
+    if (!a) return;
+    const href = a.getAttribute("href");
+    if (!href || href.startsWith("http")) return;
+    e.preventDefault();
+    go(href);
+  });
+  window.addEventListener("popstate", render);
+
+  function ticker() {
+    const lines = (state.copy && state.copy.ticker) || [
+      "Certificate on every lot",
+      "21+ only",
+      "Not a clinic. Not a pharmacy.",
+    ];
+    const doubled = lines.concat(lines);
+    $("#ticker").innerHTML = `<div class="ticker-track">${doubled
+      .map((t) => `<span>${t} ·</span>`)
+      .join("")}</div>`;
+  }
+
+  function navActive() {
+    const p = pathOf();
+    document.querySelectorAll(".nav a").forEach((a) => {
+      const h = a.getAttribute("href");
+      a.classList.toggle("active", h === p || (h !== "/" && p.startsWith(h)));
+    });
+    $("#acctLink").textContent = state.user ? state.user.email.split("@")[0] : "Account";
+    document.querySelectorAll('[data-nav="ops"]').forEach((a) => {
+      const on = !!(state.user && state.user.isOps);
+      a.classList.toggle("is-hidden", !on);
+      a.style.display = on ? "" : "none";
+    });
+    document.querySelectorAll('[data-nav="aff"]').forEach((a) => {
+      const live = !!(state.user && state.user.affiliate && state.user.affiliate.status === "live");
+      a.classList.toggle("is-hidden", !live);
+      a.style.display = live ? "" : "none";
+    });
+  }
+
+  function isPending(p) {
+    return p && (p.releaseState === "pending_testing" || p.unavailableReason);
+  }
+
+  function priceBlock(p, range) {
+    if (isPending(p)) {
+      return `<div class="price lock">Waiting for testing to complete</div>`;
+    }
+    if (!state.user) return `<div class="price lock">Sign in for pricing</div>`;
+    const min = range && range.min != null ? range.min : p && p.price;
+    const max = range && range.max != null ? range.max : min;
+    if (min == null) return `<div class="price lock">Sign in for pricing</div>`;
+    if (max != null && max !== min) {
+      return `<div class="price">From ${money(min)} – ${money(max)}</div>`;
+    }
+    return `<div class="price">${money(min)}</div>`;
+  }
+
+  function familyOfItem(p) {
+    const fams = (state.catalog && state.catalog.families) || [];
+    return fams.find((f) => f.id === p.family || f.slug === p.familySlug) || null;
+  }
+
+  function variantsOf(p) {
+    return state.catalog.items.filter((x) => x.family === p.family);
+  }
+
+  function productCard(p) {
+    return `<a class="card" href="/product/${p.slug}" data-link>
+      <div class="ph"><img src="${p.image}" alt="${p.name} ${p.size}" /></div>
+      <div class="meta">
+        <div class="name">${p.name}</div>
+        <div class="sub">${p.size} · ${p.form}</div>
+        <div class="badges">
+          <span class="badge">${p.lot}</span>
+          <span class="badge">${p.purity}</span>
+        </div>
+        ${priceBlock(p)}
+      </div>
+    </a>`;
+  }
+
+  function stockBadge(p) {
+    const n = p.available != null ? p.available : p.stock;
+    const status = p.stockStatus || (n <= 0 ? "out" : n < 3 ? "low" : "ok");
+    if (status === "out") return `<span class="badge stock out">Out of stock</span>`;
+    if (status === "low") return `<span class="badge stock low">Low · ${n} on hand</span>`;
+    return "";
+  }
+
+  function familyCard(f) {
+    const vars = state.catalog.items.filter((x) => x.family === f.id);
+    const lead = vars[Math.floor(vars.length / 2)] || vars[0] || {};
+    const sizes = (f.sizes || vars.map((v) => v.size)).join(" · ");
+    const img = (vars[0] && vars[0].image) || f.cardImage || f.image || lead.image;
+    const pending = f.releaseState === "pending_testing" || vars.every(isPending);
+    const priced = vars.filter((v) => v.price != null && !isPending(v));
+    const lows = priced.map((v) => v.price);
+    const from = pending
+      ? { releaseState: "pending_testing" }
+      : lows.length
+        ? { price: Math.min(...lows) }
+        : lead;
+    const range = lows.length ? { min: Math.min(...lows), max: Math.max(...lows) } : null;
+    const worst = vars.some((v) => (v.available != null ? v.available : v.stock) <= 0)
+      ? vars.find((v) => (v.available != null ? v.available : v.stock) <= 0)
+      : vars.find((v) => v.stockStatus === "low" || (v.available != null ? v.available : v.stock) < 3);
+    return `<a class="card" href="/product/${f.slug}" data-link>
+      <div class="ph"><img src="${img}" alt="${f.name}" /></div>
+      <div class="meta">
+        <div class="name">${f.name}</div>
+        <div class="sub">${sizes}</div>
+        <div class="badges">
+          ${vars.map((v) => `<span class="badge">${v.size}</span>`).join("")}
+          ${pending ? `<span class="badge stock out">Unavailable</span>` : worst ? stockBadge(worst) : ""}
+        </div>
+        ${priceBlock(from, range)}
+      </div>
+    </a>`;
+  }
+
+  function home() {
+    const heroFam =
+      (state.catalog.families || []).find((f) => f.id === state.catalog.heroFamily || f.hero) ||
+      (state.catalog.families || [])[0];
+    const hero =
+      state.catalog.items.find((p) => p.sku === state.catalog.heroSku) ||
+      state.catalog.items.find((p) => p.hero) ||
+      state.catalog.items[0];
+    const offerIds = state.catalog.homeOffers || ["pgl-gic1", "pgl-gi1", "bpc-tb", "tesamorelin"];
+    const featured = offerIds
+      .map((id) => (state.catalog.families || []).find((f) => f.id === id))
+      .filter(Boolean);
+    const copy = state.copy.homepage;
+    return `
+    <section class="hero">
+      <img class="bg" src="/img/pgl-gic1-10.jpg" alt="" />
+      <div class="veil"></div>
+      <div class="hero-copy">
+        <div class="kicker">Helix King Labs</div>
+        <h1>${copy.headline}</h1>
+        <p class="proof">${copy.proof}</p>
+        <p class="hard">${copy.number}</p>
+        <div class="hero-actions">
+          <a class="btn" href="/product/${heroFam ? heroFam.slug : hero.slug}" data-link>Shop ${hero.name} ${hero.size}</a>
+          <a class="btn ghost" href="/library" data-link>Open the library</a>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="wrap">
+        <div class="kicker">On the bench</div>
+        <h2>Live families</h2>
+        <p class="lede">PGL-GIC1, PGL-GI1, Wolverine, Tesamorelin first. PGL-G1, BPC-157, GLOW, GHK-Cu next. One vial on the card. Strength chips open the fill.</p>
+        <div class="grid cards home-cards">${featured.map(familyCard).join("")}</div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="wrap">
+        <div class="kicker">Catalog</div>
+        <h2>Shop by class</h2>
+        <p class="lede">Research vials only — lyophilized dried powder. Cosmetic, tallow, BAC, and wellness lots stay off the shop until testing returns them. Nothing on this catalog is reconstituted.</p>
+        <div class="grid cats">
+          ${state.catalog.categories
+            .map(
+              (c) => `<a class="cat-tile" href="/shop?cat=${c.id}" data-link>
+              <h3>${c.name}</h3><p>${c.blurb}</p></a>`
+            )
+            .join("")}
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="wrap">
+        <div class="kicker">Gate language, in plain sentences</div>
+        <h2>Questions</h2>
+        <div class="faq">
+          ${state.copy.faq
+            .map(
+              (f) => `<details><summary>${f.q}</summary><p>${f.a}</p></details>`
+            )
+            .join("")}
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="wrap capture">
+        <div>
+          <div class="kicker">List</div>
+          <h2>Lot alerts</h2>
+          <p class="lede">Leave an email for lot alerts and the library link.</p>
+        </div>
+        <form id="homeCapture">
+          <input type="email" name="email" placeholder="Email" required />
+          <button class="btn" type="submit">Get the library link</button>
+        </form>
+      </div>
+    </section>`;
+  }
+
+  function shop() {
+    const cat = new URLSearchParams(location.search).get("cat");
+    const families = (state.catalog.families || []).filter((f) => f.shopVisible !== false && (!cat || f.category === cat));
+    const label = state.catalog.categories.find((c) => c.id === cat);
+    return `<section class="page wrap">
+      <div class="kicker">Catalog</div>
+      <h1>${label ? label.name : "Full catalog"}</h1>
+      <p class="lede">Research names on the card. One vial per family. Signed-in cards show the fill range. Selank and Semax stay. BAC water, tallow, serums, and night lots are off this catalog.</p>
+      <div class="badges" style="margin-bottom:22px">
+        <a class="badge" href="/shop" data-link>All</a>
+        ${state.catalog.categories
+          .map((c) => `<a class="badge" href="/shop?cat=${c.id}" data-link>${c.name}</a>`)
+          .join("")}
+      </div>
+      <div class="grid cards">${families.map(familyCard).join("")}</div>
+    </section>`;
+  }
+
+  function productView(p, lots, related, variants, extra = {}) {
+    const current = lots.find((l) => l.lot === p.lot) || lots[0];
+    const vars = variants && variants.length ? variants : variantsOf(p);
+    const fam = extra.family || familyOfItem(p) || {};
+    const about = fam.about || {};
+    const reviews = extra.reviews || [];
+    const canReview = !!extra.canReview;
+    const classLabel =
+      p.useClass === "cosmetic"
+        ? "Cosmetic lot"
+        : p.useClass === "wellness"
+        ? "Documented wellness lot"
+        : p.useClass === "mixed"
+        ? "Kit"
+        : "Research material";
+    return `<section class="page wrap">
+      <div class="product">
+        <div class="stage"><img id="pdpImage" src="${p.image}" alt="${p.name} ${p.size}" /></div>
+        <div>
+          <div class="kicker">${classLabel}</div>
+          <h1>${p.name}</h1>
+          <p class="hard">${p.size} · ${p.form}</p>
+          <div class="sku-line">Lot ${p.lot}</div>
+          <div class="dose-row" aria-label="Strengths">
+            ${vars
+              .map((v) => {
+                const href = `/product/${v.familySlug || fam.slug || p.familySlug}?sku=${v.sku}`;
+                return `<a class="dose ${v.sku === p.sku ? "on" : ""}" href="${href}" data-link data-sku="${v.sku}">${v.size}</a>`;
+              })
+              .join("")}
+          </div>
+          <div class="badges" style="margin-top:14px">
+            <span class="badge">Lot ${p.lot}</span>
+            <span class="badge">${p.purity}</span>
+            <span class="badge">${p.panel}</span>
+            ${stockBadge(p)}
+          </div>
+          ${priceBlock(p)}
+          <div class="qty">
+            <button type="button" id="qtyMinus">−</button>
+            <input id="qty" type="number" min="1" max="20" value="1" style="width:72px;min-width:72px;text-align:center" />
+            <button type="button" id="qtyPlus">+</button>
+          </div>
+          <button class="btn" id="addBtn" ${
+            isPending(p) || !state.user || (p.available != null ? p.available : p.stock) <= 0 ? "disabled" : ""
+          }>${
+            isPending(p)
+              ? "Waiting for testing to complete"
+              : !state.user
+              ? "Sign in to add"
+              : (p.available != null ? p.available : p.stock) <= 0
+              ? "Out of stock"
+              : "Add " + p.name + " · " + p.size
+          }</button>
+          ${
+            state.user
+              ? ""
+              : `<p class="hard"><a href="/account" data-link>Open an account</a> to quote the cart. HELIX10 attaches to the first recorded order.</p>`
+          }
+          <div class="tiers">
+            Volume table (cart, automatic): 2 units 5% · 4 units 10% · 10+ units 15%.<br/>
+            HELIX10 is first-order only. No sitewide sale. No published price list.
+          </div>
+          <table class="spec">
+            ${(p.specs || [])
+              .map((row) => `<tr><th>${row[0]}</th><td>${row[1]}</td></tr>`)
+              .join("")}
+          </table>
+          <div class="cert-box">
+            <h3>Lot file</h3>
+            <p>Certificates publish when testing is complete. Methods are listed on the testing page.</p>
+            <p style="margin-top:10px"><a href="/library" data-link>Open the library</a></p>
+          </div>
+        </div>
+      </div>
+      <div class="about-panel">
+        <div class="kicker">About this lot</div>
+        <h2>${about.ref || p.name}</h2>
+        <p class="lede">${about.body || ""}</p>
+        <table class="spec">
+          <tr><th>Ref</th><td>${about.ref || p.name}</td></tr>
+          <tr><th>Class</th><td>${about.class || classLabel}</td></tr>
+          <tr><th>CAS</th><td>${about.cas || "NA"}</td></tr>
+          <tr><th>Formula</th><td>${about.formula || "NA"}</td></tr>
+          <tr><th>M.W.</th><td>${about.mw || "NA"}</td></tr>
+          <tr><th>Purity</th><td>${p.purity} · ${about.purityNote || "HPLC"}</td></tr>
+          <tr><th>Use</th><td>${about.use || "Research use only. Not for diagnostic or therapeutic use."}</td></tr>
+          <tr><th>Components</th><td>${(about.components || [p.name]).join(" · ")}</td></tr>
+        </table>
+      </div>
+      <div class="reviews" id="reviewBlock">
+        <div class="kicker">Verified purchase reviews</div>
+        <h2>Only from recorded orders of this fill</h2>
+        ${
+          reviews.length
+            ? reviews
+                .map(
+                  (r) => `<article class="review">
+                    <div class="review-meta">${"●".repeat(r.rating)}${"○".repeat(5 - r.rating)} · ${r.by} · ${r.size} · Verified purchase</div>
+                    <p>${r.text}</p>
+                  </article>`
+                )
+                .join("")
+            : `<p class="lede">No verified purchase reviews on this fill yet.</p>`
+        }
+        ${
+          canReview
+            ? `<form id="reviewForm" data-sku="${p.sku}">
+                <select name="rating">
+                  <option value="5">5</option><option value="4">4</option>
+                  <option value="3">3</option><option value="2">2</option><option value="1">1</option>
+                </select>
+                <input type="text" name="text" placeholder="Review this lot" required minlength="8" />
+                <button class="btn" type="submit">Post verified review</button>
+              </form>`
+            : `<p class="hard">Reviews unlock after a recorded order of ${p.name} ${p.size}.</p>`
+        }
+      </div>
+      ${
+        related.length
+          ? `<div style="margin-top:56px">
+              <div class="kicker">Related rail</div>
+              <h2>Companions</h2>
+              <div class="grid cards" style="margin-top:18px">${related.map(productCard).join("")}</div>
+            </div>`
+          : ""
+      }
+    </section>`;
+  }
+
+  function certIndex() {
+    return `<section class="page wrap">
+      <div class="kicker">Lot files</div>
+      <h1>Certificates</h1>
+      <p class="lede">Lot certificates publish here when a lot clears the panel.</p>
+      <p class="hard"><a href="/library" data-link>Library</a> · <a href="/testing" data-link>Testing methods</a></p>
+    </section>`;
+  }
+
+  function certDetail() {
+    return `<section class="page wrap">
+      <div class="kicker">Lot file</div>
+      <h1>Not published</h1>
+      <p class="lede">Lot certificates publish here when testing is complete.</p>
+      <p class="hard"><a href="/certificates" data-link>Back</a></p>
+    </section>`;
+  }
+
+  function libraryView() {
+    return `<section class="page wrap prose">
+      <div class="kicker">Library</div>
+      <h1>Documentation library</h1>
+      <p>Lot files, use terms, and cart rules. Certificates publish when a lot clears the panel.</p>
+      <h2>On file</h2>
+      <ul>
+        <li><a href="/use" data-link>Permitted use</a> — 21+, research vs cosmetic, not a clinic.</li>
+        <li><a href="/testing" data-link>Testing methods</a> — intended 12-point panel.</li>
+        <li><a href="/certificates" data-link>Certificates</a> — lot PDFs when a lot clears.</li>
+        <li><a href="/shipping" data-link>Shipping</a> — $9.95, free at $199 after discounts.</li>
+        <li><a href="/refunds" data-link>Refunds</a> — all sales final. 7-day damage window.</li>
+        <li><a href="/tracking" data-link>Tracking</a> — lookup by tracking number from the ship email.</li>
+      </ul>
+      <h2>Catalog rules</h2>
+      <p>Research names on the card. Volume at 2 / 4 / 10+ units. One 10% on the cart: an affiliate code replaces HELIX10.</p>
+      <h2>Lot alerts</h2>
+      <p>Subscribe from the footer. The address is stored for lot alerts and the library link.</p>
+    </section>`;
+  }
+
+  function affiliatesLocked(data) {
+    if (!state.user) {
+      return `<section class="page wrap prose">
+        <div class="kicker">Affiliates</div>
+        <h1>Account first. Then an order. Then a desk.</h1>
+        <p>This page is not public. Sign in, place an order, then apply from your account.</p>
+        <p><a class="btn" href="/account" data-link>Sign in</a></p>
+      </section>`;
+    }
+    if (!data || !data.hasOrdered) {
+      return `<section class="page wrap prose">
+        <div class="kicker">Affiliates</div>
+        <h1>Order first</h1>
+        <p>The desk opens after this account has a recorded order.</p>
+        <p><a class="btn" href="/shop" data-link>Open catalog</a></p>
+      </section>`;
+    }
+    return `<section class="page wrap prose">
+      <div class="kicker">Affiliates</div>
+      <h1>Open a desk</h1>
+      <p>10% cash on merchandise after discounts. Shipping is not commissioned. Payout on request at $50. Year-end sweep 31 Dec. No store credit. An affiliate code replaces HELIX10.</p>
+      <form id="affApply">
+        <label class="check"><input type="checkbox" name="agree" required /> I want a Helix affiliate code. I accept the settlement rules.</label>
+        <button class="btn" type="submit" style="margin-top:16px">Open the desk</button>
+      </form>
+    </section>`;
+  }
+
+  function affiliatesDesk(data) {
+    const rows = (data.orders || [])
+      .map(
+        (o) => `<tr><td>${o.id}</td><td>${(o.created || "").slice(0, 10)}</td><td>${(o.lines || []).join(", ")}</td><td>${money(o.merchandise)}</td><td>${money(o.payout)}</td></tr>`
+      )
+      .join("");
+    return `<section class="page wrap">
+      <div class="kicker">Affiliate desk</div>
+      <h1>${data.affiliate.code}</h1>
+      <p class="lede">Share <span class="sku-line">${location.origin}${data.link}</span>. Commission is 10% of merchandise after discounts. Shipping is not paid.</p>
+      <div class="totals">
+        <div><span>Earned</span><span>${money(data.earned)}</span></div>
+        <div><span>Paid</span><span>${money(data.paid)}</span></div>
+        <div class="grand"><span>Available</span><span>${money(data.available)}</span></div>
+      </div>
+      <p class="lede">Cash out at $${data.payoutFloor}+. Leftover sweeps 31 Dec.</p>
+      <h2>Referred orders</h2>
+      ${
+        rows
+          ? `<table class="table"><thead><tr><th>Order</th><th>Date</th><th>Lines</th><th>Merch</th><th>10%</th></tr></thead><tbody>${rows}</tbody></table>`
+          : `<p class="lede">No referred orders yet.</p>`
+      }
+    </section>`;
+  }
+
+  const ORIGIN = (window.HKL_PUBLIC_ORIGIN || "https://helixkinglabs.com").replace(/\/$/, "");
+
+  function setPageMeta(title, description, path) {
+    document.title = title;
+    const url = ORIGIN + (path || "/");
+    const pairs = [
+      ['meta[name="description"]', description],
+      ['meta[property="og:title"]', title],
+      ['meta[property="og:description"]', description],
+      ['meta[property="og:url"]', url],
+      ['meta[name="twitter:title"]', title],
+      ['meta[name="twitter:description"]', description],
+    ];
+    pairs.forEach(([sel, val]) => {
+      const el = document.querySelector(sel);
+      if (el) el.setAttribute("content", val);
+    });
+    let canon = document.querySelector('link[rel="canonical"]');
+    if (canon) canon.setAttribute("href", url);
+  }
+
+  function about() {
+    return `<section class="page wrap prose">
+      <div class="kicker">About</div>
+      <h1>Helix King Labs — lyophilized research peptides</h1>
+      <p>Helix King Labs is a documentation-first catalog of research materials. Every research vial on this catalog is lyophilized dried powder. We do not sell, ship, or offer reconstituted solutions.</p>
+      <p>The mark is the crowned ape. Packaging is matte black and silver. Voice is lot, fill, form, storage — not outcomes. Cosmetics return after testing. We do not sell a story a lot file cannot support.</p>
+      <p>A house label goes on the vial after the certificate for that lot exists. The QR on that label opens <span class="mono">/testing?lot=XXXX</span> on this site. It does not open the testing laboratory.</p>
+      <p>The catalog, accounts, cart rules, and email list run here. Card rails and group-buy settlement stay off this site.</p>
+      <p>Contact: <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a></p>
+    </section>`;
+  }
+
+  function testing() {
+    const t = state.catalog.testing || { methods: [], releaseThreshold: "pending" };
+    const lot = new URLSearchParams(location.search).get("lot") || "";
+    const lotBlock = lot
+      ? `<div class="calc-out"><div class="kicker">Lot ${lot}</div>
+          <p>No public certificate is attached to this lot yet. Incoming files stay in operations until a lot is accepted for the shop. Scan targets this page so the URL never depends on a third-party laboratory.</p></div>`
+      : "";
+    return `<section class="page wrap prose">
+      <div class="kicker">Methods</div>
+      <h1>Peptide testing methods</h1>
+      <p>Helix King Labs publishes the intended panel here. Lot PDFs publish on Certificates when a lot is accepted for sale. Nothing on this page is a protocol.</p>
+      ${lotBlock}
+      <ul>${(t.methods || []).map((m) => `<li>${m}</li>`).join("")}</ul>
+      <p>Release threshold on chromatographic lots: ${t.releaseThreshold || "pending"}. Public certificates are off until operations clears a lot for resale.</p>
+      <p><a href="/library" data-link>Library</a> · <a href="/tools" data-link>Research tools</a></p>
+    </section>`;
+  }
+
+  function toolsHome() {
+    return `<section class="page wrap prose">
+      <div class="kicker">Research tools</div>
+      <h1>Research peptide tools</h1>
+      <p>Two instruments for lyophilized research materials. Arithmetic and labeling only. Not a protocol. Not an offer to reconstitute a vial for you.</p>
+      <div class="tool-grid">
+        <a class="tool-card" href="/tools/label" data-link>
+          <h2>Vial label maker</h2>
+          <p>20 × 40 mm house label. Mark, compound, fill, lot, and a QR to /testing?lot= on this site.</p>
+        </a>
+        <a class="tool-card" href="/tools/calculator" data-link>
+          <h2>Reconstitution calculator</h2>
+          <p>Concentration and U-100 units from vial milligrams and diluent volume. Research arithmetic only.</p>
+        </a>
+      </div>
+    </section>`;
+  }
+
+  function labelTool() {
+    return `<section class="page wrap prose">
+      <div class="kicker">Label</div>
+      <h1>Research vial label maker</h1>
+      <p>Sized for a 3 mL crimp vial at 20 × 40 mm (203 dpi). Prints the Helix King Labs mark, the public compound name, the lyophilized fill, the lot, and a QR that opens this site — never the testing laboratory.</p>
+      <form class="tool-form" id="labelForm" onsubmit="return false">
+        <label>Compound name<input id="lbName" value="PGL-GIC1" /></label>
+        <label>Fill (lyophilized)<input id="lbSize" value="10 mg" /></label>
+        <label>Lot<input id="lbLot" value="" placeholder="Leave blank until the COA is back" /></label>
+        <label>Date<input id="lbDate" value="${new Date().toISOString().slice(0, 7)}" /></label>
+        <button class="btn" id="lbGo" type="button">Generate label</button>
+      </form>
+      <div class="label-stage">
+        <canvas id="lbCanvas" width="320" height="160" aria-label="Label preview"></canvas>
+        <button class="btn ghost" id="lbDl" type="button">Download JPEG</button>
+      </div>
+      <p>Thermal printers print black on white. Use a high-contrast crop of the crowned ape. Import the JPEG into the Niimbot app as a custom image on 40 × 20 mm stock.</p>
+    </section>`;
+  }
+
+  function calcTool() {
+    return `<section class="page wrap prose">
+      <div class="kicker">Calculator</div>
+      <h1>Peptide reconstitution calculator</h1>
+      <p>For laboratory arithmetic on a lyophilized vial you already hold. Helix King Labs does not sell reconstituted product. This page does not instruct use on a person or an animal.</p>
+      <form class="tool-form" id="calcForm" onsubmit="return false">
+        <label>Vial contents (mg)<input id="cMg" type="number" step="0.01" value="10" /></label>
+        <label>Diluent added (mL)<input id="cMl" type="number" step="0.1" value="2" /></label>
+        <label>Amount per draw (mg)<input id="cDose" type="number" step="0.01" value="0.5" /></label>
+      </form>
+      <div class="calc-out" id="calcOut"></div>
+      <p>Concentration = mg ÷ mL. Volume per draw = amount ÷ concentration. U-100 units = volume (mL) × 100. Prefer the tested milligram figure from a certificate when one exists.</p>
+    </section>`;
+  }
+
+  function bindTools() {
+    const canvas = $("#lbCanvas");
+    if (canvas) {
+      const draw = () => {
+        const ctx = canvas.getContext("2d");
+        const name = ($("#lbName") && $("#lbName").value.trim()) || "RESEARCH";
+        const size = ($("#lbSize") && $("#lbSize").value.trim()) || "";
+        const lot = ($("#lbLot") && $("#lbLot").value.trim()) || "PENDING";
+        const date = ($("#lbDate") && $("#lbDate").value.trim()) || "";
+        const dest = ORIGIN + "/testing?lot=" + encodeURIComponent(lot === "PENDING" ? "" : lot);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, 320, 160);
+        ctx.fillStyle = "#111111";
+        ctx.fillRect(0, 0, 320, 18);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "700 9px 'IBM Plex Sans', sans-serif";
+        ctx.fillText("HELIX KING LABS", 8, 13);
+        ctx.fillStyle = "#111111";
+        ctx.font = "700 18px 'IBM Plex Sans', sans-serif";
+        ctx.fillText(name.slice(0, 18), 8, 48);
+        ctx.font = "12px 'IBM Plex Mono', monospace";
+        ctx.fillText(size + "  ·  lyophilized", 8, 70);
+        ctx.fillText("LOT " + lot, 8, 90);
+        ctx.fillText(date, 8, 108);
+        ctx.font = "8px 'IBM Plex Mono', monospace";
+        ctx.fillText("RUO · not for consumption", 8, 150);
+        const qr = new Image();
+        qr.crossOrigin = "anonymous";
+        qr.onload = () => {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(214, 24, 98, 98);
+          ctx.drawImage(qr, 218, 28, 90, 90);
+        };
+        qr.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=" + encodeURIComponent(dest);
+      };
+      draw();
+      ["lbName", "lbSize", "lbLot", "lbDate"].forEach((id) => {
+        const el = $("#" + id);
+        if (el) el.addEventListener("input", draw);
+      });
+      if ($("#lbGo")) $("#lbGo").onclick = draw;
+      if ($("#lbDl")) {
+        $("#lbDl").onclick = () => {
+          const a = document.createElement("a");
+          a.download = "helix-king-labs-label.jpg";
+          a.href = canvas.toDataURL("image/jpeg", 0.95);
+          a.click();
+        };
+      }
+    }
+    const out = $("#calcOut");
+    if (out) {
+      const run = () => {
+        const mg = Number($("#cMg") && $("#cMg").value);
+        const ml = Number($("#cMl") && $("#cMl").value);
+        const dose = Number($("#cDose") && $("#cDose").value);
+        if (!mg || !ml || !dose) {
+          out.innerHTML = "<p>Enter vial milligrams, diluent milliliters, and amount per draw.</p>";
+          return;
+        }
+        const conc = mg / ml;
+        const vol = dose / conc;
+        const units = vol * 100;
+        out.innerHTML = `<p>Concentration</p><strong>${conc.toFixed(3)} mg/mL</strong>
+          <p style="margin-top:12px">Volume per draw</p><strong>${vol.toFixed(3)} mL</strong>
+          <p style="margin-top:12px">U-100 units</p><strong>${units.toFixed(1)} units</strong>
+          <p>Research arithmetic only. Dried powder in. Nothing on this page is a use instruction.</p>`;
+      };
+      ["cMg", "cMl", "cDose"].forEach((id) => {
+        const el = $("#" + id);
+        if (el) el.addEventListener("input", run);
+      });
+      run();
+    }
+  }
+
+  function policy(kind) {
+    const pages = {
+      terms: {
+        t: "Terms of service",
+        b: `<p>Last updated 30 September 2026. These terms govern helixkinglabs.com and any Helix King Labs account. Creating an account, passing the gate, or placing an order is agreement to these terms, the <a href="/use" data-link>permitted-use</a> rules, the <a href="/privacy" data-link>privacy notice</a>, and the <a href="/refunds" data-link>refund policy</a>.</p>
+            <h2>Eligibility</h2>
+            <p>You must be 21 or older. You confirm you are purchasing lyophilized research materials for laboratory research, not for consumption, clinical use, compounding, or resale as a drug or supplement.</p>
+            <h2>What we sell</h2>
+            <p>Research SKUs ship as lyophilized dried powder in a labeled vial. We do not offer reconstituted product, filled syringes, pens, or bacteriostatic water on this catalog. Cosmetic SKUs, when they return, are cosmetics as labeled.</p>
+            <h2>What we do not claim</h2>
+            <p>Nothing on this site is medical advice, a diagnosis, a protocol, or a claim to treat, cure, or prevent disease. Research tools are arithmetic and labeling aids. They are not instructions for use on a person or an animal.</p>
+            <h2>Accounts</h2>
+            <p>You are responsible for the email and password on the account. Prices are visible after an account exists. We may close an account that refuses the use terms, that is used by a minor, or that is used to publish outcome claims in our name.</p>
+            <h2>Orders</h2>
+            <p>An order recorded on this site is an offer to purchase the named lyophilized lots. Settlement may complete off-site. All sales are final except the narrow window in the refund policy.</p>
+            <h2>Intellectual property</h2>
+            <p>The crowned ape mark, Helix King Labs name, vial photography, and site copy are ours. You may not scrape the catalog to build a competing storefront or a public price list.</p>
+            <h2>Limitation</h2>
+            <p>To the maximum extent permitted by law, Helix King Labs is not liable for indirect, incidental, or consequential damages, or for use of research materials outside the permitted-use terms. Some states do not allow certain limitations; those limits apply only to the extent allowed.</p>
+            <h2>Governing law</h2>
+            <p>These terms are governed by the laws of the Commonwealth of Kentucky, without regard to conflict-of-law rules, except where a mandatory consumer statute in your place of residence says otherwise.</p>
+            <p>Questions: <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a></p>`,
+      },
+      shipping: {
+        t: "Shipping",
+        b: `<p>Last updated 30 September 2026.</p>
+            <p>Standard shipping is $9.95. Free when merchandise after discounts is $199 or more. Shipping is not commissionable and is not discounted by HELIX10 or an affiliate code.</p>
+            <p>Research vials ship as lyophilized powder. Cold pack is used when the lot record requires it. Tracking posts on the order when the label is booked.</p>
+            <p>We do not ship reconstituted solutions.</p>`,
+      },
+      privacy: {
+        t: "Privacy notice",
+        b: `<p>Last updated 30 September 2026. This notice covers helixkinglabs.com, the account system, the email list, and measurement tags we may load after you choose a cookie option. It is a notice, not legal advice.</p>
+            <h2>Who we are</h2>
+            <p>Helix King Labs. Contact: <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a>. Domain: helixkinglabs.com.</p>
+            <h2>Information we collect</h2>
+            <ul>
+              <li>Account: email, name you give, password hash (scrypt), age and terms flags, order history, affiliate code on the cart.</li>
+              <li>Gate and subscribe: email, source page, timestamp.</li>
+              <li>Session: httpOnly cookie that identifies a signed-in account. We do not store the Google or Apple password.</li>
+              <li>Google Sign-In, when configured: verified email and provider subject from the ID token.</li>
+              <li>Technical: IP used for rate limits, user agent, pages requested.</li>
+              <li>Measurement, only after you accept analytics cookies: Google Analytics identifiers and Meta (Facebook) Pixel identifiers, including a hashed email if Advanced Matching is later enabled.</li>
+            </ul>
+            <h2>Cookies and similar tech</h2>
+            <ul>
+              <li>Strictly necessary — session cookie, gate confirmation, cart contents in local storage. These run without an analytics opt-in.</li>
+              <li>Analytics and ads — Google Analytics 4 and the Meta Pixel. These do not load until you accept analytics cookies, and they do not load at all until measurement IDs are installed.</li>
+            </ul>
+            <p>We do not use TikTok Pixel at this time.</p>
+            <h2>Why we use it</h2>
+            <p>To run the catalog and accounts, to remember the gate, to send lot alerts you requested, to prevent abuse, and — if you opt in — to measure which public pages are read. We do not sell the email list. We do not use research-use confirmations as a marketing interest profile.</p>
+            <h2>Sharing</h2>
+            <p>We share data with processors who run infrastructure we select: hosting, email delivery when SMTP is connected, Google (Sign-In and, if enabled, Analytics), and Meta (if the Pixel is enabled). We do not sell personal information for money. Under California law, loading a Meta Pixel or Google Analytics tag can be treated as “sharing” for cross-context advertising. You can refuse that share.</p>
+            <h2 id="do-not-sell">Do not sell or share</h2>
+            <p>Use the cookie bar to refuse analytics cookies, or write <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a> with the subject line “Do not sell or share.” We will keep the necessary account records and stop measurement tags on future visits from that browser when you refuse cookies.</p>
+            <h2>Retention</h2>
+            <p>Account and order records are kept while the account is open and for a limited period after close so a dispute can be answered. Subscribe records stay until you ask to be removed. Server logs rotate. Incoming certificates that are not accepted for resale stay in operations and are not published.</p>
+            <h2>Your choices</h2>
+            <p>Request access, correction, or deletion of account and list data at the contact above. You may close an account. You may refuse analytics cookies. Global Privacy Control signals, when the browser sends them, are treated as a refusal of analytics cookies.</p>
+            <h2>Children</h2>
+            <p>This site is 21+. We do not knowingly collect data from anyone under 21.</p>
+            <h2>Security</h2>
+            <p>Passwords are scrypt-hashed. Sessions are httpOnly cookies. Do not paste client secrets, bank details, or government IDs into a chat, a ticket, or a form that does not ask for them.</p>
+            <h2>International</h2>
+            <p>If you write from the EEA or UK, the lawful bases we rely on are contract (account and order), legitimate interests (security and abuse prevention), and consent (analytics cookies and the email list).</p>
+            <p>Updates will be posted on this page with a new date.</p>`,
+      },
+      use: {
+        t: "Permitted use",
+        b: `<p>You must be 21+ to enter the catalog.</p>
+            <p>Documented compounds ship as lyophilized dried powder for laboratory research only. Not for human or animal consumption. Not a drug. Not a dietary supplement. Not a reconstituted solution. No protocols are published.</p>
+            <p>Cosmetic lots: topical cosmetic use as labeled. Those SKUs stay off the public shop until testing is complete. No disease claims. No before/after gallery.</p>
+            <p>Helix King Labs is not a clinic and not a 503A or 503B pharmacy.</p>`,
+      },
+      refunds: {
+        t: "Refunds",
+        b: `<p class="lede">No returns. No refunds. All sales are final.</p>
+            <p>Last updated 30 September 2026. Read this before you place an order.</p>
+            <h2>No returns</h2>
+            <p>We do not accept returns. Research lots leave as lyophilized powder under a controlled chain of custody. Once a vial is out of that chain we cannot restock it. Review the name, fill, form, and quantity on the product page before you pay.</p>
+            <h2>No refunds</h2>
+            <p>Once an order is placed and processed it cannot be cancelled or refunded. Descriptions and lot numbers are published so the purchase can be checked before checkout. Public certificates attach when a lot is accepted for resale.</p>
+            <h2>Missing, incorrect, or damaged</h2>
+            <p>If the shipment arrives missing a line, with the wrong SKU, or with a broken seal or broken vial, write within seven days of delivery to <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a>. Include the order number and photographs of the outer carton, inner pack, and the item. We will replace the affected line or close the ticket under this policy. Opened lots and any lot that has been reconstituted after delivery are not eligible.</p>
+            <h2>Contact</h2>
+            <p>info@helixkinglabs.com. Placing an order is agreement to this policy.</p>
+            <p><a href="/terms" data-link>Terms</a> · <a href="/shipping" data-link>Shipping</a> · <a href="/use" data-link>Permitted use</a></p>`,
+      },
+    };
+    const p = pages[kind];
+    return `<section class="page wrap prose"><h1>${p.t}</h1>${p.b}</section>`;
+  }
+
+  function account() {
+    if (state.user) {
+      return `<section class="page wrap">
+        <div class="kicker">Account</div>
+        <h1>${state.user.email}</h1>
+        <p class="lede">Signed in with ${state.user.provider || "email"}. First-order code ${
+          state.user.firstOrderOpen ? "HELIX10 is open on this account." : "has already been applied."
+        }</p>
+        ${
+          state.user.affiliate && state.user.affiliate.status === "live"
+            ? `<p><a class="btn" href="/affiliates" data-link>Affiliate desk · ${state.user.affiliate.code}</a></p>`
+            : state.user.hasOrdered
+              ? `<p><a class="btn ghost" href="/affiliates" data-link>Apply for an affiliate desk</a></p>`
+              : `<p class="lede">Affiliate desk opens after this account records an order.</p>`
+        }
+        <button class="btn ghost" id="logoutBtn">Sign out</button>
+        <div id="orderList" style="margin-top:28px"></div>
+      </section>`;
+    }
+    return `<section class="page wrap account-grid">
+      <div>
+        <div class="kicker">Create account</div>
+        <h1>Open the catalog.</h1>
+        <p class="lede">Prices unlock after the account exists. HELIX10 attaches here, not on the homepage.</p>
+        <form id="regForm">
+          <div class="row-form" style="flex-direction:column;align-items:stretch">
+            <input name="name" type="text" placeholder="Name" />
+            <input name="email" type="email" placeholder="Email" required />
+            <input name="password" type="password" placeholder="Password (8+)" required minlength="8" />
+            <label class="check"><input type="checkbox" name="age" required /> I am 21 or older.</label>
+            <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms and the refund policy. All sales are final. Documented compounds are research-only. Cosmetics are cosmetics. This is not a clinic or pharmacy.</label>
+            <button class="btn" type="submit">Create account</button>
+            ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleBtn">Continue with Google</button>` : ""}
+            ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleBtn">Continue with Apple</button>` : ""}
+          </div>
+          <div class="err" id="regErr"></div>
+        </form>
+      </div>
+      <div>
+        <div class="kicker">Returning</div>
+        <h1>Sign in.</h1>
+        <form id="loginForm">
+          <div class="row-form" style="flex-direction:column;align-items:stretch">
+            <input name="email" type="email" placeholder="Email" required />
+            <input name="password" type="password" placeholder="Password" required />
+            <button class="btn" type="submit">Sign in</button>
+            ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleLoginBtn">Continue with Google</button>` : ""}
+            ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleLoginBtn">Continue with Apple</button>` : ""}
+          </div>
+          <div class="err" id="loginErr"></div>
+        </form>
+      </div>
+    </section>`;
+  }
+
+  function cartView(quote) {
+    if (!state.user) {
+      return `<section class="page wrap">
+        <h1>Cart</h1>
+        <p class="lede">An account is required before the cart can quote volume, HELIX10, or shipping.</p>
+        <a class="btn" href="/account" data-link>Sign in</a>
+      </section>`;
+    }
+    if (!state.cart.length) {
+      return `<section class="page wrap"><h1>Cart</h1><p class="lede">Empty. Start with PGL-GIC1.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
+    }
+    const lines = quote
+      ? quote.lines
+          .map((l) => {
+            const p = state.catalog.items.find((x) => x.id === l.id);
+            return `<div class="cart-line">
+              <img src="${p ? p.image : ""}" alt="" />
+              <div>
+                <div>${l.name} · ${l.size}</div>
+                <div class="sub">Lot ${l.lot} · Qty ${l.qty}${
+                  l.available != null ? " · " + l.available + " on hand" : ""
+                }${l.oversold ? " · over available" : l.stockStatus === "low" ? " · low" : l.stockStatus === "out" ? " · out" : ""}</div>
+                <button class="dismiss" data-remove="${l.id}">Remove</button>
+              </div>
+              <div>${money(l.line)}</div>
+            </div>`;
+          })
+          .join("")
+      : "";
+    return `<section class="page wrap">
+      <div class="kicker">Cart rules</div>
+      <h1>Review</h1>
+      <div class="cart-lines">${lines}</div>
+      <div class="totals">
+        <div><span>Subtotal</span><span>${money(quote.subtotal)}</span></div>
+        <div><span>Volume ${Math.round((quote.volumeRate || 0) * 100)}%</span><span>−${money(quote.volumeOff)}</span></div>
+        <div><span>${
+          quote.discountKind === "affiliate"
+            ? "Affiliate " + quote.coupon
+            : quote.coupon || "HELIX10"
+        }</span><span>${quote.couponOff ? "−" + money(quote.couponOff) : "—"}</span></div>
+        <div><span>Merchandise</span><span>${money(quote.merchandise != null ? quote.merchandise : quote.total)}</span></div>
+        <div><span>Shipping${quote.shippingLabel === "Free" ? " · free at $199" : ""}</span><span>${
+          quote.shipping === 0 ? "Free" : money(quote.shipping)
+        }</span></div>
+        <div class="grand"><span>Total</span><span>${money(quote.total)}</span></div>
+      </div>
+      <label class="aff-field">Affiliate code
+        <input id="affCode" type="text" maxlength="16" value="${state.aff || ""}" placeholder="Leave blank for HELIX10 on a first order" />
+      </label>
+      <p class="lede">One 10% on the cart. An affiliate code replaces HELIX10. Shipping $9.95. Free at $199 merchandise after discounts.</p>
+      <p class="hard">${(state.site.channels && state.site.channels.publicNote) || "This catalog records the order and the lots. Settlement is off this site."}</p>
+      <p class="lede">${(state.site.channels && state.site.channels.checkoutHint) || ""}</p>
+      <button class="btn" id="checkoutBtn" style="margin-top:16px">${(state.site.channels && state.site.channels.checkoutLabel) || "Record order"}</button>
+      <div id="orderDone"></div>
+    </section>`;
+  }
+
+  function renderGate() {
+    const el = $("#gate");
+    if (state.gateOk) {
+      el.classList.add("hidden");
+      el.innerHTML = "";
+      return;
+    }
+    el.classList.remove("hidden");
+    el.innerHTML = `
+      <div class="gate-card">
+        <img src="/img/logo.jpg" alt="Helix King Labs" />
+        <div class="kicker">Door</div>
+        <h1 id="gateTitle">Confirm before the catalog.</h1>
+        <p>21+ and permitted use. Email optional. Prices unlock after an account.</p>
+        <form id="gateForm">
+          <label class="check"><input type="checkbox" name="age" required /> I am 21 or older.</label>
+          <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms. Research materials stay in the lab. Cosmetics stay cosmetics. This is not a clinic or a pharmacy.</label>
+          <input type="email" name="email" placeholder="Email (optional)" />
+          <div style="margin-top:16px;display:grid;gap:8px">
+            <button class="btn" type="submit">Enter Helix King Labs</button>
+            ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="gateGoogle">Continue with Google</button>` : ""}
+            ${state.auth.apple ? `<button class="btn ghost" type="button" id="gateApple">Continue with Apple</button>` : ""}
+          </div>
+          <div class="err" id="gateErr"></div>
+        </form>
+      </div>`;
+  }
+
+  function dismissPopup() {
+    const el = $("#popup");
+    if (el) {
+      el.classList.add("hidden");
+      el.innerHTML = "";
+    }
+    state.popupDismissed = true;
+    sessionStorage.setItem("hkl_popup_dismissed", "1");
+    if (popupHideTimer) {
+      clearTimeout(popupHideTimer);
+      popupHideTimer = null;
+    }
+    if (popupShowTimer) {
+      clearTimeout(popupShowTimer);
+      popupShowTimer = null;
+    }
+  }
+
+  function wirePopupOnce() {
+    const el = $("#popup");
+    if (!el || el.dataset.wired === "1") return;
+    el.dataset.wired = "1";
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("#popDismiss") || e.target.id === "popDismiss") {
+        e.preventDefault();
+        e.stopPropagation();
+        dismissPopup();
+        return;
+      }
+      if (e.target === el) dismissPopup();
+    });
+    el.addEventListener("submit", async (e) => {
+      if (!e.target.closest("#popCapture")) return;
+      e.preventDefault();
+      try {
+        await capture(new FormData(e.target).get("email"), "popup");
+      } catch {
+        toast("Use a valid email.");
+      }
+    });
+  }
+
+  function maybePopup() {
+    // Capture popup parked until final build. Footer email still live.
+    const el = $("#popup");
+    if (el) {
+      el.classList.add("hidden");
+      el.innerHTML = "";
+    }
+    return;
+    wirePopupOnce();
+    if (!state.gateOk || state.captureOk || state.popupDismissed) return;
+    if (pathOf() === "/account") return;
+    if (popupShowTimer) return;
+    if ($("#popup") && !$("#popup").classList.contains("hidden") && $("#popup").innerHTML.trim()) return;
+    popupShowTimer = setTimeout(() => {
+      popupShowTimer = null;
+      if (state.captureOk || state.popupDismissed) return;
+      const el = $("#popup");
+      if (!el) return;
+      el.classList.remove("hidden");
+      el.innerHTML = `<div class="popup-card">
+        <div class="kicker">Gift</div>
+        <h2>Certificate library + new-lot alerts.</h2>
+        <p>Same offer as the footer. Documentation access — not a homepage sale.</p>
+        <form id="popCapture">
+          <input type="email" name="email" placeholder="Email" required />
+          <button class="btn" type="submit">Send access</button>
+        </form>
+        <button class="dismiss" id="popDismiss" type="button">Not now</button>
+      </div>`;
+    }, 8000);
+  }
+
+  async function capture(email, source) {
+    await api("/api/capture", { method: "POST", body: { email, source } });
+    state.captureOk = true;
+    localStorage.setItem("hkl_capture", "1");
+    toast("You are on the list. Opening the library.");
+    dismissPopup();
+    go("/library");
+  }
+
+  function captureAffFromUrl() {
+    const ref = new URLSearchParams(location.search).get("ref") || new URLSearchParams(location.search).get("aff");
+    if (!ref) return;
+    const code = String(ref).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 16);
+    if (code.length < 3 || code === "HELIX10") return;
+    state.aff = code;
+    localStorage.setItem("hkl_aff", code);
+  }
+
+  async function loadBase() {
+    captureAffFromUrl();
+    const [sess, copy, catalog, site] = await Promise.all([
+      api("/api/session"),
+      api("/api/copy"),
+      api("/api/catalog"),
+      api("/api/site").catch(() => ({ channels: state.site.channels })),
+    ]);
+    state.user = sess.user;
+    state.auth = sess.auth || state.auth;
+    state.copy = copy;
+    state.catalog = catalog;
+    state.site = site || state.site;
+  }
+
+  function loadScript(src, id) {
+    return new Promise((resolve, reject) => {
+      if (id && document.getElementById(id)) return resolve();
+      const s = document.createElement("script");
+      if (id) s.id = id;
+      s.src = src;
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error("script"));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function signInGoogle(age, terms) {
+    if (!state.auth.google || !state.auth.googleClientId) {
+      if (!state.auth.demo) throw new Error("google_not_configured");
+      return api("/api/auth/google", { method: "POST", body: { age: !!age, terms: !!terms } });
+    }
+    await loadScript("https://accounts.google.com/gsi/client", "hkl-gsi");
+    const credential = await new Promise((resolve, reject) => {
+      window.google.accounts.id.initialize({
+        client_id: state.auth.googleClientId,
+        callback: (res) => (res && res.credential ? resolve(res.credential) : reject(new Error("google_token"))),
+        ux_mode: "popup",
+        auto_select: false,
+      });
+      window.google.accounts.id.prompt((n) => {
+        if (n && (n.isNotDisplayed && n.isNotDisplayed() || n.isSkippedMoment && n.isSkippedMoment())) {
+          reject(new Error("google_cancelled"));
+        }
+      });
+    });
+    return api("/api/auth/google", {
+      method: "POST",
+      body: { credential, age: !!age, terms: !!terms },
+    });
+  }
+
+  async function signInApple(age, terms) {
+    if (!state.auth.apple || !state.auth.appleClientId) throw new Error("apple_not_configured");
+    await loadScript(
+      "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js",
+      "hkl-apple"
+    );
+    window.AppleID.auth.init({
+      clientId: state.auth.appleClientId,
+      scope: "name email",
+      redirectURI: state.auth.appleRedirect || window.location.origin + "/account",
+      usePopup: true,
+    });
+    const res = await window.AppleID.auth.signIn();
+    const credential = res && res.authorization && res.authorization.id_token;
+    if (!credential) throw new Error("apple_token");
+    return api("/api/auth/apple", {
+      method: "POST",
+      body: {
+        credential,
+        age: !!age,
+        terms: !!terms,
+        fullName: res.user && res.user.name ? res.user.name : null,
+      },
+    });
+  }
+
+  async function render() {
+    if (!state.catalog) await loadBase();
+    ticker();
+    navActive();
+    saveCart();
+    renderGate();
+
+    const p = pathOf();
+    try {
+      if (p === "/") {
+        app.innerHTML = home();
+      } else if (p === "/shop") {
+        app.innerHTML = shop();
+      } else if (p.startsWith("/product/")) {
+        const slug = p.split("/")[2];
+        const skuQ = new URLSearchParams(location.search).get("sku");
+        const data = await api("/api/products/" + encodeURIComponent(skuQ || slug));
+        const variants = data.variants || [];
+        const picked =
+          (skuQ && variants.find((v) => v.sku === skuQ)) ||
+          variants.find((v) => v.sku === slug) ||
+          data.product;
+        app.innerHTML = productView(picked, data.lots, data.related, variants, {
+          family: data.family && data.family.family ? data.family.family : data.family,
+          reviews: data.reviews || [],
+          canReview: data.canReview,
+        });
+        setPageMeta(
+          (picked.name || "Research peptide") + " " + (picked.size || "") + " lyophilized — Helix King Labs",
+          "Lyophilized " + (picked.name || "research peptide") + " " + (picked.size || "") + ". Research use only. Dried powder. Not for human or animal consumption.",
+          p + (skuQ ? "?sku=" + encodeURIComponent(skuQ) : "")
+        );
+        const available = picked.available != null ? Number(picked.available) : Number(picked.stock || 0);
+        const qty = $("#qty");
+        const cap = Math.max(1, Math.min(20, available || 1));
+        $("#qtyMinus").onclick = () => {
+          qty.value = Math.max(1, Number(qty.value) - 1);
+        };
+        $("#qtyPlus").onclick = () => {
+          qty.value = Math.min(cap, Number(qty.value) + 1);
+        };
+        $("#addBtn").onclick = () => {
+          if (isPending(picked)) {
+            toast("Waiting for testing to complete.");
+            return;
+          }
+          if (!state.user) return go("/account");
+          if (available <= 0) {
+            toast("Out of stock · " + picked.name + " · " + picked.size);
+            return;
+          }
+          const id = picked.id;
+          const q = Math.max(1, Number(qty.value) || 1);
+          const line = state.cart.find((l) => l.id === id);
+          const next = Math.min(available, line ? line.qty + q : q);
+          if (line) line.qty = next;
+          else state.cart.push({ id, qty: next });
+          if (next < (line ? line.qty + q : q) || next === available) {
+            /* capped */
+          }
+          saveCart();
+          toast("Added " + picked.name + " · " + picked.size);
+        };
+      } else if (p === "/certificates") {
+        const q = new URLSearchParams(location.search).get("q") || "";
+        const data = await api("/api/certificates" + (q ? `?q=${encodeURIComponent(q)}` : ""));
+        app.innerHTML = certIndex();
+      } else if (p.startsWith("/certificates/")) {
+        const lot = p.split("/")[2];
+        const data = await api("/api/certificates/" + encodeURIComponent(lot));
+        app.innerHTML = certDetail();
+      } else if (p === "/about") {
+        app.innerHTML = about();
+      } else if (p === "/library") {
+        app.innerHTML = libraryView();
+      } else if (p === "/affiliates") {
+        if (!state.user) {
+          app.innerHTML = affiliatesLocked(null);
+        } else {
+          const desk = await api("/api/affiliate");
+          app.innerHTML = desk.locked ? affiliatesLocked(desk) : affiliatesDesk(desk);
+        }
+      } else if (p === "/tracking") {
+        app.innerHTML = `<section class="page wrap prose">
+          <div class="kicker">Tracking</div>
+          <h1>Track a shipment</h1>
+          <p>When fulfillment is live, the ship email carries a tracking number. Enter it here.</p>
+          <form id="trackForm" class="capture" onsubmit="return false">
+            <input id="trackNo" type="text" placeholder="Tracking number" />
+            <button class="btn" type="submit">Look up</button>
+          </form>
+          <p class="lede" id="trackOut">Labels post when ops marks an order shipped and stores the tracking number. No carrier feed is attached yet.</p>
+        </section>`;
+      } else if (p === "/testing") {
+        app.innerHTML = testing();
+      } else if (p === "/tools") {
+        app.innerHTML = toolsHome();
+      } else if (p === "/tools/label") {
+        app.innerHTML = labelTool();
+      } else if (p === "/tools/calculator") {
+        app.innerHTML = calcTool();
+      } else if (p === "/terms") {
+        app.innerHTML = policy("terms");
+      } else if (p === "/shipping") {
+        app.innerHTML = policy("shipping");
+      } else if (p === "/privacy") {
+        app.innerHTML = policy("privacy");
+      } else if (p === "/use") {
+        app.innerHTML = policy("use");
+      } else if (p === "/refunds" || p === "/returns") {
+        app.innerHTML = policy("refunds");
+      } else if (p === "/account") {
+        app.innerHTML = account();
+        if (state.user) {
+          api("/api/orders")
+            .then((d) => {
+              const box = $("#orderList");
+              if (!box) return;
+              if (!d.orders.length) {
+                box.innerHTML = `<p class="muted">No recorded orders yet.</p>`;
+                return;
+              }
+              box.innerHTML = `<h2>Orders</h2>` + d.orders.map((o) =>
+                `<p class="hard">${o.id} · ${o.created.slice(0, 10)} · ${money(o.quote.total)} · ${o.status}${o.tracking ? " · " + o.tracking : ""}</p>`
+              ).join("");
+            })
+            .catch(() => {});
+        }
+      } else if (p === "/ops") {
+        if (!state.user || !state.user.isOps) {
+          app.innerHTML = `<section class="page wrap"><h1>Not found</h1><a href="/" data-link>Home</a></section>`;
+        } else {
+          const ops = await api("/api/ops/pricing");
+          const board = await api("/api/ops/board").catch(() => ({ totals: {}, orders: [], affiliates: [] }));
+          const t = board.totals || {};
+          app.innerHTML = `<section class="page wrap">
+            <div class="kicker">Ops</div>
+            <h1>Backend</h1>
+            <p class="lede">Customers do not see this page. ${t.orders || 0} orders · ${money(t.merchandise || 0)} merch · ${t.accounts || 0} accounts · ${t.list || 0} on the list.</p>
+            <h2>Orders</h2>
+            <p class="lede">Recorded here. Mark settled when Exodus or the Telegram group clears. Void restores stock. Tracking posts on shipped.</p>
+            ${
+              (board.orders || []).length
+                ? `<table class="table"><thead><tr><th>Order</th><th>Email</th><th>Total</th><th>Status</th><th>Track</th><th></th></tr></thead><tbody>${(board.orders || [])
+                    .map((o) => `<tr data-oid="${o.id}">
+                      <td>${o.id}</td>
+                      <td>${o.email || ""}</td>
+                      <td>${money((o.quote && o.quote.total) || 0)}</td>
+                      <td>${o.status || ""}</td>
+                      <td><input class="op-track" type="text" value="${o.tracking || ""}" placeholder="Label" /></td>
+                      <td>
+                        <button type="button" class="btn ghost op-status" data-status="settled">Settled</button>
+                        <button type="button" class="btn ghost op-status" data-status="shipped">Shipped</button>
+                        <button type="button" class="btn ghost op-status" data-status="voided">Void</button>
+                      </td>
+                    </tr>`)
+                    .join("")}</tbody></table>`
+                : `<p class="lede">No recorded orders yet.</p>`
+            }
+            <div id="channelDesk" style="margin-top:28px"></div>
+            <h2>Affiliates</h2>
+            ${
+              (board.affiliates || []).length
+                ? `<table class="table"><thead><tr><th>Code</th><th>Email</th><th>Status</th></tr></thead><tbody>${(board.affiliates || [])
+                    .map((a) => `<tr><td>${a.code}</td><td>${a.email || ""}</td><td>${a.status}</td></tr>`)
+                    .join("")}</tbody></table>`
+                : `<p class="lede">No desks open.</p>`
+            }
+            <h2>Pricing and margin</h2>
+            <p class="lede">Customers see customer_price only. Unit cost stays here. Saving writes data/catalog-pricing.csv.</p>
+            <div style="overflow:auto">
+              <table class="table" id="opsTable">
+                <thead><tr><th>SKU</th><th>Name</th><th>Size</th><th>Customer price</th><th>Unit cost</th><th>Margin</th></tr></thead>
+                <tbody>
+                  ${ops.rows
+                    .map(
+                      (r) => `<tr data-sku="${r.sku}">
+                        <td>${r.sku}</td><td>${r.name}</td><td>${r.size}</td>
+                        <td><input class="op-price" type="number" step="0.01" value="${r.customer_price ?? ""}" /></td>
+                        <td><input class="op-cost" type="number" step="0.01" value="${r.unit_cost ?? ""}" /></td>
+                        <td>${r.margin_dollars == null ? "—" : money(r.margin_dollars) + " (" + r.margin_percent + "%)"}</td>
+                      </tr>`
+                    )
+                    .join("")}
+                </tbody>
+              </table>
+            </div>
+            <button class="btn" id="opsSave" style="margin-top:16px">Save prices</button>
+            <div id="incomingList" style="margin-top:40px"></div>
+            <div id="subList" style="margin-top:40px"></div>
+          </section>`;
+          api("/api/ops/channels").then((ch) => {
+            const box = $("#channelDesk");
+            if (!box) return;
+            const tg = (ch.ops && ch.ops.telegram) || {};
+            const cr = (ch.ops && ch.ops.crypto) || {};
+            box.innerHTML = `<h2>Off-site settlement</h2>
+              <p class="lede">Telegram group and Exodus stay off the shop. Paste the handle and receive address here only. Domain SMTP waits until helixkinglabs.com is live.</p>
+              <div class="row-form" style="flex-direction:column;align-items:stretch;max-width:520px">
+                <label>Public checkout note<textarea id="chNote" rows="3">${ch.publicNote || ""}</textarea></label>
+                <label>Telegram handle (ops only)<input id="chTg" type="text" value="${tg.handle || ""}" placeholder="@group or invite — not published" /></label>
+                <label>Exodus asset<input id="chAsset" type="text" value="${cr.asset || ""}" placeholder="USDT / BTC" /></label>
+                <label>Exodus receive address (ops only)<input id="chAddr" type="text" value="${cr.address || ""}" placeholder="Paste when the wallet exists" /></label>
+                <button class="btn" type="button" id="chSave">Save channels</button>
+              </div>`;
+            const save = $("#chSave");
+            if (save) {
+              save.onclick = async () => {
+                try {
+                  await api("/api/ops/channels", {
+                    method: "POST",
+                    body: {
+                      publicNote: ($("#chNote") && $("#chNote").value) || "",
+                      telegram: { handle: ($("#chTg") && $("#chTg").value) || "" },
+                      crypto: {
+                        asset: ($("#chAsset") && $("#chAsset").value) || "",
+                        address: ($("#chAddr") && $("#chAddr").value) || "",
+                      },
+                    },
+                  });
+                  toast("Channels saved. Nothing from this form prints on the shop except the public note.");
+                } catch {
+                  toast("Could not save channels.");
+                }
+              };
+            }
+          }).catch(() => {});
+          app.querySelectorAll(".op-status").forEach((btn) => {
+            btn.onclick = async () => {
+              const row = btn.closest("tr");
+              if (!row) return;
+              try {
+                await api("/api/ops/orders", {
+                  method: "POST",
+                  body: {
+                    id: row.getAttribute("data-oid"),
+                    status: btn.getAttribute("data-status"),
+                    tracking: (row.querySelector(".op-track") && row.querySelector(".op-track").value) || "",
+                  },
+                });
+                toast("Order updated.");
+                render();
+              } catch {
+                toast("Order update failed.");
+              }
+            };
+          });
+          api("/api/ops/incoming-coas").then((d) => {
+            const box = $("#incomingList");
+            if (!box) return;
+            const rows = d.records || [];
+            box.innerHTML = `<h2>Incoming supplier COAs</h2>
+              <p class="lede">${d.lab || "Bioviridian"} · ${rows.length} files in data/coas/incoming. Not published on /testing. DSIP 5mg is non-conforming. TSM20 certificate is filed even though TSM20 is off the catalog. Glutathione 1500 and DSIP stay off the shop.</p>` +
+              (rows.length
+                ? `<table class="table"><thead><tr><th>Code</th><th>Sample</th><th>Lot</th><th>Purity</th><th>Status</th><th>Hint</th><th>File</th></tr></thead><tbody>${rows.map((r)=>`<tr><td>${r.webCode||""}</td><td>${r.sample||""}</td><td>${r.lot||""}</td><td>${r.purity==null?"—":r.purity+"%"}</td><td>${r.status||""}</td><td>${r.helixSkuHint||"—"}</td><td><a href="/api/ops/incoming-coas/${r.webCode}" target="_blank" rel="noopener">PDF</a></td></tr>`).join("")}</tbody></table>`
+                : `<p class="muted">No incoming files indexed.</p>`);
+          }).catch(()=>{});
+          api("/api/ops/subscribers").then((d) => {
+            const box = $("#subList");
+            if (!box) return;
+            const rows = d.captures || [];
+            box.innerHTML = `<h2>Email list</h2><p class="lede">${rows.length} addresses. Written to data/subscribers.csv. Outbox queued in data/outbox.json.</p>` +
+              (rows.length
+                ? `<table class="table"><thead><tr><th>Email</th><th>Source</th><th>When</th></tr></thead><tbody>${rows.map((c)=>`<tr><td>${c.email}</td><td>${c.source||""}</td><td>${(c.created||"").slice(0,19)}</td></tr>`).join("")}</tbody></table>`
+                : `<p class="muted">No subscribers yet.</p>`);
+          }).catch(()=>{});
+        }
+      } else if (p === "/cart") {
+        let quote = null;
+        if (state.user && state.cart.length) {
+          quote = await api("/api/cart/quote", { method: "POST", body: { items: state.cart, affiliateCode: state.aff } });
+        }
+        app.innerHTML = cartView(quote);
+      } else {
+        app.innerHTML = `<section class="page wrap"><h1>Not found</h1><a href="/" data-link>Home</a></section>`;
+      }
+    } catch (err) {
+      app.innerHTML = `<section class="page wrap"><h1>Unavailable</h1><p class="lede">${err.message}</p></section>`;
+    }
+
+    bindGlobal();
+    bindTools();
+    applyPageMeta(p);
+    renderConsent();
+    maybePopup();
+  }
+
+  function applyPageMeta(p) {
+    const map = {
+      "/": ["Helix King Labs — Lyophilized research peptides", "Dried powder research peptides with a lot on the vial. Research use only. Not a clinic. Not a pharmacy."],
+      "/shop": ["Research peptide catalog — Helix King Labs", "Browse lyophilized research peptides. Account required for pricing. Research use only."],
+      "/about": ["About Helix King Labs", "Documentation-first catalog of lyophilized research peptides. Crowned ape mark. Lot QR on the vial."],
+      "/library": ["Research documentation library — Helix King Labs", "Permitted use, testing methods, and lot records for lyophilized research peptides."],
+      "/certificates": ["Certificates of analysis — Helix King Labs", "Lot certificates publish when a research lot is accepted. Search by lot or compound."],
+      "/testing": ["Peptide testing methods — Helix King Labs", "Intended testing panel for lyophilized research peptides. Lot files attach when a lot clears."],
+      "/tools": ["Research peptide tools — Helix King Labs", "Vial label maker and reconstitution calculator for lyophilized research materials."],
+      "/tools/label": ["Research vial label maker — Helix King Labs", "20×40 mm house label with lot QR to helixkinglabs.com/testing."],
+      "/tools/calculator": ["Peptide reconstitution calculator — Helix King Labs", "Research arithmetic for lyophilized vials. Not a protocol. Not a reconstituted product."],
+      "/terms": ["Terms of service — Helix King Labs", "Account, catalog, and permitted-use terms for Helix King Labs."],
+      "/privacy": ["Privacy notice — Helix King Labs", "How Helix King Labs collects account, order, and optional analytics data. Do not sell or share."],
+      "/refunds": ["Refund policy — Helix King Labs", "All sales final. Seven-day window for missing, incorrect, or damaged shipments."],
+      "/shipping": ["Shipping — Helix King Labs", "Flat $9.95. Free at $199 merchandise after discounts. Lyophilized powder only."],
+      "/use": ["Permitted use — Helix King Labs", "21+. Lyophilized research materials only. Not for human or animal consumption."],
+    };
+    const row = map[p] || ["Helix King Labs", "Lyophilized research peptides. Research use only."];
+    setPageMeta(row[0], row[1], p === "/" ? "/" : p);
+  }
+
+  function consentState() {
+    try {
+      return JSON.parse(localStorage.getItem("hkl_consent") || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function gpcRefused() {
+    return typeof navigator !== "undefined" && navigator.globalPrivacyControl === true;
+  }
+
+  function loadMeasurement() {
+    const ga = window.HKL_GA_MEASUREMENT_ID || "";
+    const pixel = window.HKL_META_PIXEL_ID || "";
+    if (ga && !document.getElementById("hkl-ga")) {
+      const s = document.createElement("script");
+      s.id = "hkl-ga";
+      s.async = true;
+      s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(ga);
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag("js", new Date());
+      window.gtag("config", ga, { anonymize_ip: true });
+    }
+    if (pixel && !document.getElementById("hkl-meta")) {
+      const s = document.createElement("script");
+      s.id = "hkl-meta";
+      s.text = "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','" + pixel + "');fbq('track','PageView');";
+      document.head.appendChild(s);
+    }
+  }
+
+  function renderConsent() {
+    const box = $("#consent");
+    if (!box) return;
+    let pref = consentState();
+    if (gpcRefused()) {
+      pref = { analytics: false, at: new Date().toISOString(), gpc: true };
+      localStorage.setItem("hkl_consent", JSON.stringify(pref));
+    }
+    if (pref && pref.analytics) loadMeasurement();
+    if (pref) {
+      box.classList.add("hidden");
+      box.innerHTML = "";
+      return;
+    }
+    box.classList.remove("hidden");
+    box.innerHTML = `<p>Necessary cookies run the gate, the cart, and the account. Analytics cookies (Google Analytics and the Meta Pixel, when IDs are installed) stay off until you accept. <a href="/privacy" data-link>Privacy notice</a>.</p>
+      <div class="consent-actions">
+        <button class="btn" type="button" id="cAccept">Accept analytics</button>
+        <button class="btn ghost" type="button" id="cReject">Necessary only</button>
+      </div>`;
+    if ($("#cAccept")) {
+      $("#cAccept").onclick = () => {
+        localStorage.setItem("hkl_consent", JSON.stringify({ analytics: true, at: new Date().toISOString() }));
+        loadMeasurement();
+        box.classList.add("hidden");
+      };
+    }
+    if ($("#cReject")) {
+      $("#cReject").onclick = () => {
+        localStorage.setItem("hkl_consent", JSON.stringify({ analytics: false, at: new Date().toISOString() }));
+        box.classList.add("hidden");
+      };
+    }
+  }
+
+  function bindGlobal() {
+    const footer = $("#footerCapture");
+    if (footer && !footer.dataset.bound) {
+      footer.dataset.bound = "1";
+      footer.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          await capture(new FormData(footer).get("email"), "footer");
+          footer.reset();
+        } catch {
+          toast("Use a valid email.");
+        }
+      });
+    }
+
+    const homeCap = $("#homeCapture");
+    if (homeCap) {
+      homeCap.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          await capture(new FormData(homeCap).get("email"), "home");
+          homeCap.reset();
+        } catch {
+          toast("Use a valid email.");
+        }
+      });
+    }
+
+    const certSearch = $("#certSearch");
+    if (certSearch) {
+      certSearch.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const q = new FormData(certSearch).get("q");
+        go("/certificates?q=" + encodeURIComponent(q));
+      });
+    }
+
+    const gateForm = $("#gateForm");
+    if (gateForm) {
+      gateForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(gateForm);
+        if (!fd.get("age") || !fd.get("terms")) {
+          $("#gateErr").textContent = "Both confirmations are required.";
+          return;
+        }
+        const email = fd.get("email");
+        if (email) {
+          try {
+            await capture(email, "gate");
+          } catch {}
+        }
+        state.gateOk = true;
+        localStorage.setItem("hkl_gate", "1");
+        renderGate();
+      });
+    }
+    const gateGoogle = $("#gateGoogle");
+    if (gateGoogle) {
+      gateGoogle.onclick = async () => {
+        const form = $("#gateForm");
+        const fd = new FormData(form);
+        if (!fd.get("age") || !fd.get("terms")) {
+          $("#gateErr").textContent = "Both confirmations are required.";
+          return;
+        }
+        try {
+          const out = await signInGoogle(true, true);
+          state.user = out.user;
+          state.gateOk = true;
+          localStorage.setItem("hkl_gate", "1");
+          toast(out.demo ? "Google is demo on this host. Email/password is live." : "Signed in with Google.");
+          await loadBase();
+          render();
+        } catch (err) {
+          $("#gateErr").textContent =
+            err.message === "google_not_configured"
+              ? "Add GOOGLE_CLIENT_ID on the server to finish Google."
+              : err.message === "google_cancelled"
+                ? "Google window closed."
+                : "Google sign-in failed.";
+        }
+      };
+    }
+    const gateApple = $("#gateApple");
+    if (gateApple) {
+      gateApple.onclick = async () => {
+        const form = $("#gateForm");
+        const fd = new FormData(form);
+        if (!fd.get("age") || !fd.get("terms")) {
+          $("#gateErr").textContent = "Both confirmations are required.";
+          return;
+        }
+        try {
+          const out = await signInApple(true, true);
+          state.user = out.user;
+          state.gateOk = true;
+          localStorage.setItem("hkl_gate", "1");
+          toast("Signed in with Apple.");
+          await loadBase();
+          render();
+        } catch (err) {
+          $("#gateErr").textContent =
+            err.message === "apple_not_configured" ? "Apple is not configured on this host." : "Apple sign-in failed.";
+        }
+      };
+    }
+
+    const pop = $("#popCapture");
+    if (pop) {
+      pop.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          await capture(new FormData(pop).get("email"), "popup");
+        } catch {
+          toast("Use a valid email.");
+        }
+      });
+    }
+    const dismiss = $("#popDismiss");
+    if (dismiss) dismiss.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dismissPopup();
+    };
+    const reviewForm = $("#reviewForm");
+    if (reviewForm) {
+      reviewForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(reviewForm);
+        try {
+          await api("/api/reviews", {
+            method: "POST",
+            body: {
+              sku: reviewForm.dataset.sku,
+              rating: fd.get("rating"),
+              text: fd.get("text"),
+            },
+          });
+          toast("Verified review posted.");
+          render();
+        } catch (err) {
+          toast(err.message === "verified_purchase_required" ? "Order this fill first." : err.message);
+        }
+      });
+    }
+    const opsSave = $("#opsSave");
+    if (opsSave) {
+      opsSave.onclick = async () => {
+        const rows = [...document.querySelectorAll("#opsTable tbody tr")].map((tr) => ({
+          sku: tr.dataset.sku,
+          customer_price: tr.querySelector(".op-price").value,
+          unit_cost: tr.querySelector(".op-cost").value,
+        }));
+        try {
+          await api("/api/ops/pricing", { method: "POST", body: { rows } });
+          toast("Prices saved to catalog-pricing.csv");
+          await loadBase();
+          render();
+        } catch (err) {
+          toast(err.message);
+        }
+      };
+    }
+    const popupEl = $("#popup");
+    if (popupEl && !popupEl.dataset.bound) {
+      popupEl.dataset.bound = "1";
+      popupEl.addEventListener("click", (e) => {
+        if (e.target.closest(".popup-card")) return;
+        dismissPopup();
+      });
+    }
+
+    const reg = $("#regForm");
+    if (reg) {
+      reg.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(reg);
+        try {
+          const out = await api("/api/auth/register", {
+            method: "POST",
+            body: {
+              name: fd.get("name"),
+              email: fd.get("email"),
+              password: fd.get("password"),
+              age: !!fd.get("age"),
+              terms: !!fd.get("terms"),
+            },
+          });
+          state.user = out.user;
+          state.gateOk = true;
+          localStorage.setItem("hkl_gate", "1");
+          toast("Account open. HELIX10 is attached.");
+          go("/shop");
+        } catch (err) {
+          $("#regErr").textContent =
+            err.message === "exists" ? "That email already has an account." : err.message;
+        }
+      });
+    }
+    async function finishSocial(out, errBox) {
+      if (!out) return;
+      state.user = out.user;
+      state.gateOk = true;
+      localStorage.setItem("hkl_gate", "1");
+      toast(out.demo ? "Google is demo on this host. Email/password is live." : "Signed in.");
+      go("/shop");
+      if (errBox) errBox.textContent = "";
+    }
+    const googleBtn = $("#googleBtn");
+    if (googleBtn) {
+      googleBtn.onclick = async () => {
+        const form = $("#regForm");
+        const fd = form ? new FormData(form) : null;
+        if (!fd || !fd.get("age") || !fd.get("terms")) {
+          $("#regErr").textContent = "Confirm age and terms before Google.";
+          return;
+        }
+        try {
+          await finishSocial(await signInGoogle(true, true));
+        } catch (err) {
+          $("#regErr").textContent =
+            err.message === "google_cancelled" ? "Google window closed." : "Google sign-in failed.";
+        }
+      };
+    }
+    const appleBtn = $("#appleBtn");
+    if (appleBtn) {
+      appleBtn.onclick = async () => {
+        const form = $("#regForm");
+        const fd = form ? new FormData(form) : null;
+        if (!fd || !fd.get("age") || !fd.get("terms")) {
+          $("#regErr").textContent = "Confirm age and terms before Apple.";
+          return;
+        }
+        try {
+          await finishSocial(await signInApple(true, true));
+        } catch {
+          $("#regErr").textContent = "Apple sign-in failed.";
+        }
+      };
+    }
+    const googleLoginBtn = $("#googleLoginBtn");
+    if (googleLoginBtn) {
+      googleLoginBtn.onclick = async () => {
+        try {
+          await finishSocial(await signInGoogle(false, false));
+        } catch (err) {
+          $("#loginErr").textContent =
+            err.message === "confirmations_required"
+              ? "First Google login: use Create account and accept terms."
+              : "Google sign-in failed.";
+        }
+      };
+    }
+    const appleLoginBtn = $("#appleLoginBtn");
+    if (appleLoginBtn) {
+      appleLoginBtn.onclick = async () => {
+        try {
+          await finishSocial(await signInApple(false, false));
+        } catch (err) {
+          $("#loginErr").textContent =
+            err.message === "confirmations_required"
+              ? "First Apple login: use Create account and accept terms."
+              : "Apple sign-in failed.";
+        }
+      };
+    }
+    const login = $("#loginForm");
+    if (login) {
+      login.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(login);
+        try {
+          const out = await api("/api/auth/login", {
+            method: "POST",
+            body: { email: fd.get("email"), password: fd.get("password") },
+          });
+          state.user = out.user;
+          go("/shop");
+        } catch (err) {
+          $("#loginErr").textContent = "Check the email and password.";
+        }
+      });
+    }
+    const logoutBtn = $("#logoutBtn");
+    if (logoutBtn) {
+      logoutBtn.onclick = async () => {
+        await api("/api/auth/logout", { method: "POST", body: {} });
+        state.user = null;
+        toast("Signed out.");
+        render();
+      };
+    }
+
+    document.querySelectorAll("[data-remove]").forEach((btn) => {
+      btn.onclick = () => {
+        state.cart = state.cart.filter((l) => l.id !== btn.dataset.remove);
+        saveCart();
+        render();
+      };
+    });
+
+    const affApply = $("#affApply");
+    if (affApply) {
+      affApply.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          await api("/api/affiliate/apply", { method: "POST", body: { agree: true } });
+          await loadBase();
+          toast("Desk open.");
+          go("/affiliates");
+        } catch (err) {
+          toast(err.message === "order_required" ? "Record an order first." : err.message);
+        }
+      });
+    }
+
+    const trackForm = $("#trackForm");
+    if (trackForm) {
+      trackForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const n = ($("#trackNo") && $("#trackNo").value) || "";
+        const out = $("#trackOut");
+        if (!out) return;
+        if (!n.trim()) {
+          out.textContent = "Enter the number from the ship note.";
+          return;
+        }
+        api("/api/tracking?q=" + encodeURIComponent(n.trim()))
+          .then((d) => {
+            out.textContent = d.found
+              ? `${d.orderId} · ${d.status}${d.shippedAt ? " · booked " + d.shippedAt.slice(0, 10) : ""}`
+              : d.message || "No shipment under that number yet.";
+          })
+          .catch(() => {
+            out.textContent = "Lookup unavailable.";
+          });
+      });
+    }
+
+    const affInput = $("#affCode");
+    if (affInput) {
+      affInput.onchange = affInput.onkeydown = (e) => {
+        if (e.type === "keydown" && e.key !== "Enter") return;
+        e.preventDefault();
+        const code = String(affInput.value || "").trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 16);
+        state.aff = code.length >= 3 ? code : "";
+        if (state.aff) localStorage.setItem("hkl_aff", state.aff);
+        else localStorage.removeItem("hkl_aff");
+        render();
+      };
+    }
+
+    const checkoutBtn = $("#checkoutBtn");
+    if (checkoutBtn) {
+      checkoutBtn.onclick = async () => {
+        try {
+          const out = await api("/api/checkout", { method: "POST", body: { items: state.cart, affiliateCode: state.aff } });
+          state.cart = [];
+          saveCart();
+          await loadBase();
+          $("#orderDone").innerHTML = `<p class="hard">Recorded ${out.order.id} · awaiting settlement. Lots: ${out.order.quote.lines
+            .map((l) => l.lot)
+            .join(", ")}. ${out.order.note || ""}</p>`;
+          toast("Order recorded. Settlement is off this site.");
+        } catch (err) {
+          toast(err.message === "insufficient_stock" ? "A line is over on-hand quantity. Remove it or lower qty." : err.message);
+        }
+      };
+    }
+  }
+
+  loadBase()
+    .then(render)
+    .catch((err) => {
+      app.innerHTML = `<section class="page wrap"><h1>Shell unavailable</h1><p class="lede">${err.message}</p></section>`;
+    });
+})();

@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Disallow: /account
+Disallow: /cart
+Disallow: /ops
+Disallow: /affiliates
+Disallow: /tracking
+Disallow: /api/
+Disallow: /privacy#do-not-sell
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://helixkinglabs.com/sitemap.xml
+Host: helixkinglabs.com

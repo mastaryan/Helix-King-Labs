@@ -1,0 +1,95 @@
+{
+  "voice": "Process and documentation. Not outcomes.",
+  "homepage": {
+    "headline": "Lyophilized research peptides. Lot on the vial.",
+    "proof": "Dried powder only. Research use only. Not for human or animal consumption.",
+    "number": "PGL-GIC1 · PGL-GI1 · Wolverine · Tesamorelin",
+    "sub": "Helix King Labs supplies lyophilized research materials with a house label and a lot QR. Cosmetics return after testing. Not a clinic. Not a pharmacy."
+  },
+  "ticker": [
+    "Research use only",
+    "Lyophilized powder only — no reconstituted lots",
+    "21+ only",
+    "Account required for pricing",
+    "First order: HELIX10 after you sign in — unless an affiliate code is on the cart",
+    "Volume table in the cart — 2 / 4 / 10+",
+    "Shipping $9.95 · free at $199",
+    "Not a clinic. Not a pharmacy."
+  ],
+  "allowed": [
+    "lot",
+    "certificate",
+    "tested",
+    "documented",
+    "catalog",
+    "account",
+    "shipping cutoff",
+    "purity",
+    "panel",
+    "release threshold",
+    "research use only",
+    "cosmetic lot"
+  ],
+  "gateFooterOnly": [
+    "Age line (21+)",
+    "Permitted-use sentence",
+    "Not a clinic / not a pharmacy"
+  ],
+  "banned": [
+    "results",
+    "cycles",
+    "protocols",
+    "before/after",
+    "outcome testimonials",
+    "how-to-use on a person",
+    "weight loss claims",
+    "treat / cure / diagnose",
+    "peptide therapy",
+    "dosage for humans"
+  ],
+  "replacements": {
+    "best peptide for fat loss": "documented compound — see the lot certificate",
+    "before and after": "lot history and purity table",
+    "how to inject": "[removed — not published]",
+    "stack protocol": "related SKUs",
+    "customers saw results": "lot record"
+  },
+  "faq": [
+    {
+      "q": "Why is there a gate?",
+      "a": "You confirm you are 21+ and you accept the permitted-use terms before the catalog opens."
+    },
+    {
+      "q": "Why do I need an account to see prices?",
+      "a": "There is no published price list. The cart quotes volume tiers after an account exists. HELIX10 attaches to a first order unless an affiliate code is already on the cart."
+    },
+    {
+      "q": "Where are the certificates?",
+      "a": "The library is /library. Lot files publish on /certificates when testing is complete. A vial QR points at /testing?lot=XXXX on this site — not at the testing laboratory."
+    },
+    {
+      "q": "Do you ship reconstituted vials?",
+      "a": "No. Every research vial leaves as lyophilized dried powder. Reconstitution is not offered and is not a product."
+    },
+    {
+      "q": "Are documented compounds for human use?",
+      "a": "No. They are research materials. Not drugs, not supplements, not for human or animal consumption. Helix King Labs is not a clinic and not a pharmacy."
+    },
+    {
+      "q": "What about the creams and serums?",
+      "a": "Those SKUs are cosmetics. They are off the public shop until testing is complete."
+    },
+    {
+      "q": "Do you run sitewide discounts?",
+      "a": "No sitewide sales. Volume percentages apply in the cart at 2, 4, and 10+ units. One 10% on the cart: an affiliate code replaces HELIX10. They do not stack. Shipping is $9.95, free at $199 merchandise after discounts."
+    }
+  ],
+  "emailSequence": [
+    { "when": "Subscribe", "job": "Library link + permitted-use line." },
+    { "when": "Order day", "job": "Confirmation plus the lot file when it exists." },
+    { "when": "In transit", "job": "Shipped + tracking." },
+    { "when": "Day 21", "job": "Running-low nudge. No outcome language." },
+    { "when": "Day 30", "job": "Reorder offer — small, time-boxed." },
+    { "when": "Day 60", "job": "Win-back: new lots documented." }
+  ]
+}
