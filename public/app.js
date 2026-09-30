@@ -857,8 +857,19 @@
                 <div class="sub">Lot ${l.lot} · Qty ${l.qty}${
                   l.available != null ? " · " + l.available + " on hand" : ""
                 }${l.oversold ? " · over available" : l.stockStatus === "low" ? " · low" : l.stockStatus === "out" ? " · out" : ""}</div>
-                <button class="dismiss" data-remove="${l.id}">Remove</button>
-              </div>
+<div class="cart-qty" aria-label="Quantity controls">
+  <button class="dismiss" type="button" data-cart-minus="${l.id}" aria-label="Decrease quantity">−</button>
+  <span class="cart-qty-number">${l.qty}</span>
+  <button
+    class="dismiss"
+    type="button"
+    data-cart-plus="${l.id}"
+    data-cart-max="${Math.min(20, Number(l.available || 0))}"
+    aria-label="Increase quantity"
+    ${l.available != null && l.qty >= l.available ? "disabled" : ""}
+  >+</button>
+</div>
+<button class="dismiss" type="button" data-remove="${l.id}">Remove</button>              </div>
               <div>${money(l.line)}</div>
             </div>`;
           })
@@ -1662,6 +1673,7 @@
           state.gateOk = true;
           localStorage.setItem("hkl_gate", "1");
           toast("Account open. HELIX10 is attached.");
+          await loadBase();
           go("/shop");
         } catch (err) {
           $("#regErr").textContent =
@@ -1747,8 +1759,9 @@
             method: "POST",
             body: { email: fd.get("email"), password: fd.get("password") },
           });
-          state.user = out.user;
-          go("/shop");
+         state.user = out.user;
+        await loadBase();
+        go("/shop");
         } catch (err) {
           $("#loginErr").textContent = "Check the email and password.";
         }
@@ -1771,6 +1784,29 @@
         render();
       };
     });
+
+    document.querySelectorAll("[data-cart-minus], [data-cart-plus]").forEach((btn) => {
+  btn.onclick = async () => {
+    const id = btn.dataset.cartMinus || btn.dataset.cartPlus;
+    const line = state.cart.find((item) => item.id === id);
+    if (!line) return;
+
+    if (btn.dataset.cartMinus) {
+      if (line.qty <= 1) {
+        state.cart = state.cart.filter((item) => item.id !== id);
+      } else {
+        line.qty -= 1;
+      }
+    } else {
+      const max = Math.min(20, Number(btn.dataset.cartMax) || 20);
+      if (line.qty >= max) return;
+      line.qty += 1;
+    }
+
+    saveCart();
+    await render();
+  };
+});
 
     const affApply = $("#affApply");
     if (affApply) {
