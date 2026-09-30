@@ -19,10 +19,7 @@ const PORT = Number(process.env.PORT || 4173);
 const SESSION_HOURS = 14 * 24;
 const SECRET = process.env.HKL_SECRET || crypto.randomBytes(32).toString("hex");
 const PUBLIC_ORIGIN = String(process.env.HKL_PUBLIC_ORIGIN || "").replace(/\/$/, "");
-const GOOGLE_CLIENT_ID = String(
-  process.env.GOOGLE_CLIENT_ID ||
-    "264747327954-jeukts6o6ekf8ibepsc5215vcj0pbmg5.apps.googleusercontent.com"
-).trim();
+const GOOGLE_CLIENT_ID = String(process.env.GOOGLE_CLIENT_ID || "").trim();
 const APPLE_CLIENT_ID = String(process.env.APPLE_CLIENT_ID || "").trim();
 const APPLE_TEAM_ID = String(process.env.APPLE_TEAM_ID || "").trim();
 const APPLE_KEY_ID = String(process.env.APPLE_KEY_ID || "").trim();
