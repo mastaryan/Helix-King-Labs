@@ -19,7 +19,10 @@ const PORT = Number(process.env.PORT || 4173);
 const SESSION_HOURS = 14 * 24;
 const SECRET = process.env.HKL_SECRET || crypto.randomBytes(32).toString("hex");
 const PUBLIC_ORIGIN = String(process.env.HKL_PUBLIC_ORIGIN || "").replace(/\/$/, "");
-const GOOGLE_CLIENT_ID = String(process.env.GOOGLE_CLIENT_ID || "").trim();
+const GOOGLE_CLIENT_ID = String(
+  process.env.GOOGLE_CLIENT_ID ||
+    "264747327954-jeukts6o6ekf8ibepsc5215vcj0pbmg5.apps.googleusercontent.com"
+).trim();
 const APPLE_CLIENT_ID = String(process.env.APPLE_CLIENT_ID || "").trim();
 const APPLE_TEAM_ID = String(process.env.APPLE_TEAM_ID || "").trim();
 const APPLE_KEY_ID = String(process.env.APPLE_KEY_ID || "").trim();
@@ -252,8 +255,10 @@ function publicChannels() {
   const c = loadChannels();
   return {
     publicNote: c.publicNote,
-    checkoutLabel: c.checkoutLabel || "Record order",
+    checkoutLabel: c.checkoutLabel || "Checkout not open",
     checkoutHint: c.checkoutHint,
+    telegramInvite: c.telegramInvite || "https://t.me/+gk0d_zGjGORkNDc5",
+    checkoutOpen: false,
   };
 }
 
@@ -675,9 +680,7 @@ function validEmail(e) {
   return typeof e === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length < 120;
 }
 
-function volumeRate(qty) {
-  if (qty >= 10) return 0.1;
-  if (qty >= 5) return 0.05;
+function volumeRate() {
   return 0;
 }
 
@@ -1110,6 +1113,7 @@ async function api(req, res, url) {
   }
 
   if (method === "POST" && route === "/api/checkout") {
+    return send(res, 503, { error: "checkout_closed", message: "Checkout is not open yet." });
     let body;
     try {
       body = await readBody(req);

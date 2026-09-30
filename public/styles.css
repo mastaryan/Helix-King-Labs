@@ -300,6 +300,9 @@ input:focus, select:focus { border-color: var(--silver-2); }
 .dose-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 8px; }
 .dose { border: 1px solid var(--line-2); padding: 8px 12px; font-family: var(--mono); font-size: 12px; color: var(--silver-2); }
 .dose.on { border-color: var(--silver); color: var(--text); }
+.card-doses { margin-top: 10px; }
+.qty-n { min-width: 1.6em; text-align: center; font-family: var(--mono); }
+.ship-nudge { color: var(--silver); }
 .about-panel, .reviews { margin-top: 56px; max-width: 760px; }
 .review { border-top: 1px solid var(--line); padding: 14px 0; }
 .review-meta { font-family: var(--mono); font-size: 11px; color: var(--silver-2); margin-bottom: 8px; }

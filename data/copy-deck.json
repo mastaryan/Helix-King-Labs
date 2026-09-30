@@ -1,19 +1,17 @@
 {
   "voice": "Process and documentation. Not outcomes.",
   "homepage": {
-    "headline": "Lyophilized research peptides. Lot on the vial.",
-    "proof": "Dried powder only. Research use only. Not for human or animal consumption.",
+    "headline": "Premium research peptides. Lot on the vial.",
+    "proof": "Research-use materials only. Not for human or animal consumption.",
     "number": "PGL-GIC1 · PGL-GI1 · Wolverine · Tesamorelin",
-    "sub": "Helix King Labs supplies lyophilized research materials with a house label and a lot QR. Cosmetics return after testing. Not a clinic. Not a pharmacy."
+    "sub": "Helix King Labs supplies documented research peptides with a house label and a lot QR. Not a clinic. Not a pharmacy."
   },
   "ticker": [
     "Research use only",
-    "Lyophilized powder only — no reconstituted lots",
+    "Premium research peptides",
     "21+ only",
-    "Account required for pricing",
+    "Free shipping on orders over $199",
     "First order: HELIX10 after you sign in — unless an affiliate code is on the cart",
-    "Volume table in the cart — 2 / 4 / 10+",
-    "Shipping $9.95 · free at $199",
     "Not a clinic. Not a pharmacy."
   ],
   "allowed": [
@@ -28,7 +26,7 @@
     "panel",
     "release threshold",
     "research use only",
-    "cosmetic lot"
+    "research peptide"
   ],
   "gateFooterOnly": [
     "Age line (21+)",
@@ -45,7 +43,8 @@
     "weight loss claims",
     "treat / cure / diagnose",
     "peptide therapy",
-    "dosage for humans"
+    "dosage for humans",
+    "lyophilized"
   ],
   "replacements": {
     "best peptide for fat loss": "documented compound — see the lot certificate",
@@ -57,35 +56,31 @@
   "faq": [
     {
       "q": "Why is there a gate?",
-      "a": "You confirm you are 21+ and you accept the permitted-use terms before the catalog opens."
+      "a": "This catalog is 21+ and research-use only. The gate is the same check you would get at a laboratory supply counter: confirm age and that you are buying documented research materials, not a treatment."
     },
     {
-      "q": "Why do I need an account to see prices?",
-      "a": "There is no published price list. The cart quotes volume tiers after an account exists. HELIX10 attaches to a first order unless an affiliate code is already on the cart."
+      "q": "Why do I need an account?",
+      "a": "Pricing, stock, and checkout sit behind an account so we know who placed the order and which lot went out. Add to cart without signing in and you will get a short prompt to create one. HELIX10 applies to the first recorded order unless an affiliate code is already on the cart."
     },
     {
       "q": "Where are the certificates?",
-      "a": "The library is /library. Lot files publish on /certificates when testing is complete. A vial QR points at /testing?lot=XXXX on this site — not at the testing laboratory."
+      "a": "Search lots on Certificates. A vial QR opens /testing?lot=XXXX on this site — not the outside laboratory. Public PDFs attach when a lot is accepted for the shop."
     },
     {
-      "q": "Do you ship reconstituted vials?",
-      "a": "No. Every research vial leaves as lyophilized dried powder. Reconstitution is not offered and is not a product."
+      "q": "What form do the vials ship in?",
+      "a": "Dried research material in a sealed vial. We do not ship mixed solutions, filled pens, or research water on this catalog."
     },
     {
-      "q": "Are documented compounds for human use?",
+      "q": "Are these for human use?",
       "a": "No. They are research materials. Not drugs, not supplements, not for human or animal consumption. Helix King Labs is not a clinic and not a pharmacy."
     },
     {
-      "q": "What about the creams and serums?",
-      "a": "Those SKUs are cosmetics. They are off the public shop until testing is complete."
-    },
-    {
       "q": "Do you run sitewide discounts?",
-      "a": "No sitewide sales. Volume percentages apply in the cart at 2, 4, and 10+ units. One 10% on the cart: an affiliate code replaces HELIX10. They do not stack. Shipping is $9.95, free at $199 merchandise after discounts."
+      "a": "No sitewide sales. First-time buyers get HELIX10 on the first recorded order. Affiliates earn 10% on merchandise after discounts and their code replaces HELIX10 — the two never stack. Free shipping over $199 after discounts."
     }
   ],
   "emailSequence": [
-    { "when": "Subscribe", "job": "Library link + permitted-use line." },
+    { "when": "Subscribe", "job": "Catalog note + permitted-use line." },
     { "when": "Order day", "job": "Confirmation plus the lot file when it exists." },
     { "when": "In transit", "job": "Shipped + tracking." },
     { "when": "Day 21", "job": "Running-low nudge. No outcome language." },

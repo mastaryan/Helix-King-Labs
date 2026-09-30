@@ -11,7 +11,7 @@
     "firstOrderRate": 0.1,
     "codesStack": false,
     "affiliatePaysOn": "merchandise_after_discounts",
-    "note": "One 10% on the cart. Affiliate code replaces HELIX10. Shipping $9.95, free at $199 merchandise after discounts. Affiliate commission is 10% of that merchandise total, not list and not shipping. Public shop is research vials only."
+    "note": "One 10% on the cart. Affiliate code replaces HELIX10. Free shipping at $199 merchandise after discounts. Affiliate commission is 10% of that merchandise total, not list and not shipping. Public shop is research vials only. Volume tiers are off."
   },
   "testing": {
     "panelName": "12-point release panel",
@@ -75,7 +75,7 @@
       "name": "PGL-GIC1",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/pgl-gic1-10.jpg?v=30",
       "hero": true,
       "blurb": "Documented multi-receptor research analog. Listed by research name only.",
@@ -105,7 +105,7 @@
         "components": [
           "PGL-GIC1"
         ],
-        "body": "Listed by research name only. Specs on this page are identity, fill, form, storage, and the lot. No protocol language is published."
+        "body": "Specs on this page are identity, fill, form, storage, and the lot. No protocol language is published."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -116,7 +116,7 @@
       "name": "PGL-GI1",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/pgl-gi1-10.jpg?v=30",
       "hero": false,
       "blurb": "Documented dual-agonist research analog. Listed by research name only.",
@@ -146,7 +146,7 @@
         "components": [
           "PGL-GI1"
         ],
-        "body": "Listed by research name only. The certificate names this lot. This page does not publish a protocol."
+        "body": "The certificate names this lot. This page does not publish a protocol."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -157,7 +157,7 @@
       "name": "PGL-G1",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/pgl-g1-5.jpg?v=30",
       "hero": false,
       "blurb": "Documented incretin-class research analog. Listed by research name only.",
@@ -187,7 +187,7 @@
         "components": [
           "PGL-G1"
         ],
-        "body": "Listed by research name only. Fill, form, appearance, storage, lot."
+        "body": "Fill, form, appearance, storage, lot."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -198,7 +198,7 @@
       "name": "CGL-1",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/cgl-1-5.jpg?v=30",
       "hero": false,
       "blurb": "Documented amylin-class research analog. Listed by research name only.",
@@ -235,7 +235,7 @@
       "name": "BPC-157",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/bpc-157-5.jpg?v=30",
       "hero": false,
       "blurb": "Documented pentadecapeptide. Certificate on every lot.",
@@ -274,7 +274,7 @@
       "name": "TB-500",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/tb-500-5.jpg?v=30",
       "cardImage": "/img/tb-500-5.jpg?v=30",
       "hero": false,
@@ -311,7 +311,7 @@
       "name": "GHK-Cu",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/ghk-cu-50.jpg?v=30",
       "hero": false,
       "blurb": "Documented copper tripeptide. Two documented fills.",
@@ -348,7 +348,7 @@
       "name": "Ipamorelin",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/ipamorelin-5.jpg?v=30",
       "hero": false,
       "blurb": "Documented ghrelin-mimetic research lot. Not CJC-1295.",
@@ -385,7 +385,7 @@
       "name": "Sermorelin",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/sermorelin-5.jpg?v=30",
       "hero": false,
       "blurb": "Documented GHRH(1-29) research lot.",
@@ -422,7 +422,7 @@
       "name": "Tesamorelin",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/tesamorelin-5.jpg?v=30",
       "hero": false,
       "blurb": "Documented GHRH-analog research lot.",
@@ -459,7 +459,7 @@
       "name": "MOTS-c",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/mots-c-10.jpg?v=30",
       "hero": false,
       "blurb": "Documented mitochondrial ORF research peptide.",
@@ -498,7 +498,7 @@
       "name": "NAD+",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/nad-100.jpg?v=30",
       "hero": false,
       "blurb": "Documented dinucleotide research lot.",
@@ -537,7 +537,7 @@
       "name": "5-Amino-1MQ",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/5am-5.jpg?v=30",
       "hero": false,
       "blurb": "Documented small-molecule research lot.",
@@ -576,7 +576,7 @@
       "name": "SS-31",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/ss-31-10.jpg?v=30",
       "hero": false,
       "blurb": "Documented mitochondria-targeted research tetrapeptide.",
@@ -613,7 +613,7 @@
       "name": "KPV",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/kpv-5.jpg?v=30",
       "hero": false,
       "blurb": "Documented tripeptide research lot.",
@@ -652,7 +652,7 @@
       "name": "PGL-SR1",
       "category": "documented",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/pgl-sr1-12.jpg?v=30",
       "hero": false,
       "blurb": "Documented somatropin-class research analog. Listed by research name only.",
@@ -691,7 +691,7 @@
       "name": "Wolverine",
       "category": "blends",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/bpc-tb-5-5.jpg?v=30",
       "hero": false,
       "blurb": "BPC-157 10 mg + TB-500 10 mg. One vial. 1:1. 20 mg total.",
@@ -729,7 +729,7 @@
       "name": "GLOW",
       "category": "blends",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/glow.jpg?v=30",
       "hero": false,
       "blurb": "Named three-component blend. 70 mg vial. Certificate lists component identity.",
@@ -766,7 +766,7 @@
       "name": "KLOW",
       "category": "blends",
       "useClass": "research",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "image": "/img/klow.jpg?v=30",
       "hero": false,
       "blurb": "Named four-component blend. 80 mg vial. Certificate lists component identity.",
@@ -1277,7 +1277,7 @@
       "slug": "pgl-gic1-rt10",
       "name": "PGL-GIC1",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White to off-white lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1313,7 +1313,7 @@
         ],
         [
           "Appearance",
-          "White to off-white lyophilized cake"
+          "White to off-white dried cake"
         ],
         [
           "Storage",
@@ -1341,7 +1341,7 @@
       "slug": "pgl-gic1-rt15",
       "name": "PGL-GIC1",
       "size": "15 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White to off-white lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1377,7 +1377,7 @@
         ],
         [
           "Appearance",
-          "White to off-white lyophilized cake"
+          "White to off-white dried cake"
         ],
         [
           "Storage",
@@ -1405,7 +1405,7 @@
       "slug": "pgl-gic1-rt20",
       "name": "PGL-GIC1",
       "size": "20 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White to off-white lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1441,7 +1441,7 @@
         ],
         [
           "Appearance",
-          "White to off-white lyophilized cake"
+          "White to off-white dried cake"
         ],
         [
           "Storage",
@@ -1469,7 +1469,7 @@
       "slug": "pgl-gic1-rt30",
       "name": "PGL-GIC1",
       "size": "30 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White to off-white lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1505,7 +1505,7 @@
         ],
         [
           "Appearance",
-          "White to off-white lyophilized cake"
+          "White to off-white dried cake"
         ],
         [
           "Storage",
@@ -1533,7 +1533,7 @@
       "slug": "pgl-gi1-tr10",
       "name": "PGL-GI1",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1569,7 +1569,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -1597,7 +1597,7 @@
       "slug": "pgl-gi1-tr15",
       "name": "PGL-GI1",
       "size": "15 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1633,7 +1633,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -1661,7 +1661,7 @@
       "slug": "pgl-gi1-tr20",
       "name": "PGL-GI1",
       "size": "20 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1697,7 +1697,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -1725,7 +1725,7 @@
       "slug": "pgl-gi1-tr30",
       "name": "PGL-GI1",
       "size": "30 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1761,7 +1761,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -1789,7 +1789,7 @@
       "slug": "pgl-g1-sm5",
       "name": "PGL-G1",
       "size": "5 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1825,7 +1825,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -1853,7 +1853,7 @@
       "slug": "pgl-g1-sm10",
       "name": "PGL-G1",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1889,7 +1889,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -1917,7 +1917,7 @@
       "slug": "pgl-g1-sm20",
       "name": "PGL-G1",
       "size": "20 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -1953,7 +1953,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -1981,7 +1981,7 @@
       "slug": "pgl-g1-sm30",
       "name": "PGL-G1",
       "size": "30 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -2017,7 +2017,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2045,7 +2045,7 @@
       "slug": "cgl-1-cgl5",
       "name": "CGL-1",
       "size": "5 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -2081,7 +2081,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2109,7 +2109,7 @@
       "slug": "cgl-1-cgl10",
       "name": "CGL-1",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -2145,7 +2145,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2173,7 +2173,7 @@
       "slug": "bpc-157-bpc5",
       "name": "BPC-157",
       "size": "5 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2209,7 +2209,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2237,7 +2237,7 @@
       "slug": "bpc-157-bpc10",
       "name": "BPC-157",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2273,7 +2273,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2301,7 +2301,7 @@
       "slug": "bpc-157-bpc20",
       "name": "BPC-157",
       "size": "20 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2337,7 +2337,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2365,7 +2365,7 @@
       "slug": "tb-500-5mg",
       "name": "TB-500",
       "size": "5 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White to off-white lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2401,7 +2401,7 @@
         ],
         [
           "Appearance",
-          "White to off-white lyophilized cake"
+          "White to off-white dried cake"
         ],
         [
           "Storage",
@@ -2428,7 +2428,7 @@
       "slug": "tb-500-10mg",
       "name": "TB-500",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White to off-white lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2464,7 +2464,7 @@
         ],
         [
           "Appearance",
-          "White to off-white lyophilized cake"
+          "White to off-white dried cake"
         ],
         [
           "Storage",
@@ -2491,7 +2491,7 @@
       "slug": "ghk-cu-cu50",
       "name": "GHK-Cu",
       "size": "50 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "Blue-green lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -2528,7 +2528,7 @@
         ],
         [
           "Appearance",
-          "Blue-green lyophilized cake"
+          "Blue-green dried cake"
         ],
         [
           "Storage",
@@ -2556,7 +2556,7 @@
       "slug": "ghk-cu-cu100",
       "name": "GHK-Cu",
       "size": "100 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "Blue-green lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -2593,7 +2593,7 @@
         ],
         [
           "Appearance",
-          "Blue-green lyophilized cake"
+          "Blue-green dried cake"
         ],
         [
           "Storage",
@@ -2621,7 +2621,7 @@
       "slug": "ipamorelin-ipa5",
       "name": "Ipamorelin",
       "size": "5 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2656,7 +2656,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2684,7 +2684,7 @@
       "slug": "ipamorelin-ipa10",
       "name": "Ipamorelin",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2719,7 +2719,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2747,7 +2747,7 @@
       "slug": "sermorelin-ser5",
       "name": "Sermorelin",
       "size": "5 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2782,7 +2782,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2810,7 +2810,7 @@
       "slug": "sermorelin-ser10",
       "name": "Sermorelin",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2845,7 +2845,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2873,7 +2873,7 @@
       "slug": "tesamorelin-tsm5",
       "name": "Tesamorelin",
       "size": "5 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2908,7 +2908,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2936,7 +2936,7 @@
       "slug": "tesamorelin-tsm10",
       "name": "Tesamorelin",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -2971,7 +2971,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -2999,7 +2999,7 @@
       "slug": "mots-c-ms10",
       "name": "MOTS-c",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3034,7 +3034,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -3062,7 +3062,7 @@
       "slug": "mots-c-ms20",
       "name": "MOTS-c",
       "size": "20 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3097,7 +3097,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -3125,7 +3125,7 @@
       "slug": "mots-c-ms40",
       "name": "MOTS-c",
       "size": "40 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3160,7 +3160,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -3188,7 +3188,7 @@
       "slug": "nad-nj100",
       "name": "NAD+",
       "size": "100 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White crystalline solid",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -3251,7 +3251,7 @@
       "slug": "nad-nj500",
       "name": "NAD+",
       "size": "500 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White crystalline solid",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -3314,7 +3314,7 @@
       "slug": "nad-nj1000",
       "name": "NAD+",
       "size": "1000 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White crystalline solid",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "documented",
@@ -3377,7 +3377,7 @@
       "slug": "5-amino-1mq-5am",
       "name": "5-Amino-1MQ",
       "size": "5 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White crystalline solid",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3440,7 +3440,7 @@
       "slug": "5-amino-1mq-10am",
       "name": "5-Amino-1MQ",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White crystalline solid",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3503,7 +3503,7 @@
       "slug": "5-amino-1mq-50am",
       "name": "5-Amino-1MQ",
       "size": "50 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White crystalline solid",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3566,7 +3566,7 @@
       "slug": "ss-31-2s10",
       "name": "SS-31",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3601,7 +3601,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -3629,7 +3629,7 @@
       "slug": "ss-31-2s50",
       "name": "SS-31",
       "size": "50 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3664,7 +3664,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -3692,7 +3692,7 @@
       "slug": "kpv-kpv5",
       "name": "KPV",
       "size": "5 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3727,7 +3727,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -3755,7 +3755,7 @@
       "slug": "kpv-kpv10",
       "name": "KPV",
       "size": "10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3790,7 +3790,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -3818,7 +3818,7 @@
       "slug": "kpv-kpv20",
       "name": "KPV",
       "size": "20 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3853,7 +3853,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -3881,7 +3881,7 @@
       "slug": "pgl-sr1-h12",
       "name": "PGL-SR1",
       "size": "12 IU",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3916,7 +3916,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -3944,7 +3944,7 @@
       "slug": "pgl-sr1-h24",
       "name": "PGL-SR1",
       "size": "24 IU",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -3979,7 +3979,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -4007,7 +4007,7 @@
       "slug": "pgl-sr1-h36",
       "name": "PGL-SR1",
       "size": "36 IU",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "documented",
@@ -4042,7 +4042,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -4070,7 +4070,7 @@
       "slug": "bpc-tb-bb10",
       "name": "Wolverine",
       "size": "BPC-157 5 mg + TB-500 5 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "blends",
@@ -4114,7 +4114,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -4142,7 +4142,7 @@
       "slug": "bpc-157-tb-500",
       "name": "Wolverine",
       "size": "BPC-157 10 mg + TB-500 10 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White lyophilized cake",
       "storage": "2\u20138 \u00b0C, desiccated",
       "category": "blends",
@@ -4186,7 +4186,7 @@
         ],
         [
           "Appearance",
-          "White lyophilized cake"
+          "White dried cake"
         ],
         [
           "Storage",
@@ -4214,7 +4214,7 @@
       "slug": "glow-glow",
       "name": "GLOW",
       "size": "70 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White to pale-blue cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "blends",
@@ -4287,7 +4287,7 @@
       "slug": "klow-klow",
       "name": "KLOW",
       "size": "80 mg",
-      "form": "Lyophilized solid in glass vial",
+      "form": "Dried research material in glass vial",
       "appearance": "White to pale-blue cake",
       "storage": "2\u20138 \u00b0C, desiccated, protected from light",
       "category": "blends",

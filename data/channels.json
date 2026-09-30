@@ -1,12 +1,13 @@
 {
-  "publicNote": "This catalog records the order and the lots. Settlement is off this site. Payment instructions go to the account email after the order is recorded.",
-  "checkoutLabel": "Record order",
-  "checkoutHint": "No card rail on this catalog. Group buys and crypto settlement stay off-site.",
+  "publicNote": "Accounts, pricing, and the cart are live. Checkout is not open yet.",
+  "checkoutLabel": "Checkout not open",
+  "checkoutHint": "Your cart stays on this device. We will open checkout when settlement is ready.",
+  "telegramInvite": "https://t.me/+gk0d_zGjGORkNDc5",
   "ops": {
     "telegram": {
-      "label": "Telegram (off-site)",
-      "handle": "",
-      "note": "Group buys and payments live in the Telegram group. Do not publish the invite on this shop."
+      "label": "Telegram",
+      "handle": "https://t.me/+gk0d_zGjGORkNDc5",
+      "note": "Private research room."
     },
     "crypto": {
       "label": "Exodus wallet",

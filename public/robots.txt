@@ -2,11 +2,14 @@ User-agent: *
 Allow: /
 Disallow: /account
 Disallow: /cart
+Disallow: /checkout
 Disallow: /ops
+Disallow: /admin
 Disallow: /affiliates
+Disallow: /library
+Disallow: /tools/label
 Disallow: /tracking
 Disallow: /api/
-Disallow: /privacy#do-not-sell
 
 User-agent: GPTBot
 Allow: /

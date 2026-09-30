@@ -173,18 +173,26 @@
     const worst = vars.some((v) => (v.available != null ? v.available : v.stock) <= 0)
       ? vars.find((v) => (v.available != null ? v.available : v.stock) <= 0)
       : vars.find((v) => v.stockStatus === "low" || (v.available != null ? v.available : v.stock) < 3);
-    return `<a class="card" href="/product/${f.slug}" data-link>
-      <div class="ph"><img src="${img}" alt="${f.name}" /></div>
+    return `<article class="card">
+      <a href="/product/${f.slug}" data-link>
+        <div class="ph"><img src="${img}" alt="${f.name}" /></div>
+      </a>
       <div class="meta">
-        <div class="name">${f.name}</div>
-        <div class="sub">${sizes}</div>
+        <a href="/product/${f.slug}" data-link><div class="name">${f.name}</div></a>
+        <div class="dose-row card-doses" aria-label="Strengths">
+          ${vars
+            .map(
+              (v) =>
+                `<a class="dose" href="/product/${f.slug}?sku=${encodeURIComponent(v.sku)}" data-link>${v.size}</a>`
+            )
+            .join("")}
+        </div>
         <div class="badges">
-          ${vars.map((v) => `<span class="badge">${v.size}</span>`).join("")}
           ${pending ? `<span class="badge stock out">Unavailable</span>` : worst ? stockBadge(worst) : ""}
         </div>
         ${priceBlock(from, range)}
       </div>
-    </a>`;
+    </article>`;
   }
 
   function home() {
@@ -211,7 +219,7 @@
         <p class="hard">${copy.number}</p>
         <div class="hero-actions">
           <a class="btn" href="/product/${heroFam ? heroFam.slug : hero.slug}" data-link>Shop ${hero.name} ${hero.size}</a>
-          <a class="btn ghost" href="/library" data-link>Open the library</a>
+          <a class="btn ghost" href="/shop" data-link>Open the catalog</a>
         </div>
       </div>
     </section>
@@ -219,7 +227,7 @@
       <div class="wrap">
         <div class="kicker">On the bench</div>
         <h2>Live families</h2>
-        <p class="lede">PGL-GIC1, PGL-GI1, Wolverine, Tesamorelin first. PGL-G1, BPC-157, GLOW, GHK-Cu next. One vial on the card. Strength chips open the fill.</p>
+        <p class="lede">PGL-GIC1, PGL-GI1, Wolverine, Tesamorelin first. PGL-G1, BPC-157, GLOW, GHK-Cu next. Pick a fill on the card to open that vial.</p>
         <div class="grid cards home-cards">${featured.map(familyCard).join("")}</div>
       </div>
     </section>
@@ -227,7 +235,7 @@
       <div class="wrap">
         <div class="kicker">Catalog</div>
         <h2>Shop by class</h2>
-        <p class="lede">Research vials only — lyophilized dried powder. Cosmetic, tallow, BAC, and wellness lots stay off the shop until testing returns them. Nothing on this catalog is reconstituted.</p>
+        <p class="lede">Research vials only. Cosmetic, tallow, BAC, and wellness lots stay off the shop. Nothing on this catalog ships as a mixed solution.</p>
         <div class="grid cats">
           ${state.catalog.categories
             .map(
@@ -260,7 +268,7 @@
         </div>
         <form id="homeCapture">
           <input type="email" name="email" placeholder="Email" required />
-          <button class="btn" type="submit">Get the library link</button>
+          <button class="btn" type="submit">Get lot alerts</button>
         </form>
       </div>
     </section>`;
@@ -273,7 +281,7 @@
     return `<section class="page wrap">
       <div class="kicker">Catalog</div>
       <h1>${label ? label.name : "Full catalog"}</h1>
-      <p class="lede">Research names on the card. One vial per family. Signed-in cards show the fill range. Selank and Semax stay. BAC water, tallow, serums, and night lots are off this catalog.</p>
+      <p class="lede">Documented research peptides, grouped by compound. One photo per family. Tap a fill to open that vial. Selank and Semax stay. BAC water and cosmetic lots stay off this catalog.</p>
       <div class="badges" style="margin-bottom:22px">
         <a class="badge" href="/shop" data-link>All</a>
         ${state.catalog.categories
@@ -307,11 +315,11 @@
           <h1>${p.name}</h1>
           <p class="hard">${p.size} · ${p.form}</p>
           <div class="sku-line">Lot ${p.lot}</div>
-          <div class="dose-row" aria-label="Strengths">
+          <div class="dose-row" aria-label="Strengths" id="pdpDoses">
             ${vars
               .map((v) => {
                 const href = `/product/${v.familySlug || fam.slug || p.familySlug}?sku=${v.sku}`;
-                return `<a class="dose ${v.sku === p.sku ? "on" : ""}" href="${href}" data-link data-sku="${v.sku}">${v.size}</a>`;
+                return `<a class="dose ${v.sku === p.sku ? "on" : ""}" href="${href}" data-sku="${v.sku}">${v.size}</a>`;
               })
               .join("")}
           </div>
@@ -341,11 +349,10 @@
           ${
             state.user
               ? ""
-              : `<p class="hard"><a href="/account" data-link>Open an account</a> to quote the cart. HELIX10 attaches to the first recorded order.</p>`
+              : `<p class="hard">Sign in to add this vial. First recorded order takes HELIX10 unless an affiliate code is already on the cart.</p>`
           }
           <div class="tiers">
-            Volume table (cart, automatic): 2 units 5% · 4 units 10% · 10+ units 15%.<br/>
-            HELIX10 is first-order only. No sitewide sale. No published price list.
+            HELIX10 is first-order only. An affiliate code replaces it. They do not stack. Free shipping over $199 after discounts.
           </div>
           <table class="spec">
             ${(p.specs || [])
@@ -355,7 +362,7 @@
           <div class="cert-box">
             <h3>Lot file</h3>
             <p>Certificates publish when testing is complete. Methods are listed on the testing page.</p>
-            <p style="margin-top:10px"><a href="/library" data-link>Open the library</a></p>
+            <p style="margin-top:10px"><a href="/certificates" data-link>Certificates</a> · <a href="/testing" data-link>Testing methods</a></p>
           </div>
         </div>
       </div>
@@ -530,12 +537,11 @@
   function about() {
     return `<section class="page wrap prose">
       <div class="kicker">About</div>
-      <h1>Helix King Labs — lyophilized research peptides</h1>
-      <p>Helix King Labs is a documentation-first catalog of research materials. Every research vial on this catalog is lyophilized dried powder. We do not sell, ship, or offer reconstituted solutions.</p>
-      <p>The mark is the crowned ape. Packaging is matte black and silver. Voice is lot, fill, form, storage — not outcomes. Cosmetics return after testing. We do not sell a story a lot file cannot support.</p>
-      <p>A house label goes on the vial after the certificate for that lot exists. The QR on that label opens <span class="mono">/testing?lot=XXXX</span> on this site. It does not open the testing laboratory.</p>
-      <p>The catalog, accounts, cart rules, and email list run here. Card rails and group-buy settlement stay off this site.</p>
-      <p>Contact: <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a></p>
+      <h1>A U.S. research catalog with a lot on every vial.</h1>
+      <p>Helix King Labs supplies premium research peptides for laboratory work. Each vial on this catalog is labeled with the compound name, fill, and lot. We ship dried research material only. Mixed solutions, pens, and research water are not on the shop.</p>
+      <p>Quality is the point. Lots are held to a written testing panel. Certificates publish on this domain when a lot is accepted. The QR on the vial opens <span class="mono">/testing?lot=XXXX</span> here — not a third-party lab page.</p>
+      <p>We are proud to support U.S. research buyers. Helix King Labs is not a clinic and not a pharmacy. Nothing on this site is a treatment, a protocol, or a claim to diagnose, cure, or prevent disease.</p>
+      <p>Contact <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a>. Research room: <a href="https://t.me/+gk0d_zGjGORkNDc5" rel="noopener noreferrer">Telegram</a>. Brand: <a href="https://x.com/HelixKingLabs" rel="noopener noreferrer">@HelixKingLabs on X</a> and <a href="https://www.instagram.com/HelixKingLabs/" rel="noopener noreferrer">Instagram</a>.</p>
     </section>`;
   }
 
@@ -553,23 +559,19 @@
       ${lotBlock}
       <ul>${(t.methods || []).map((m) => `<li>${m}</li>`).join("")}</ul>
       <p>Release threshold on chromatographic lots: ${t.releaseThreshold || "pending"}. Public certificates are off until operations clears a lot for resale.</p>
-      <p><a href="/library" data-link>Library</a> · <a href="/tools" data-link>Research tools</a></p>
+      <p><a href="/certificates" data-link>Certificates</a> · <a href="/tools/calculator" data-link>Research calculator</a></p>
     </section>`;
   }
 
   function toolsHome() {
     return `<section class="page wrap prose">
       <div class="kicker">Research tools</div>
-      <h1>Research peptide tools</h1>
-      <p>Two instruments for lyophilized research materials. Arithmetic and labeling only. Not a protocol. Not an offer to reconstitute a vial for you.</p>
+      <h1>Research calculator</h1>
+      <p>Concentration math for a vial you already hold. Not a protocol. Not an offer to mix a vial for you.</p>
       <div class="tool-grid">
-        <a class="tool-card" href="/tools/label" data-link>
-          <h2>Vial label maker</h2>
-          <p>20 × 40 mm house label. Mark, compound, fill, lot, and a QR to /testing?lot= on this site.</p>
-        </a>
         <a class="tool-card" href="/tools/calculator" data-link>
-          <h2>Reconstitution calculator</h2>
-          <p>Concentration and U-100 units from vial milligrams and diluent volume. Research arithmetic only.</p>
+          <h2>Research calculator</h2>
+          <p>Vial milligrams divided by diluent milliliters. Concentration only.</p>
         </a>
       </div>
     </section>`;
@@ -598,15 +600,14 @@
   function calcTool() {
     return `<section class="page wrap prose">
       <div class="kicker">Calculator</div>
-      <h1>Peptide reconstitution calculator</h1>
-      <p>For laboratory arithmetic on a lyophilized vial you already hold. Helix King Labs does not sell reconstituted product. This page does not instruct use on a person or an animal.</p>
+      <h1>Research concentration calculator</h1>
+      <p>Laboratory arithmetic only. Enter the milligrams on the vial and the milliliters of diluent. The page returns concentration. It does not recommend an amount, a schedule, or use on a person or an animal. Helix King Labs does not sell mixed product.</p>
       <form class="tool-form" id="calcForm" onsubmit="return false">
         <label>Vial contents (mg)<input id="cMg" type="number" step="0.01" value="10" /></label>
-        <label>Diluent added (mL)<input id="cMl" type="number" step="0.1" value="2" /></label>
-        <label>Amount per draw (mg)<input id="cDose" type="number" step="0.01" value="0.5" /></label>
+        <label>Diluent volume (mL)<input id="cMl" type="number" step="0.1" value="2" /></label>
       </form>
       <div class="calc-out" id="calcOut"></div>
-      <p>Concentration = mg ÷ mL. Volume per draw = amount ÷ concentration. U-100 units = volume (mL) × 100. Prefer the tested milligram figure from a certificate when one exists.</p>
+      <p>Concentration = mg ÷ mL. Prefer the tested milligram figure from the lot certificate when one exists.</p>
     </section>`;
   }
 
@@ -666,19 +667,15 @@
         const mg = Number($("#cMg") && $("#cMg").value);
         const ml = Number($("#cMl") && $("#cMl").value);
         const dose = Number($("#cDose") && $("#cDose").value);
-        if (!mg || !ml || !dose) {
-          out.innerHTML = "<p>Enter vial milligrams, diluent milliliters, and amount per draw.</p>";
+        if (!mg || !ml) {
+          out.innerHTML = "<p>Enter vial milligrams and diluent milliliters.</p>";
           return;
         }
         const conc = mg / ml;
-        const vol = dose / conc;
-        const units = vol * 100;
         out.innerHTML = `<p>Concentration</p><strong>${conc.toFixed(3)} mg/mL</strong>
-          <p style="margin-top:12px">Volume per draw</p><strong>${vol.toFixed(3)} mL</strong>
-          <p style="margin-top:12px">U-100 units</p><strong>${units.toFixed(1)} units</strong>
-          <p>Research arithmetic only. Dried powder in. Nothing on this page is a use instruction.</p>`;
+          <p>Research arithmetic only. Nothing on this page is a use instruction.</p>`;
       };
-      ["cMg", "cMl", "cDose"].forEach((id) => {
+      ["cMg", "cMl"].forEach((id) => {
         const el = $("#" + id);
         if (el) el.addEventListener("input", run);
       });
@@ -692,15 +689,15 @@
         t: "Terms of service",
         b: `<p>Last updated 30 September 2026. These terms govern helixkinglabs.com and any Helix King Labs account. Creating an account, passing the gate, or placing an order is agreement to these terms, the <a href="/use" data-link>permitted-use</a> rules, the <a href="/privacy" data-link>privacy notice</a>, and the <a href="/refunds" data-link>refund policy</a>.</p>
             <h2>Eligibility</h2>
-            <p>You must be 21 or older. You confirm you are purchasing lyophilized research materials for laboratory research, not for consumption, clinical use, compounding, or resale as a drug or supplement.</p>
+            <p>You must be 21 or older. You confirm you are purchasing research materials for laboratory research, not for consumption, clinical use, compounding, or resale as a drug or supplement.</p>
             <h2>What we sell</h2>
-            <p>Research SKUs ship as lyophilized dried powder in a labeled vial. We do not offer reconstituted product, filled syringes, pens, or bacteriostatic water on this catalog. Cosmetic SKUs, when they return, are cosmetics as labeled.</p>
+            <p>Research SKUs ship as dried research material in a labeled vial. We do not offer mixed product, filled syringes, pens, or bacteriostatic water on this catalog.</p>
             <h2>What we do not claim</h2>
             <p>Nothing on this site is medical advice, a diagnosis, a protocol, or a claim to treat, cure, or prevent disease. Research tools are arithmetic and labeling aids. They are not instructions for use on a person or an animal.</p>
             <h2>Accounts</h2>
             <p>You are responsible for the email and password on the account. Prices are visible after an account exists. We may close an account that refuses the use terms, that is used by a minor, or that is used to publish outcome claims in our name.</p>
             <h2>Orders</h2>
-            <p>An order recorded on this site is an offer to purchase the named lyophilized lots. Settlement may complete off-site. All sales are final except the narrow window in the refund policy.</p>
+            <p>An order recorded on this site is an offer to purchase the named research lots. Settlement may complete off-site. All sales are final except the narrow window in the refund policy.</p>
             <h2>Intellectual property</h2>
             <p>The crowned ape mark, Helix King Labs name, vial photography, and site copy are ours. You may not scrape the catalog to build a competing storefront or a public price list.</p>
             <h2>Limitation</h2>
@@ -712,9 +709,9 @@
       shipping: {
         t: "Shipping",
         b: `<p>Last updated 30 September 2026.</p>
-            <p>Standard shipping is $9.95. Free when merchandise after discounts is $199 or more. Shipping is not commissionable and is not discounted by HELIX10 or an affiliate code.</p>
-            <p>Research vials ship as lyophilized powder. Cold pack is used when the lot record requires it. Tracking posts on the order when the label is booked.</p>
-            <p>We do not ship reconstituted solutions.</p>`,
+            <p>Free shipping when merchandise after discounts is $199 or more. Under that cutoff, standard shipping applies. Shipping is not commissionable and is not discounted by HELIX10 or an affiliate code.</p>
+            <p>Research vials ship as dried material. Cold pack is used when the lot record requires it. Tracking posts on the order when the label is booked.</p>
+            <p>We do not ship mixed solutions.</p>`,
       },
       privacy: {
         t: "Privacy notice",
@@ -733,7 +730,7 @@
             <h2>Cookies and similar tech</h2>
             <ul>
               <li>Strictly necessary — session cookie, gate confirmation, cart contents in local storage. These run without an analytics opt-in.</li>
-              <li>Analytics and ads — Google Analytics 4 and the Meta Pixel. These do not load until you accept analytics cookies, and they do not load at all until measurement IDs are installed.</li>
+              <li>Measurement — Google Tag Manager container GTM-KZDZHCKC loads on every page and fires Google Analytics 4 (G-6HZJNLG29P) for page views. The Meta Pixel is not installed. Additional tags added in Tag Manager later will be listed here.</li>
             </ul>
             <p>We do not use TikTok Pixel at this time.</p>
             <h2>Why we use it</h2>
@@ -757,8 +754,7 @@
       use: {
         t: "Permitted use",
         b: `<p>You must be 21+ to enter the catalog.</p>
-            <p>Documented compounds ship as lyophilized dried powder for laboratory research only. Not for human or animal consumption. Not a drug. Not a dietary supplement. Not a reconstituted solution. No protocols are published.</p>
-            <p>Cosmetic lots: topical cosmetic use as labeled. Those SKUs stay off the public shop until testing is complete. No disease claims. No before/after gallery.</p>
+            <p>Documented compounds ship as dried research material for laboratory research only. Not for human or animal consumption. Not a drug. Not a dietary supplement. Not a mixed solution. No protocols are published.</p>
             <p>Helix King Labs is not a clinic and not a 503A or 503B pharmacy.</p>`,
       },
       refunds: {
@@ -766,7 +762,7 @@
         b: `<p class="lede">No returns. No refunds. All sales are final.</p>
             <p>Last updated 30 September 2026. Read this before you place an order.</p>
             <h2>No returns</h2>
-            <p>We do not accept returns. Research lots leave as lyophilized powder under a controlled chain of custody. Once a vial is out of that chain we cannot restock it. Review the name, fill, form, and quantity on the product page before you pay.</p>
+            <p>We do not accept returns. Research lots leave as sealed vials under a controlled chain of custody. Once a vial is out of that chain we cannot restock it. Review the name, fill, form, and quantity on the product page before you pay.</p>
             <h2>No refunds</h2>
             <p>Once an order is placed and processed it cannot be cancelled or refunded. Descriptions and lot numbers are published so the purchase can be checked before checkout. Public certificates attach when a lot is accepted for resale.</p>
             <h2>Missing, incorrect, or damaged</h2>
@@ -839,7 +835,7 @@
     if (!state.user) {
       return `<section class="page wrap">
         <h1>Cart</h1>
-        <p class="lede">An account is required before the cart can quote volume, HELIX10, or shipping.</p>
+        <p class="lede">Sign in to quote HELIX10, an affiliate code, and shipping.</p>
         <a class="btn" href="/account" data-link>Sign in</a>
       </section>`;
     }
@@ -854,22 +850,15 @@
               <img src="${p ? p.image : ""}" alt="" />
               <div>
                 <div>${l.name} · ${l.size}</div>
-                <div class="sub">Lot ${l.lot} · Qty ${l.qty}${
+                <div class="sub">Lot ${l.lot}${
                   l.available != null ? " · " + l.available + " on hand" : ""
                 }${l.oversold ? " · over available" : l.stockStatus === "low" ? " · low" : l.stockStatus === "out" ? " · out" : ""}</div>
-<div class="cart-qty" aria-label="Quantity controls">
-  <button class="dismiss" type="button" data-cart-minus="${l.id}" aria-label="Decrease quantity">−</button>
-  <span class="cart-qty-number">${l.qty}</span>
-  <button
-    class="dismiss"
-    type="button"
-    data-cart-plus="${l.id}"
-    data-cart-max="${Math.min(20, Number(l.available || 0))}"
-    aria-label="Increase quantity"
-    ${l.available != null && l.qty >= l.available ? "disabled" : ""}
-  >+</button>
-</div>
-<button class="dismiss" type="button" data-remove="${l.id}">Remove</button>              </div>
+                <div class="qty cart-qty">
+                  <button type="button" data-qty-delta="${l.id}" data-delta="-1">−</button>
+                  <span class="qty-n">${l.qty}</span>
+                  <button type="button" data-qty-delta="${l.id}" data-delta="1">+</button>
+                </div>
+              </div>
               <div>${money(l.line)}</div>
             </div>`;
           })
@@ -881,25 +870,32 @@
       <div class="cart-lines">${lines}</div>
       <div class="totals">
         <div><span>Subtotal</span><span>${money(quote.subtotal)}</span></div>
-        <div><span>Volume ${Math.round((quote.volumeRate || 0) * 100)}%</span><span>−${money(quote.volumeOff)}</span></div>
         <div><span>${
           quote.discountKind === "affiliate"
             ? "Affiliate " + quote.coupon
             : quote.coupon || "HELIX10"
         }</span><span>${quote.couponOff ? "−" + money(quote.couponOff) : "—"}</span></div>
         <div><span>Merchandise</span><span>${money(quote.merchandise != null ? quote.merchandise : quote.total)}</span></div>
-        <div><span>Shipping${quote.shippingLabel === "Free" ? " · free at $199" : ""}</span><span>${
-          quote.shipping === 0 ? "Free" : money(quote.shipping)
+        <div><span>Shipping${quote.shippingLabel === "Free" ? " · free over $199" : ""}</span><span>${
+          quote.shipping === 0 ? "Free" : "Standard"
         }</span></div>
         <div class="grand"><span>Total</span><span>${money(quote.total)}</span></div>
       </div>
       <label class="aff-field">Affiliate code
         <input id="affCode" type="text" maxlength="16" value="${state.aff || ""}" placeholder="Leave blank for HELIX10 on a first order" />
       </label>
-      <p class="lede">One 10% on the cart. An affiliate code replaces HELIX10. Shipping $9.95. Free at $199 merchandise after discounts.</p>
-      <p class="hard">${(state.site.channels && state.site.channels.publicNote) || "This catalog records the order and the lots. Settlement is off this site."}</p>
-      <p class="lede">${(state.site.channels && state.site.channels.checkoutHint) || ""}</p>
-      <button class="btn" id="checkoutBtn" style="margin-top:16px">${(state.site.channels && state.site.channels.checkoutLabel) || "Record order"}</button>
+      ${
+        quote.shipping > 0
+          ? `<p class="lede ship-nudge">Free shipping at $199. Add ${money(
+              Math.max(0, (quote.freeShippingAt || 199) - (quote.merchandise || 0))
+            )} more in merchandise.</p>`
+          : `<p class="lede">Free shipping is on this order.</p>`
+      }
+      <p class="lede">One 10% on the cart. An affiliate code replaces HELIX10. Free shipping over $199 after discounts.</p>
+      <p class="hard">${(state.site.channels && state.site.channels.publicNote) || "Accounts, pricing, and the cart are live. Checkout is not open yet."}</p>
+      <p class="lede">${(state.site.channels && state.site.channels.checkoutHint) || "Your cart stays on this device."}</p>
+      <p class="lede" style="margin-top:12px">Research room: <a href="${(state.site.channels && state.site.channels.telegramInvite) || "https://t.me/+gk0d_zGjGORkNDc5"}" rel="noopener noreferrer">Telegram</a></p>
+      <button class="btn" id="checkoutBtn" disabled style="margin-top:16px;opacity:.55;cursor:not-allowed">${(state.site.channels && state.site.channels.checkoutLabel) || "Checkout not open"}</button>
       <div id="orderDone"></div>
     </section>`;
   }
@@ -1103,6 +1099,114 @@
     });
   }
 
+  function showAdded(item) {
+    const box = $("#added");
+    if (!box) {
+      toast("Added " + item.name + " · " + item.size);
+      return;
+    }
+    box.classList.remove("hidden");
+    box.innerHTML = `<div class="popup-card">
+      <div class="kicker">Cart</div>
+      <h2>Added ${item.name} · ${item.size}</h2>
+      <p>The vial is in your cart. Stay on this page or review the order.</p>
+      <div class="consent-actions">
+        <button class="btn" type="button" id="addedCart">Go to cart</button>
+        <button class="btn ghost" type="button" id="addedStay">Keep shopping</button>
+      </div>
+    </div>`;
+    const close = () => {
+      box.classList.add("hidden");
+      box.innerHTML = "";
+    };
+    $("#addedCart").onclick = () => {
+      close();
+      go("/cart");
+    };
+    $("#addedStay").onclick = close;
+    box.onclick = (e) => {
+      if (e.target === box) close();
+    };
+  }
+
+  function showNeedAccount() {
+    const box = $("#added");
+    if (!box) return go("/account");
+    box.classList.remove("hidden");
+    box.innerHTML = `<div class="popup-card">
+      <div class="kicker">Account</div>
+      <h2>Sign in to add a vial</h2>
+      <p>Pricing and checkout sit on an account so the lot is tied to the order. Create one, then add this fill.</p>
+      <div class="consent-actions">
+        <button class="btn" type="button" id="needAcct">Open account</button>
+        <button class="btn ghost" type="button" id="needStay">Stay here</button>
+      </div>
+    </div>`;
+    const close = () => {
+      box.classList.add("hidden");
+      box.innerHTML = "";
+    };
+    $("#needAcct").onclick = () => {
+      close();
+      go("/account");
+    };
+    $("#needStay").onclick = close;
+    box.onclick = (e) => {
+      if (e.target === box) close();
+    };
+  }
+
+  function bindPdp(picked, variants, mountPdp) {
+    const available = picked.available != null ? Number(picked.available) : Number(picked.stock || 0);
+    const qty = $("#qty");
+    const cap = Math.max(1, Math.min(20, available || 1));
+    if ($("#qtyMinus")) {
+      $("#qtyMinus").onclick = () => {
+        qty.value = Math.max(1, Number(qty.value) - 1);
+      };
+    }
+    if ($("#qtyPlus")) {
+      $("#qtyPlus").onclick = () => {
+        qty.value = Math.min(cap, Number(qty.value) + 1);
+      };
+    }
+    document.querySelectorAll("#pdpDoses .dose").forEach((a) => {
+      a.onclick = (e) => {
+        e.preventDefault();
+        const next = variants.find((v) => v.sku === a.getAttribute("data-sku"));
+        if (!next || next.sku === picked.sku) return;
+        const keepQty = qty ? qty.value : "1";
+        mountPdp(next, true);
+        const q2 = $("#qty");
+        if (q2) q2.value = keepQty;
+      };
+    });
+    if ($("#addBtn")) {
+      $("#addBtn").onclick = () => {
+        if (isPending(picked)) {
+          toast("Waiting for testing to complete.");
+          return;
+        }
+        if (!state.user) {
+          showNeedAccount();
+          return;
+        }
+        if (available <= 0) {
+          toast("Out of stock · " + picked.name + " · " + picked.size);
+          return;
+        }
+        const id = picked.id;
+        const q = Math.max(1, Number(qty.value) || 1);
+        const line = state.cart.find((l) => l.id === id);
+        const next = Math.min(available, line ? line.qty + q : q);
+        if (line) line.qty = next;
+        else state.cart.push({ id, qty: next });
+        saveCart();
+        showAdded(picked);
+      };
+    }
+  }
+
   async function render() {
     if (!state.catalog) await loadBase();
     ticker();
@@ -1121,51 +1225,30 @@
         const skuQ = new URLSearchParams(location.search).get("sku");
         const data = await api("/api/products/" + encodeURIComponent(skuQ || slug));
         const variants = data.variants || [];
-        const picked =
-          (skuQ && variants.find((v) => v.sku === skuQ)) ||
-          variants.find((v) => v.sku === slug) ||
-          data.product;
-        app.innerHTML = productView(picked, data.lots, data.related, variants, {
+        const extras = {
           family: data.family && data.family.family ? data.family.family : data.family,
           reviews: data.reviews || [],
           canReview: data.canReview,
-        });
-        setPageMeta(
-          (picked.name || "Research peptide") + " " + (picked.size || "") + " lyophilized — Helix King Labs",
-          "Lyophilized " + (picked.name || "research peptide") + " " + (picked.size || "") + ". Research use only. Dried powder. Not for human or animal consumption.",
-          p + (skuQ ? "?sku=" + encodeURIComponent(skuQ) : "")
-        );
-        const available = picked.available != null ? Number(picked.available) : Number(picked.stock || 0);
-        const qty = $("#qty");
-        const cap = Math.max(1, Math.min(20, available || 1));
-        $("#qtyMinus").onclick = () => {
-          qty.value = Math.max(1, Number(qty.value) - 1);
         };
-        $("#qtyPlus").onclick = () => {
-          qty.value = Math.min(cap, Number(qty.value) + 1);
+        const pickFrom = (sku) =>
+          (sku && variants.find((v) => v.sku === sku)) ||
+          variants.find((v) => v.sku === slug) ||
+          data.product;
+        let picked = pickFrom(skuQ);
+        const mountPdp = (item, push) => {
+          picked = item;
+          const fam = extras.family || {};
+          const path = "/product/" + (item.familySlug || fam.slug || slug) + "?sku=" + encodeURIComponent(item.sku);
+          if (push) history.pushState({}, "", path);
+          app.innerHTML = productView(item, data.lots, data.related, variants, extras);
+          setPageMeta(
+            (item.name || "Research peptide") + " " + (item.size || "") + " — Helix King Labs",
+            (item.name || "Research peptide") + " " + (item.size || "") + " research peptide. Research use only. Not for human or animal consumption.",
+            path
+          );
+          bindPdp(item, variants, mountPdp);
         };
-        $("#addBtn").onclick = () => {
-          if (isPending(picked)) {
-            toast("Waiting for testing to complete.");
-            return;
-          }
-          if (!state.user) return go("/account");
-          if (available <= 0) {
-            toast("Out of stock · " + picked.name + " · " + picked.size);
-            return;
-          }
-          const id = picked.id;
-          const q = Math.max(1, Number(qty.value) || 1);
-          const line = state.cart.find((l) => l.id === id);
-          const next = Math.min(available, line ? line.qty + q : q);
-          if (line) line.qty = next;
-          else state.cart.push({ id, qty: next });
-          if (next < (line ? line.qty + q : q) || next === available) {
-            /* capped */
-          }
-          saveCart();
-          toast("Added " + picked.name + " · " + picked.size);
-        };
+        mountPdp(picked, false);
       } else if (p === "/certificates") {
         const q = new URLSearchParams(location.search).get("q") || "";
         const data = await api("/api/certificates" + (q ? `?q=${encodeURIComponent(q)}` : ""));
@@ -1177,7 +1260,11 @@
       } else if (p === "/about") {
         app.innerHTML = about();
       } else if (p === "/library") {
-        app.innerHTML = libraryView();
+        if (!state.user || !state.user.isOps) {
+          app.innerHTML = `<section class="page wrap"><h1>Not found</h1><a href="/" data-link>Home</a></section>`;
+        } else {
+          app.innerHTML = libraryView();
+        }
       } else if (p === "/affiliates") {
         if (!state.user) {
           app.innerHTML = affiliatesLocked(null);
@@ -1199,9 +1286,14 @@
       } else if (p === "/testing") {
         app.innerHTML = testing();
       } else if (p === "/tools") {
-        app.innerHTML = toolsHome();
+        go("/tools/calculator");
+        return;
       } else if (p === "/tools/label") {
-        app.innerHTML = labelTool();
+        if (!state.user || !state.user.isOps) {
+          app.innerHTML = `<section class="page wrap"><h1>Not found</h1><a href="/" data-link>Home</a></section>`;
+        } else {
+          app.innerHTML = labelTool();
+        }
       } else if (p === "/tools/calculator") {
         app.innerHTML = calcTool();
       } else if (p === "/terms") {
@@ -1391,23 +1483,22 @@
   }
 
   function applyPageMeta(p) {
+    if (p && p.startsWith("/product/")) return;
     const map = {
-      "/": ["Helix King Labs — Lyophilized research peptides", "Dried powder research peptides with a lot on the vial. Research use only. Not a clinic. Not a pharmacy."],
-      "/shop": ["Research peptide catalog — Helix King Labs", "Browse lyophilized research peptides. Account required for pricing. Research use only."],
-      "/about": ["About Helix King Labs", "Documentation-first catalog of lyophilized research peptides. Crowned ape mark. Lot QR on the vial."],
-      "/library": ["Research documentation library — Helix King Labs", "Permitted use, testing methods, and lot records for lyophilized research peptides."],
+      "/": ["Helix King Labs — Premium research peptides", "Premium research peptides with a lot on the vial. Research use only. Not a clinic. Not a pharmacy."],
+      "/shop": ["Research peptide catalog — Helix King Labs", "Browse premium research peptides. Sign in for pricing. Research use only."],
+      "/about": ["About Helix King Labs", "U.S. research catalog. Documented peptides, lot QR on the vial. Not a clinic. Not a pharmacy."],
       "/certificates": ["Certificates of analysis — Helix King Labs", "Lot certificates publish when a research lot is accepted. Search by lot or compound."],
-      "/testing": ["Peptide testing methods — Helix King Labs", "Intended testing panel for lyophilized research peptides. Lot files attach when a lot clears."],
-      "/tools": ["Research peptide tools — Helix King Labs", "Vial label maker and reconstitution calculator for lyophilized research materials."],
-      "/tools/label": ["Research vial label maker — Helix King Labs", "20×40 mm house label with lot QR to helixkinglabs.com/testing."],
-      "/tools/calculator": ["Peptide reconstitution calculator — Helix King Labs", "Research arithmetic for lyophilized vials. Not a protocol. Not a reconstituted product."],
+      "/testing": ["Peptide testing methods — Helix King Labs", "Intended testing panel for research peptides. Lot files attach when a lot clears."],
+      "/tools": ["Research calculator — Helix King Labs", "Concentration arithmetic for research vials. Not a protocol."],
+      "/tools/calculator": ["Research calculator — Helix King Labs", "Concentration arithmetic for research vials. Not a protocol. Not mixed product."],
       "/terms": ["Terms of service — Helix King Labs", "Account, catalog, and permitted-use terms for Helix King Labs."],
-      "/privacy": ["Privacy notice — Helix King Labs", "How Helix King Labs collects account, order, and optional analytics data. Do not sell or share."],
+      "/privacy": ["Privacy notice — Helix King Labs", "How Helix King Labs collects account, order, and measurement data. Google Tag Manager and GA4."],
       "/refunds": ["Refund policy — Helix King Labs", "All sales final. Seven-day window for missing, incorrect, or damaged shipments."],
-      "/shipping": ["Shipping — Helix King Labs", "Flat $9.95. Free at $199 merchandise after discounts. Lyophilized powder only."],
-      "/use": ["Permitted use — Helix King Labs", "21+. Lyophilized research materials only. Not for human or animal consumption."],
+      "/shipping": ["Shipping — Helix King Labs", "Free shipping over $199 merchandise after discounts. Research peptides only."],
+      "/use": ["Permitted use — Helix King Labs", "21+. Research materials only. Not for human or animal consumption."],
     };
-    const row = map[p] || ["Helix King Labs", "Lyophilized research peptides. Research use only."];
+    const row = map[p] || ["Helix King Labs", "Premium research peptides. Research use only."];
     setPageMeta(row[0], row[1], p === "/" ? "/" : p);
   }
 
@@ -1460,7 +1551,7 @@
       return;
     }
     box.classList.remove("hidden");
-    box.innerHTML = `<p>Necessary cookies run the gate, the cart, and the account. Analytics cookies (Google Analytics and the Meta Pixel, when IDs are installed) stay off until you accept. <a href="/privacy" data-link>Privacy notice</a>.</p>
+    box.innerHTML = `<p>Necessary cookies run the gate, the cart, and the account. Google Tag Manager and GA4 page views load on this site. The Meta Pixel is off. <a href="/privacy" data-link>Privacy notice</a>.</p>
       <div class="consent-actions">
         <button class="btn" type="button" id="cAccept">Accept analytics</button>
         <button class="btn ghost" type="button" id="cReject">Necessary only</button>
@@ -1687,6 +1778,7 @@
       state.gateOk = true;
       localStorage.setItem("hkl_gate", "1");
       toast(out.demo ? "Google is demo on this host. Email/password is live." : "Signed in.");
+      await loadBase();
       go("/shop");
       if (errBox) errBox.textContent = "";
     }
@@ -1759,9 +1851,9 @@
             method: "POST",
             body: { email: fd.get("email"), password: fd.get("password") },
           });
-         state.user = out.user;
-        await loadBase();
-        go("/shop");
+          state.user = out.user;
+          await loadBase();
+          go("/shop");
         } catch (err) {
           $("#loginErr").textContent = "Check the email and password.";
         }
@@ -1784,29 +1876,27 @@
         render();
       };
     });
-
-    document.querySelectorAll("[data-cart-minus], [data-cart-plus]").forEach((btn) => {
-  btn.onclick = async () => {
-    const id = btn.dataset.cartMinus || btn.dataset.cartPlus;
-    const line = state.cart.find((item) => item.id === id);
-    if (!line) return;
-
-    if (btn.dataset.cartMinus) {
-      if (line.qty <= 1) {
-        state.cart = state.cart.filter((item) => item.id !== id);
-      } else {
-        line.qty -= 1;
-      }
-    } else {
-      const max = Math.min(20, Number(btn.dataset.cartMax) || 20);
-      if (line.qty >= max) return;
-      line.qty += 1;
-    }
-
-    saveCart();
-    await render();
-  };
-});
+    document.querySelectorAll("[data-qty-delta]").forEach((btn) => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-qty-delta");
+        const delta = Number(btn.getAttribute("data-delta") || 0);
+        const line = state.cart.find((l) => l.id === id);
+        if (!line) return;
+        const item = state.catalog.items.find((x) => x.id === id);
+        const cap = item && (item.available != null ? Number(item.available) : Number(item.stock || 0));
+        const next = line.qty + delta;
+        if (next < 1) {
+          state.cart = state.cart.filter((l) => l.id !== id);
+        } else if (cap != null && cap >= 0 && next > cap) {
+          line.qty = cap;
+          toast("That is the on-hand quantity.");
+        } else {
+          line.qty = next;
+        }
+        saveCart();
+        render();
+      };
+    });
 
     const affApply = $("#affApply");
     if (affApply) {
@@ -1861,19 +1951,8 @@
 
     const checkoutBtn = $("#checkoutBtn");
     if (checkoutBtn) {
-      checkoutBtn.onclick = async () => {
-        try {
-          const out = await api("/api/checkout", { method: "POST", body: { items: state.cart, affiliateCode: state.aff } });
-          state.cart = [];
-          saveCart();
-          await loadBase();
-          $("#orderDone").innerHTML = `<p class="hard">Recorded ${out.order.id} · awaiting settlement. Lots: ${out.order.quote.lines
-            .map((l) => l.lot)
-            .join(", ")}. ${out.order.note || ""}</p>`;
-          toast("Order recorded. Settlement is off this site.");
-        } catch (err) {
-          toast(err.message === "insufficient_stock" ? "A line is over on-hand quantity. Remove it or lower qty." : err.message);
-        }
+      checkoutBtn.onclick = () => {
+        toast("Checkout is not open yet. Your cart is saved on this device.");
       };
     }
   }
