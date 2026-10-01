@@ -6,10 +6,14 @@
  */
 
 const http = require("node:http");
+const https = require("node:https");
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const { URL } = require("node:url");
+const authx = require("./auth-extra");
+const QRCode = require("./node_modules/qrcode/lib/core/qrcode");
+const QRLevel = require("./node_modules/qrcode/lib/core/error-correction-level");
 
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, "public");
@@ -446,7 +450,13 @@ function publicUser(u) {
     isOps: isOpsUser(u),
     firstOrderOpen: !u.firstOrderUsed,
     coupon: u.firstOrderUsed ? null : "HELIX10",
+    company: u.company || "",
+    researchField: u.researchField || "",
     hasOrdered: hasOrdered(u.id),
+    phone: u.phone || "",
+    address: u.address || { line1: "", city: "", region: "", postal: "" },
+    emailOptIn: !!u.emailOptIn,
+    passkey: !!(u.passkeys && u.passkeys.length),
     affiliate: aff
       ? { code: aff.code, status: aff.status, created: aff.created }
       : null,
@@ -610,6 +620,9 @@ function upsertSocialUser({ email, name, provider, sub, age, terms }) {
       firstOrderUsed: false,
       age: true,
       terms: true,
+      company,
+      researchField,
+      researchAck: true,
       created: new Date().toISOString(),
     };
     store.users.push(u);
@@ -766,7 +779,10 @@ function quoteCart(items, user, opts) {
   const merchandise = Math.round((afterVolume - couponOff) * 100) / 100;
   const shipping = merchandise >= freeAt || merchandise <= 0 ? 0 : shipFee;
   const shippingLabel = shipping === 0 && merchandise >= freeAt ? "Free" : "Standard";
-  const total = Math.round((merchandise + shipping) * 100) / 100;
+  const paymentMethod = opts && opts.paymentMethod === "venmo" ? "venmo" : "crypto";
+  const surchargeRate = paymentMethod === "venmo" ? 0.1 : 0;
+  const surcharge = Math.round(merchandise * surchargeRate * 100) / 100;
+  const total = Math.round((merchandise + surcharge + shipping) * 100) / 100;
   const affiliatePayout =
     discountKind === "affiliate" ? Math.round(merchandise * affRate * 100) / 100 : 0;
   return {
@@ -786,6 +802,9 @@ function quoteCart(items, user, opts) {
     affiliateCode: discountKind === "affiliate" ? affiliateCode : null,
     affiliateRate: affRate,
     affiliatePayout,
+    paymentMethod,
+    surchargeRate,
+    surcharge,
     total,
   };
 }
@@ -794,7 +813,7 @@ function sanitizeProduct(p, authed) {
   const out = { ...p };
   delete out.cost;
   const pending = p.releaseState === "pending_testing";
-  if (!authed || pending) {
+  if (pending) {
     out.price = null;
     out.priceHidden = true;
   } else {
@@ -894,9 +913,9 @@ async function api(req, res, url) {
       .filter(Boolean)
       .map((x) => sanitizeProduct(x, !!user));
     const revFile = loadReviews();
-    const reviews = (revFile.reviews || []).filter(
-      (r) => r.sku === p.sku || r.family === p.family
-    );
+    const reviews = (revFile.reviews || [])
+      .filter((r) => r.sku === p.sku || r.family === p.family)
+      .map(({ text, by, userId, ...rest }) => rest);
     return send(res, 200, {
       product: sanitizeProduct(p, !!user),
       family,
@@ -964,7 +983,11 @@ async function api(req, res, url) {
     const name = String(body.name || "").slice(0, 80);
     const age = !!body.age;
     const terms = !!body.terms;
-    if (!age || !terms) return send(res, 400, { error: "confirmations_required" });
+    const company = String(body.company || "Independent research").trim().slice(0, 80);
+    const researchField = String(body.researchField || "");
+    const researchAck = !!body.researchAck;
+    if (!age || !terms || !researchAck) return send(res, 400, { error: "confirmations_required" });
+    if (!RESEARCH_FIELDS.includes(researchField)) return send(res, 400, { error: "research_field" });
     if (!validEmail(email)) return send(res, 400, { error: "email" });
     if (password.length < 8 || password.length > 72) return send(res, 400, { error: "password" });
     if (store.users.some((u) => u.email === email)) return send(res, 409, { error: "exists" });
@@ -1101,6 +1124,141 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true });
   }
 
+  if (method === "POST" && route === "/api/auth/magic") {
+    if (limited(ip, "magic", 6, 15 * 60 * 1000)) return send(res, 429, { error: "rate" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const email = String(body.email || "").toLowerCase().trim();
+    if (!validEmail(email)) return send(res, 400, { error: "email" });
+    const token = authx.issueMagic(store, email);
+    saveStore(store);
+    const link = authx.requestOrigin(req) + "/magic?token=" + encodeURIComponent(token);
+    const sent = await authx.deliver(loadOutbox, saveOutbox, {
+      to: email,
+      subject: "Helix King Labs sign-in link",
+      text: "Sign in to Helix King Labs.\n\n" + link + "\n\nThis link expires in 20 minutes. Research use only.",
+    });
+    return send(res, 200, { ok: true, sent: !!sent.sent });
+  }
+
+  if (method === "POST" && route === "/api/auth/magic/consume") {
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const row = authx.takeMagic(store, body.token);
+    if (!row) return send(res, 400, { error: "link" });
+    let u = store.users.find((x) => x.email === row.email);
+    if (!u) {
+      u = {
+        id: token(),
+        email: row.email,
+        name: row.email.split("@")[0],
+        provider: "magic",
+        providers: ["magic"],
+        firstOrderUsed: false,
+        age: true,
+        terms: true,
+        company: "Independent research",
+        researchField: "",
+        created: new Date().toISOString(),
+      };
+      store.users.push(u);
+    }
+    u.providers = Array.from(new Set([...(u.providers || []), "magic"]));
+    saveStore(store);
+    setSession(res, u.id);
+    return send(res, 200, { user: publicUser(u) });
+  }
+
+  if (method === "POST" && route === "/api/auth/passkey/register/options") {
+    if (!user) return send(res, 401, { error: "account_required" });
+    const origin = authx.requestOrigin(req);
+    const challenge = authx.issueChallenge(store, "reg:" + user.id);
+    saveStore(store);
+    return send(res, 200, {
+      challenge,
+      rp: { name: "Helix King Labs", id: authx.rpId(origin) },
+      user: { id: user.id, name: user.email, displayName: user.name || user.email },
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+      timeout: 60000,
+      authenticatorSelection: { residentKey: "preferred", userVerification: "preferred" },
+    });
+  }
+
+  if (method === "POST" && route === "/api/auth/passkey/register") {
+    if (!user) return send(res, 401, { error: "account_required" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const challenge = authx.takeChallenge(store, "reg:" + user.id);
+    if (!challenge || !authx.verifyClient(body.clientDataJSON, "webauthn.create", challenge, authx.requestOrigin(req))) {
+      return send(res, 400, { error: "challenge" });
+    }
+    if (!body.id || !body.publicKey) return send(res, 400, { error: "key" });
+    user.passkeys = user.passkeys || [];
+    user.passkeys = user.passkeys.filter((k) => k.id !== body.id);
+    user.passkeys.push({ id: String(body.id).slice(0, 256), publicKey: String(body.publicKey).slice(0, 2000), created: new Date().toISOString() });
+    user.providers = Array.from(new Set([...(user.providers || []), "passkey"]));
+    saveStore(store);
+    return send(res, 200, { user: publicUser(user) });
+  }
+
+  if (method === "POST" && route === "/api/auth/passkey/login/options") {
+    const challenge = authx.issueChallenge(store, "login:" + ip);
+    saveStore(store);
+    return send(res, 200, {
+      challenge,
+      timeout: 60000,
+      rpId: authx.rpId(authx.requestOrigin(req)),
+      userVerification: "preferred",
+    });
+  }
+
+  if (method === "POST" && route === "/api/auth/passkey/login") {
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const challenge = authx.takeChallenge(store, "login:" + ip);
+    if (!challenge || !authx.verifyClient(body.clientDataJSON, "webauthn.get", challenge, authx.requestOrigin(req))) {
+      return send(res, 400, { error: "challenge" });
+    }
+    const u = store.users.find((x) => (x.passkeys || []).some((k) => k.id === body.id));
+    const key = u && u.passkeys.find((k) => k.id === body.id);
+    if (!key || !authx.verifyAssertion(key.publicKey, body.authenticatorData, body.clientDataJSON, body.signature)) {
+      return send(res, 401, { error: "passkey" });
+    }
+    saveStore(store);
+    setSession(res, u.id);
+    return send(res, 200, { user: publicUser(u) });
+  }
+
+  if (method === "POST" && route === "/api/account") {
+    if (!user) return send(res, 401, { error: "account_required" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    if (typeof body.name === "string") user.name = body.name.slice(0, 80);
+    if (typeof body.company === "string") user.company = body.company.slice(0, 80) || "Independent research";
+    if (typeof body.researchField === "string" && RESEARCH_FIELDS.includes(body.researchField)) user.researchField = body.researchField;
+    if (typeof body.phone === "string") user.phone = body.phone.replace(/[^0-9+() .-]/g, "").slice(0, 24);
+    if (body.address && typeof body.address === "object") {
+      user.address = {
+        line1: String(body.address.line1 || "").slice(0, 80),
+        city: String(body.address.city || "").slice(0, 40),
+        region: String(body.address.region || "").slice(0, 40),
+        postal: String(body.address.postal || "").slice(0, 16),
+      };
+    }
+    if (typeof body.emailOptIn === "boolean") {
+      user.emailOptIn = body.emailOptIn;
+      if (!body.emailOptIn) store.captures = (store.captures || []).filter((c) => c.email !== user.email);
+    }
+    if (typeof body.email === "string") {
+      const email = body.email.toLowerCase().trim();
+      if (!validEmail(email)) return send(res, 400, { error: "email" });
+      if (email !== user.email && store.users.some((x) => x.email === email)) return send(res, 409, { error: "exists" });
+      user.email = email;
+    }
+    saveStore(store);
+    return send(res, 200, { user: publicUser(user) });
+  }
+
   if (method === "POST" && route === "/api/cart/quote") {
     let body;
     try {
@@ -1109,11 +1267,13 @@ async function api(req, res, url) {
       return send(res, 400, { error: "bad_request" });
     }
     if (!user) return send(res, 401, { error: "account_required" });
-    return send(res, 200, quoteCart(body.items, user, { affiliateCode: body.affiliateCode }));
+    return send(res, 200, quoteCart(body.items, user, {
+      affiliateCode: body.affiliateCode,
+      paymentMethod: body.paymentMethod,
+    }));
   }
 
   if (method === "POST" && route === "/api/checkout") {
-    return send(res, 503, { error: "checkout_closed", message: "Checkout is not open yet." });
     let body;
     try {
       body = await readBody(req);
@@ -1121,8 +1281,17 @@ async function api(req, res, url) {
       return send(res, 400, { error: "bad_request" });
     }
     if (!user) return send(res, 401, { error: "account_required" });
+    const company = String(body.company || user.company || "Independent research").trim().slice(0, 80);
+    const researchField = String(body.researchField || user.researchField || "");
+    if (!company) return send(res, 400, { error: "company" });
+    if (!RESEARCH_FIELDS.includes(researchField)) return send(res, 400, { error: "research_field" });
+    if (!body.researchAck) return send(res, 400, { error: "research_ack" });
+    const paymentMethod = body.paymentMethod === "venmo" ? "venmo" : "crypto";
+    user.company = company;
+    user.researchField = researchField;
+    user.researchAck = true;
     applyInventoryCsv();
-    const quote = quoteCart(body.items, user, { affiliateCode: body.affiliateCode });
+    const quote = quoteCart(body.items, user, { affiliateCode: body.affiliateCode, paymentMethod });
     if (!quote.lines.length) return send(res, 400, { error: "empty" });
     const blocked = quote.lines.filter((l) => l.available <= 0 || l.qty > l.available);
     if (blocked.length) {
@@ -1136,25 +1305,34 @@ async function api(req, res, url) {
       id: "HK-" + token().slice(0, 8).toUpperCase(),
       userId: user.id,
       email: user.email,
+      company,
+      researchField,
+      researchAck: true,
       quote,
       affiliateCode: quote.affiliateCode,
       affiliatePayout: quote.affiliatePayout,
+      paymentMethod,
       status: "awaiting_settlement",
-      settlement: "offsite",
+      fulfillment: "hold",
+      settlement: paymentMethod,
       tracking: null,
       note: channels.publicNote,
       created: new Date().toISOString(),
     };
+    if (paymentMethod === "venmo") {
+      order.payment = {
+        provider: "venmo",
+        handle: "fibkingpeps",
+        status: "awaiting_confirmation",
+        surcharge: quote.surcharge,
+        amount: quote.total,
+        note: order.id,
+      };
+    } else {
+      order.payment = await createNowInvoice(order);
+    }
     user.firstOrderUsed = true;
     store.orders.push(order);
-    for (const line of quote.lines) {
-      const p = findProduct(line.sku);
-      if (!p) continue;
-      p.stock = Math.max(0, Number(p.stock || 0) - line.qty);
-      p.available = Math.max(0, p.stock - Number(p.reserved || 0));
-      p.stockStatus = stockStatus(p.available, p.stockThreshold || STOCK_THRESHOLD);
-    }
-    writeInventoryCsv();
     saveStore(store);
     return send(res, 200, { order });
   }
@@ -1247,6 +1425,9 @@ async function api(req, res, url) {
     const next = String(body.status || "").toLowerCase();
     const allowed = new Set(["awaiting_settlement", "settled", "shipped", "voided"]);
     if (!allowed.has(next)) return send(res, 400, { error: "status" });
+    if (next === "shipped" && order.status !== "settled" && order.status !== "shipped") {
+      return send(res, 400, { error: "settle_first" });
+    }
     if (next === "voided" && order.status !== "voided") restoreStock(order);
     order.status = next;
     if (typeof body.tracking === "string") {
@@ -1254,6 +1435,10 @@ async function api(req, res, url) {
     }
     if (next === "shipped" && !order.shippedAt) order.shippedAt = new Date().toISOString();
     if (next === "settled" && !order.settledAt) order.settledAt = new Date().toISOString();
+    if (next === "settled") order.fulfillment = "ready";
+    if (next === "shipped") order.fulfillment = "shipped";
+    if (next === "voided") order.fulfillment = "void";
+    audit(user, "order", order.id + " " + next);
     saveStore(store);
     return send(res, 200, { ok: true, order });
   }
@@ -1414,7 +1599,9 @@ async function api(req, res, url) {
     const sku = url.searchParams.get("sku") || "";
     const family = url.searchParams.get("family") || "";
     const all = loadReviews().reviews || [];
-    const rows = all.filter((r) => (sku && r.sku === sku) || (family && r.family === family));
+    const rows = all
+      .filter((r) => (sku && r.sku === sku) || (family && r.family === family))
+      .map(({ text, ...rest }) => rest);
     return send(res, 200, { reviews: rows });
   }
 
@@ -1432,9 +1619,8 @@ async function api(req, res, url) {
     if (!purchasedSkus(user.id).has(item.sku)) {
       return send(res, 403, { error: "verified_purchase_required" });
     }
-    const rating = Math.max(1, Math.min(5, Number(body.rating) || 5));
-    const text = String(body.text || "").slice(0, 600).trim();
-    if (text.length < 8) return send(res, 400, { error: "text" });
+    const rating = Math.max(1, Math.min(5, Number(body.rating) || 0));
+    if (![1, 2, 3, 4, 5].includes(rating)) return send(res, 400, { error: "rating" });
     const file = loadReviews();
     if ((file.reviews || []).some((r) => r.userId === user.id && r.sku === item.sku)) {
       return send(res, 409, { error: "already_reviewed" });
@@ -1446,9 +1632,7 @@ async function api(req, res, url) {
       name: item.name,
       size: item.size,
       rating,
-      text,
       userId: user.id,
-      by: (user.name || user.email || "Account").slice(0, 24),
       verified: true,
       created: new Date().toISOString(),
     };
@@ -1456,6 +1640,83 @@ async function api(req, res, url) {
     file.reviews.unshift(rec);
     saveReviews(file);
     return send(res, 200, { review: rec });
+  }
+
+  if (method === "GET" && route === "/api/ops/label-qr") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    const lot = String(url.searchParams.get("lot") || "").trim().slice(0, 40);
+    if (!lot) return send(res, 400, { error: "lot" });
+    const target = "https://helixkinglabs.com/testing?lot=" + encodeURIComponent(lot);
+    const qr = QRCode.create(target, { errorCorrectionLevel: QRLevel.M });
+    return send(res, 200, {
+      url: target,
+      size: qr.modules.size,
+      modules: Array.from(qr.modules.data, (bit) => (bit ? 1 : 0)),
+    });
+  }
+
+  if (method === "GET" && route === "/api/ops/desk") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    return send(res, 200, deskPayload());
+  }
+
+  if (method === "GET" && route === "/api/ops/export") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    const kind = url.searchParams.get("kind") || "orders";
+    const csv = kind === "inventory" ? inventoryCsvExport() : ordersCsvExport();
+    res.writeHead(200, {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="helix-${kind}.csv"`,
+    });
+    return res.end(csv);
+  }
+
+  if (method === "POST" && route === "/api/ops/inventory") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const item = findProduct(body.sku);
+    if (!item) return send(res, 404, { error: "not_found" });
+    if (body.on_hand !== undefined && body.on_hand !== "") {
+      const n = Number(body.on_hand);
+      if (!Number.isFinite(n) || n < 0) return send(res, 400, { error: "on_hand" });
+      item.stock = n;
+    }
+    if (typeof body.lot === "string" && body.lot.trim()) item.lot = body.lot.trim().slice(0, 40);
+    if (body.unit_cost !== undefined && body.unit_cost !== "") {
+      const n = Number(body.unit_cost);
+      item.cost = Number.isFinite(n) ? n : item.cost;
+    }
+    if (body.certificate === "accepted" || body.certificate === "pending") item.certificateStatus = body.certificate;
+    item.available = Math.max(0, Number(item.stock || 0) - Number(item.reserved || 0));
+    item.stockStatus = stockStatus(item.available, item.stockThreshold || STOCK_THRESHOLD);
+    writeInventoryCsv();
+    writePricingCsv();
+    fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2));
+    audit(user, "inventory", item.sku);
+    saveStore(store);
+    return send(res, 200, { ok: true });
+  }
+
+  if (method === "POST" && route === "/api/ops/disputes") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const order = (store.orders || []).find((o) => o.id === body.orderId);
+    if (!order) return send(res, 404, { error: "not_found" });
+    store.disputes = store.disputes || [];
+    store.disputes.unshift({
+      id: "DP-" + token().slice(0, 6).toUpperCase(),
+      orderId: order.id,
+      rail: String(body.rail || order.paymentMethod || "").slice(0, 24),
+      note: String(body.note || "").slice(0, 400),
+      status: "open",
+      created: new Date().toISOString(),
+    });
+    order.dispute = "open";
+    audit(user, "dispute", order.id);
+    saveStore(store);
+    return send(res, 200, { ok: true });
   }
 
   if (method === "GET" && route === "/api/ops/pricing") {
@@ -1510,51 +1771,397 @@ async function api(req, res, url) {
   return send(res, 404, { error: "not_found" });
 }
 
+
+const RESEARCH_FIELDS = [
+  "Molecular Biology",
+  "Biochemistry",
+  "Peptide Chemistry",
+  "Chemical Biology",
+  "Biotechnology Research",
+  "Academic Research",
+  "Pharmacology",
+];
+
+function createNowInvoice(order) {
+  const key = process.env.NOWPAYMENTS_API_KEY;
+  if (!key) {
+    return Promise.resolve({
+      provider: "nowpayments",
+      status: "invoice_pending",
+      message: "Crypto checkout is recorded. The invoice appears when the processor key is on the server.",
+    });
+  }
+  const origin = PUBLIC_ORIGIN || "https://helixkinglabs.com";
+  const payload = JSON.stringify({
+    price_amount: order.quote.total,
+    price_currency: "usd",
+    order_id: order.id,
+    order_description: "Helix King Labs research order " + order.id,
+    ipn_callback_url: origin + "/api/pay/nowpayments",
+    success_url: origin + "/account?order=" + encodeURIComponent(order.id),
+    cancel_url: origin + "/cart",
+  });
+  return new Promise((resolve) => {
+    const req = https.request(
+      {
+        hostname: "api.nowpayments.io",
+        path: "/v1/invoice",
+        method: "POST",
+        headers: {
+          "x-api-key": key,
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(payload),
+        },
+      },
+      (res) => {
+        let raw = "";
+        res.on("data", (c) => (raw += c));
+        res.on("end", () => {
+          try {
+            const data = JSON.parse(raw);
+            resolve({
+              provider: "nowpayments",
+              status: data.invoice_url ? "invoice_ready" : "invoice_pending",
+              invoiceUrl: data.invoice_url || null,
+              invoiceId: data.id || null,
+            });
+          } catch {
+            resolve({ provider: "nowpayments", status: "invoice_pending" });
+          }
+        });
+      }
+    );
+    req.setTimeout(8000, () => {
+      req.destroy();
+      resolve({ provider: "nowpayments", status: "invoice_pending" });
+    });
+    req.on("error", () => resolve({ provider: "nowpayments", status: "invoice_pending" }));
+    req.write(payload);
+    req.end();
+  });
+}
+
+
+function audit(user, action, detail) {
+  store.audit = store.audit || [];
+  store.audit.unshift({
+    at: new Date().toISOString(),
+    by: user && user.email,
+    action,
+    detail: String(detail || "").slice(0, 80),
+  });
+  store.audit = store.audit.slice(0, 200);
+}
+
+function deskPayload() {
+  const orders = (store.orders || []).slice().reverse();
+  const awaiting = orders.filter((o) => o.status === "awaiting_settlement").length;
+  const holds = orders.filter((o) => o.fulfillment === "hold" || o.status === "awaiting_settlement").length;
+  const inventory = products.items.filter(shopVisibleOf).map((it) => {
+    const price = it.price;
+    const cost = it.cost;
+    const margin = price != null && cost != null ? Math.round((Number(price) - Number(cost)) * 100) / 100 : null;
+    return {
+      sku: it.sku,
+      name: it.name,
+      size: it.size,
+      lot: it.lot || "",
+      on_hand: Number(it.stock || 0),
+      available: Number(it.available != null ? it.available : it.stock || 0),
+      unit_cost: cost,
+      price,
+      margin,
+      certificate: it.certificateStatus || "pending",
+      low: Number(it.available != null ? it.available : it.stock || 0) < 3,
+    };
+  });
+  return {
+    summary: {
+      orders: orders.length,
+      awaiting,
+      holds,
+      low: inventory.filter((r) => r.low).length,
+      accounts: (store.users || []).length,
+      list: (store.captures || []).length,
+    },
+    orders: orders.map((o) => ({
+      id: o.id,
+      email: o.email,
+      company: o.company || "",
+      researchField: o.researchField || "",
+      researchAck: !!o.researchAck,
+      paymentMethod: o.paymentMethod || o.settlement || "",
+      paymentStatus: (o.payment && o.payment.status) || "",
+      status: o.status,
+      fulfillment: o.fulfillment || "hold",
+      total: o.quote && o.quote.total,
+      tracking: o.tracking || "",
+      created: o.created,
+      lines: ((o.quote && o.quote.lines) || []).map((l) => l.name + " " + l.size + " ×" + l.qty),
+      dispute: o.dispute || "",
+    })),
+    inventory,
+    customers: (store.users || []).map((u) => ({
+      email: u.email,
+      name: u.name,
+      company: u.company || "",
+      researchField: u.researchField || "",
+      orders: (store.orders || []).filter((o) => o.userId === u.id).length,
+    })),
+    disputes: store.disputes || [],
+    affiliates: store.affiliates || [],
+    audit: (store.audit || []).slice(0, 12),
+  };
+}
+
+function ordersCsvExport() {
+  const lines = ["id,email,company,field,rail,status,fulfillment,total,tracking,created"];
+  for (const o of store.orders || []) {
+    lines.push([o.id, o.email, o.company || "", o.researchField || "", o.paymentMethod || "", o.status, o.fulfillment || "", (o.quote && o.quote.total) || "", o.tracking || "", o.created || ""].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","));
+  }
+  return lines.join("\n");
+}
+
+function inventoryCsvExport() {
+  const lines = ["sku,name,size,lot,on_hand,cost,price,certificate"];
+  for (const it of products.items.filter(shopVisibleOf)) {
+    lines.push([it.sku, it.name, it.size, it.lot || "", it.stock || 0, it.cost == null ? "" : it.cost, it.price == null ? "" : it.price, it.certificateStatus || "pending"].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","));
+  }
+  return lines.join("\n");
+}
+
+function escHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "\u0026amp;")
+    .replace(/</g, "\u0026lt;")
+    .replace(/>/g, "\u0026gt;")
+    .replace(/"/g, "\u0026quot;");
+}
+
+function shopFamilies() {
+  return (products.families || []).filter(
+    (f) => f.shopVisible !== false && !SHOP_HIDDEN_FAMILIES.has(f.id)
+  );
+}
+
+function familyItems(f) {
+  return products.items.filter((it) => it.family === f.id && shopVisibleOf(it));
+}
+
+function knownPaths() {
+  const paths = new Set([
+    "/",
+    "/shop",
+    "/about",
+    "/certificates",
+    "/testing",
+    "/tools",
+    "/tools/calculator",
+    "/terms",
+    "/privacy",
+    "/do-not-sell",
+    "/do-not-sell-or-share",
+    "/shipping",
+    "/refunds",
+    "/returns",
+    "/chargebacks",
+    "/chargeback",
+    "/use",
+    "/account",
+    "/cart",
+    "/ops",
+    "/library",
+  ]);
+  for (const f of shopFamilies()) paths.add("/product/" + (f.slug || f.id));
+  return paths;
+}
+
+function pageModel(pathname) {
+  const origin = "https://helixkinglabs.com";
+  if (pathname === "/") {
+    return {
+      title: "Helix King Labs — Premium research peptides",
+      description: "Premium research peptides with a lot on the vial. Research use only. Not a clinic. Not a pharmacy.",
+      canonical: origin + "/",
+      h1: "Premium research peptides.",
+      body: "<p>Research-use materials only. Not for human or animal consumption.</p>",
+    };
+  }
+  if (pathname === "/shop") {
+    const cards = shopFamilies()
+      .map((f) => {
+        const items = familyItems(f).filter((it) => it.price != null && it.releaseState !== "pending_testing");
+        const from = items.length ? Math.min(...items.map((it) => Number(it.price))) : null;
+        const price = from != null ? "From $" + from : "Certificate pending";
+        return `<li><a href="/product/${escHtml(f.slug || f.id)}">${escHtml(f.name)}</a> — ${escHtml(price)}</li>`;
+      })
+      .join("");
+    return {
+      title: "Research peptide catalog — Helix King Labs",
+      description: "Premium research peptides. List prices after the age gate. Account required to purchase. Research use only.",
+      canonical: origin + "/shop",
+      h1: "Research catalog",
+      body: `<ul>${cards}</ul>`,
+    };
+  }
+  if (pathname.startsWith("/product/")) {
+    const slug = pathname.split("/")[2];
+    const fam = shopFamilies().find((f) => f.slug === slug || f.id === slug);
+    if (!fam) return null;
+    const items = familyItems(fam);
+    const live = items.filter((it) => it.price != null && it.releaseState !== "pending_testing");
+    const offers = live.map((it) => ({
+      "@type": "Offer",
+      sku: it.sku,
+      price: Number(it.price),
+      priceCurrency: "USD",
+      availability: Number(it.available || it.stock || 0) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      url: origin + "/product/" + (fam.slug || fam.id),
+    }));
+    const sizes = items.map((it) => `${escHtml(it.size)} · $${escHtml(it.price)}`).join("</li><li>");
+    return {
+      title: fam.name + " | Helix King Labs",
+      description: fam.name + " research material. Research use only. Not for human dosing, injection, or ingestion.",
+      canonical: origin + "/product/" + (fam.slug || fam.id),
+      h1: fam.name,
+      body: `<p>All products listed on this site are for research purposes only.</p><ul><li>${sizes}</li></ul>`,
+      schema: {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: fam.name,
+        brand: { "@type": "Brand", name: "Helix King Labs" },
+        description: fam.name + " research material. Research use only.",
+        offers: offers,
+      },
+    };
+  }
+  const legal = {
+    "/terms": ["Terms and conditions — Helix King Labs", "Terms and Conditions of Use and Purchase"],
+    "/privacy": ["Privacy notice — Helix King Labs", "Privacy Notice"],
+    "/do-not-sell": ["Do not sell or share — Helix King Labs", "Do Not Sell or Share My Personal Information"],
+    "/do-not-sell-or-share": ["Do not sell or share — Helix King Labs", "Do Not Sell or Share My Personal Information"],
+    "/shipping": ["Shipping policy — Helix King Labs", "Shipping Policy"],
+    "/refunds": ["Refund and returns — Helix King Labs", "Refund and Returns Policy"],
+    "/returns": ["Refund and returns — Helix King Labs", "Refund and Returns Policy"],
+    "/chargebacks": ["Chargeback policy — Helix King Labs", "Chargeback and Payment Dispute Policy"],
+    "/chargeback": ["Chargeback policy — Helix King Labs", "Chargeback and Payment Dispute Policy"],
+    "/use": ["Permitted use — Helix King Labs", "Permitted Use"],
+    "/about": ["About Helix King Labs", "A research catalog with a lot on the vial."],
+    "/certificates": ["Certificates of analysis — Helix King Labs", "Certificates"],
+    "/testing": ["Peptide testing methods — Helix King Labs", "Testing methods"],
+    "/tools": ["Research calculator — Helix King Labs", "Research calculator"],
+    "/tools/calculator": ["Research calculator — Helix King Labs", "Research calculator"],
+  };
+  if (legal[pathname]) {
+    return {
+      title: legal[pathname][0],
+      description: legal[pathname][1] + ". Helix King Labs. Research use only.",
+      canonical: origin + pathname.replace("/returns", "/refunds").replace("/chargeback", "/chargebacks").replace("/do-not-sell-or-share", "/do-not-sell"),
+      h1: legal[pathname][1],
+      body: "<p>All products listed on this site are for research purposes only. Not for human dosing, injection, or ingestion.</p>",
+    };
+  }
+  return {
+    title: "Helix King Labs",
+    description: "Premium research peptides. Research use only.",
+    canonical: origin + pathname,
+    h1: "Helix King Labs",
+    body: "",
+  };
+}
+
+function injectDocument(buf, pathname, status) {
+  const model = pageModel(pathname) || {
+    title: "Not found — Helix King Labs",
+    description: "This page is not on the Helix King Labs catalog.",
+    canonical: "https://helixkinglabs.com" + pathname,
+    h1: "Not found",
+    body: "<p>This address is not a catalog page.</p>",
+  };
+  let html = buf.toString("utf8");
+  html = html.replace(/<title>[^<]*<\/title>/, "<title>" + escHtml(model.title) + "</title>");
+  html = html.replace(
+    /(<meta name="description" content=")[^"]*(")/,
+    "$1" + escHtml(model.description) + "$2"
+  );
+  html = html.replace(
+    /(<link rel="canonical" href=")[^"]*(")/,
+    "$1" + escHtml(model.canonical) + "$2"
+  );
+  const schema = model.schema
+    ? `<script type="application/ld+json" id="hkl-schema">${JSON.stringify(model.schema).replace(/</g, "\\u003c")}</script>`
+    : "";
+  const block = `${schema}<main id="app"><article class="page wrap"><h1>${escHtml(model.h1)}</h1>${model.body}</article></main>`;
+  html = html.replace('<main id="app"></main>', block);
+  if (status === 404) html = html.replace('content="index,follow', 'content="noindex,follow');
+  return html;
+}
+
+function sitemapXml() {
+  const origin = "https://helixkinglabs.com";
+  const urls = ["/", "/shop", "/about", "/certificates", "/testing", "/tools/calculator", "/terms", "/privacy", "/do-not-sell", "/shipping", "/refunds", "/chargebacks", "/use"]
+    .concat(shopFamilies().map((f) => "/product/" + (f.slug || f.id)));
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
+    .map((u) => `  <url><loc>${origin}${u}</loc></url>`)
+    .join("\n")}\n</urlset>\n`;
+}
+
 function safePublic(rel) {
   const resolved = path.resolve(PUBLIC, rel);
   if (!resolved.startsWith(PUBLIC)) return null;
   return resolved;
 }
 
+function htmlHeaders(status) {
+  return {
+    "Content-Type": "text/html; charset=utf-8",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Strict-Transport-Security": "max-age=15552000; includeSubDomains",
+    "Content-Security-Policy": "frame-ancestors 'none'",
+  };
+}
+
 function serveStatic(req, res, urlPath) {
-  let rel = decodeURIComponent(urlPath);
-  if (rel === "/") rel = "/index.html";
+  const pathname = decodeURIComponent(urlPath.split("?")[0] || "/");
+  const rel = pathname === "/" ? "/index.html" : pathname;
   const file = safePublic(rel.replace(/^\/+/, ""));
-  if (!file) {
-    res.writeHead(403);
-    return res.end();
-  }
-  fs.stat(file, (err, st) => {
-    if (err || !st.isFile()) {
-      const index = path.join(PUBLIC, "index.html");
-      return fs.readFile(index, (e2, buf) => {
-        if (e2) {
-          res.writeHead(404);
-          res.end("Not found");
-          return;
-        }
-        res.writeHead(200, {
-          "Content-Type": "text/html; charset=utf-8",
-          "X-Content-Type-Options": "nosniff",
-          "Referrer-Policy": "strict-origin-when-cross-origin",
-          "X-Frame-Options": "DENY",
-        });
-        res.end(buf);
-      });
-    }
+  const isAsset = file && fs.existsSync(file) && fs.statSync(file).isFile() && !rel.endsWith(".html");
+  if (isAsset) {
     const ext = path.extname(file).toLowerCase();
     res.writeHead(200, {
       "Content-Type": MIME[ext] || "application/octet-stream",
       "X-Content-Type-Options": "nosniff",
-      "Cache-Control": ext === ".html" ? "no-store" : "public, max-age=86400",
+      "Cache-Control": "public, max-age=86400",
     });
-    fs.createReadStream(file).pipe(res);
+    return fs.createReadStream(file).pipe(res);
+  }
+  if (!file && pathname.includes("..")) {
+    res.writeHead(403);
+    return res.end();
+  }
+  const status = knownPaths().has(pathname) || pathname.startsWith("/account") || pathname === "/magic" ? 200 : 404;
+  const index = path.join(PUBLIC, "index.html");
+  fs.readFile(index, (e2, buf) => {
+    if (e2) {
+      res.writeHead(404);
+      res.end("Not found");
+      return;
+    }
+    res.writeHead(status, htmlHeaders(status));
+    res.end(injectDocument(buf, pathname, status));
   });
 }
 
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    if (url.pathname === "/sitemap.xml") {
+      res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8" });
+      return res.end(sitemapXml());
+    }
     if (url.pathname.startsWith("/api/")) {
       if (req.method === "OPTIONS") {
         res.writeHead(204, {

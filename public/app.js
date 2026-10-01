@@ -11,7 +11,8 @@
     captureOk: localStorage.getItem("hkl_capture") === "1",
     popupDismissed: sessionStorage.getItem("hkl_popup_dismissed") === "1",
     auth: { password: true, google: false, apple: false, demo: true },
-    site: { channels: { publicNote: "", checkoutLabel: "Record order", checkoutHint: "" } },
+    site: { channels: { publicNote: "", checkoutLabel: "Place order", checkoutHint: "" } },
+    payMethod: "crypto",
   };
 
   let popupShowTimer = null;
@@ -148,10 +149,9 @@
     if (isPending(p)) {
       return `<div class="price lock">Waiting for testing to complete</div>`;
     }
-    if (!state.user) return `<div class="price lock">Sign in for pricing</div>`;
     const min = range && range.min != null ? range.min : p && p.price;
     const max = range && range.max != null ? range.max : min;
-    if (min == null) return `<div class="price lock">Sign in for pricing</div>`;
+    if (min == null) return `<div class="price lock">Price unavailable</div>`;
     if (max != null && max !== min) {
       return `<div class="price">From ${money(min)} – ${money(max)}</div>`;
     }
@@ -423,6 +423,7 @@
               .map((row) => `<tr><th>${row[0]}</th><td>${row[1]}</td></tr>`)
               .join("")}
           </table>
+          <p class="hard">All products listed on this site are for research purposes only. Not for human dosing, injection, or ingestion.</p>
           <div class="cert-box">
             <h3>Lot file</h3>
             <p>Certificate not published. The file attaches when this lot is accepted. The vial QR opens this page, not a third-party laboratory.</p>
@@ -431,31 +432,30 @@
         </div>
       </div>
       <div class="reviews" id="reviewBlock">
-        <div class="kicker">Verified purchase reviews</div>
-        <h2>Only from recorded orders of this fill</h2>
+        <div class="kicker">Verified purchase</div>
+        <h2>Rating</h2>
         ${
           reviews.length
-            ? reviews
-                .map(
-                  (r) => `<article class="review">
-                    <div class="review-meta">${"●".repeat(r.rating)}${"○".repeat(5 - r.rating)} · ${r.by} · ${r.size} · Verified purchase</div>
-                    <p>${r.text}</p>
-                  </article>`
-                )
-                .join("")
-            : `<p class="lede">No verified purchase reviews on this fill yet.</p>`
+            ? `<p class="lede">${"●".repeat(Math.round(reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length))}${"○".repeat(5 - Math.round(reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length))} · ${reviews.length} verified purchase${reviews.length === 1 ? "" : "s"}</p>
+               <div class="rating-rows">${reviews
+                 .map(
+                   (r) => `<p class="review-meta">${"●".repeat(r.rating)}${"○".repeat(5 - r.rating)} · ${r.size} · Verified purchase</p>`
+                 )
+                 .join("")}</div>`
+            : `<p class="lede">No verified purchase rating on this fill yet.</p>`
         }
         ${
           canReview
             ? `<form id="reviewForm" data-sku="${p.sku}">
-                <select name="rating">
-                  <option value="5">5</option><option value="4">4</option>
-                  <option value="3">3</option><option value="2">2</option><option value="1">1</option>
-                </select>
-                <input type="text" name="text" placeholder="Review this lot" required minlength="8" />
-                <button class="btn" type="submit">Post verified review</button>
+                <label class="check">Stars
+                  <select name="rating" aria-label="Star rating">
+                    <option value="5">5</option><option value="4">4</option>
+                    <option value="3">3</option><option value="2">2</option><option value="1">1</option>
+                  </select>
+                </label>
+                <button class="btn" type="submit">Save rating</button>
               </form>`
-            : `<p class="hard">Reviews unlock after a recorded order of ${p.name} ${p.size}.</p>`
+            : `<p class="hard">A 1–5 rating unlocks after a recorded order of ${p.name} ${p.size}. No written review.</p>`
         }
       </div>
       ${
@@ -498,8 +498,10 @@
         <li><a href="/use" data-link>Permitted use</a> — 21+, research vs cosmetic, not a clinic.</li>
         <li><a href="/testing" data-link>Testing methods</a> — intended 12-point panel.</li>
         <li><a href="/certificates" data-link>Certificates</a> — lot PDFs when a lot clears.</li>
+        <li><a href="/terms" data-link>Terms</a> — use, purchase, and payment rails.</li>
         <li><a href="/shipping" data-link>Shipping</a> — $9.95, free at $199 after discounts.</li>
         <li><a href="/refunds" data-link>Refunds</a> — all sales final. 7-day damage window.</li>
+        <li><a href="/chargebacks" data-link>Chargebacks</a> — contact before a payment dispute.</li>
         <li><a href="/tracking" data-link>Tracking</a> — lookup by tracking number from the ship email.</li>
       </ul>
       <h2>Catalog rules</h2>
@@ -564,7 +566,34 @@
 
   const ORIGIN = (window.HKL_PUBLIC_ORIGIN || "https://helixkinglabs.com").replace(/\/$/, "");
 
+  function setProductSchema(item, variants, canon) {
+    const offers = (variants || []).filter((v) => v.price != null).map((v) => ({
+      "@type": "Offer",
+      sku: v.sku,
+      price: v.price,
+      priceCurrency: "USD",
+      availability: Number(v.available != null ? v.available : v.stock || 0) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      url: ORIGIN + canon,
+    }));
+    let el = document.getElementById("hkl-schema");
+    if (!el) {
+      el = document.createElement("script");
+      el.id = "hkl-schema";
+      el.type = "application/ld+json";
+      document.head.appendChild(el);
+    }
+    el.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: item.name,
+      brand: { "@type": "Brand", name: "Helix King Labs" },
+      description: item.name + " research material. Research use only.",
+      offers,
+    });
+  }
+
   function setPageMeta(title, description, path) {
+
     document.title = title;
     const url = ORIGIN + (path || "/");
     const pairs = [
@@ -592,6 +621,7 @@
       <p>We are proud to support U.S. research buyers. Helix King Labs is not a clinic and not a pharmacy. Nothing on this site is a treatment, a protocol, or a claim to diagnose, cure, or prevent disease.</p>
       <div class="social-row" aria-label="Contact">
         <a href="mailto:info@helixkinglabs.com" aria-label="Email"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></span>Email</a>
+        <a href="tel:+12026424575" aria-label="Phone"><span class="soc" aria-hidden="true">Tel</span>202-642-4575</a>
         <a href="https://t.me/+gk0d_zGjGORkNDc5" rel="noopener noreferrer" aria-label="Telegram"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 5 3 12l6 2 2 6 3-4 5 4z"/></svg></span>Telegram</a>
         <a href="https://www.instagram.com/HelixKingLabs/" rel="noopener noreferrer" aria-label="Instagram"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/></svg></span>Instagram</a>
         <a href="https://x.com/HelixKingLabs" rel="noopener noreferrer" aria-label="X"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></span>X</a>
@@ -632,22 +662,28 @@
   }
 
   function labelTool() {
+    const items = ((state.catalog && state.catalog.items) || []).filter((it) => it.shopVisible !== false);
+    const options = items
+      .map((it) => `<option value="${it.sku}" data-name="${it.name}" data-size="${it.size}" data-lot="${it.lot || ""}">${it.name} · ${it.size} · ${it.sku}</option>`)
+      .join("");
+    const first = items[0] || { name: "PGL-GIC1", size: "10 mg", sku: "", lot: "" };
     return `<section class="page wrap prose">
       <div class="kicker">Label</div>
-      <h1>Research vial label maker</h1>
-      <p>Sized for a 3 mL crimp vial at 20 × 40 mm (203 dpi). Prints the Helix King Labs mark, the public compound name, the lyophilized fill, the lot, and a QR that opens this site — never the testing laboratory.</p>
+      <h1>Vial label</h1>
+      <p>Pick the fill. The QR opens helixkinglabs.com/testing for that lot, not the laboratory. Preview is 20 × 40 mm until the sheet spec arrives. The target does not change when the sheet does.</p>
       <form class="tool-form" id="labelForm" onsubmit="return false">
-        <label>Compound name<input id="lbName" value="PGL-GIC1" /></label>
-        <label>Fill (lyophilized)<input id="lbSize" value="10 mg" /></label>
-        <label>Lot<input id="lbLot" value="" placeholder="Leave blank until the COA is back" /></label>
-        <label>Date<input id="lbDate" value="${new Date().toISOString().slice(0, 7)}" /></label>
+        <label>Fill<select id="lbSku">${options}</select></label>
+        <label>Public name<input id="lbName" value="${first.name}" /></label>
+        <label>SKU<input id="lbSkuText" value="${first.sku}" readonly /></label>
+        <label>Amount<input id="lbSize" value="${first.size}" /></label>
+        <label>Lot<input id="lbLot" value="${first.lot || ""}" placeholder="Lot on the vial" /></label>
         <button class="btn" id="lbGo" type="button">Generate label</button>
       </form>
       <div class="label-stage">
         <canvas id="lbCanvas" width="320" height="160" aria-label="Label preview"></canvas>
         <button class="btn ghost" id="lbDl" type="button">Download JPEG</button>
       </div>
-      <p>Thermal printers print black on white. Use a high-contrast crop of the crowned ape. Import the JPEG into the Niimbot app as a custom image on 40 × 20 mm stock.</p>
+      <p id="lbUrl" class="hard"></p>
     </section>`;
   }
 
@@ -669,13 +705,12 @@
   function bindTools() {
     const canvas = $("#lbCanvas");
     if (canvas) {
-      const draw = () => {
+      const paint = (modules, sizeN) => {
         const ctx = canvas.getContext("2d");
         const name = ($("#lbName") && $("#lbName").value.trim()) || "RESEARCH";
         const size = ($("#lbSize") && $("#lbSize").value.trim()) || "";
+        const sku = ($("#lbSkuText") && $("#lbSkuText").value.trim()) || "";
         const lot = ($("#lbLot") && $("#lbLot").value.trim()) || "PENDING";
-        const date = ($("#lbDate") && $("#lbDate").value.trim()) || "";
-        const dest = ORIGIN + "/testing?lot=" + encodeURIComponent(lot === "PENDING" ? "" : lot);
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, 320, 160);
         ctx.fillStyle = "#111111";
@@ -684,27 +719,53 @@
         ctx.font = "700 9px 'IBM Plex Sans', sans-serif";
         ctx.fillText("HELIX KING LABS", 8, 13);
         ctx.fillStyle = "#111111";
-        ctx.font = "700 18px 'IBM Plex Sans', sans-serif";
-        ctx.fillText(name.slice(0, 18), 8, 48);
-        ctx.font = "12px 'IBM Plex Mono', monospace";
-        ctx.fillText(size + "  ·  lyophilized", 8, 70);
-        ctx.fillText("LOT " + lot, 8, 90);
-        ctx.fillText(date, 8, 108);
+        ctx.font = "700 16px 'IBM Plex Sans', sans-serif";
+        ctx.fillText(name.slice(0, 16), 8, 46);
+        ctx.font = "11px 'IBM Plex Mono', monospace";
+        ctx.fillText(size, 8, 68);
+        ctx.fillText(sku, 8, 86);
+        ctx.fillText("LOT " + lot, 8, 104);
         ctx.font = "8px 'IBM Plex Mono', monospace";
-        ctx.fillText("RUO · not for consumption", 8, 150);
-        const qr = new Image();
-        qr.crossOrigin = "anonymous";
-        qr.onload = () => {
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(214, 24, 98, 98);
-          ctx.drawImage(qr, 218, 28, 90, 90);
-        };
-        qr.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=" + encodeURIComponent(dest);
+        ctx.fillText("Research use only", 8, 150);
+        if (!modules || !sizeN) return;
+        const cell = 90 / sizeN;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(214, 28, 92, 92);
+        ctx.fillStyle = "#111111";
+        for (let r = 0; r < sizeN; r++) {
+          for (let c = 0; c < sizeN; c++) {
+            if (modules[r * sizeN + c]) ctx.fillRect(216 + c * cell, 30 + r * cell, cell, cell);
+          }
+        }
       };
+      const draw = async () => {
+        const lot = ($("#lbLot") && $("#lbLot").value.trim()) || "";
+        const urlBox = $("#lbUrl");
+        if (!lot) {
+          paint(null, 0);
+          if (urlBox) urlBox.textContent = "Enter a lot to build the QR.";
+          return;
+        }
+        const data = await api("/api/ops/label-qr?lot=" + encodeURIComponent(lot));
+        if (urlBox) urlBox.textContent = data.url;
+        paint(data.modules, data.size);
+      };
+      const skuSel = $("#lbSku");
+      if (skuSel) {
+        skuSel.addEventListener("change", () => {
+          const opt = skuSel.selectedOptions[0];
+          if (!opt) return;
+          if ($("#lbName")) $("#lbName").value = opt.getAttribute("data-name") || "";
+          if ($("#lbSize")) $("#lbSize").value = opt.getAttribute("data-size") || "";
+          if ($("#lbSkuText")) $("#lbSkuText").value = opt.value;
+          if ($("#lbLot")) $("#lbLot").value = opt.getAttribute("data-lot") || "";
+          draw();
+        });
+      }
       draw();
-      ["lbName", "lbSize", "lbLot", "lbDate"].forEach((id) => {
+      ["lbName", "lbSize", "lbLot"].forEach((id) => {
         const el = $("#" + id);
-        if (el) el.addEventListener("input", draw);
+        if (el) el.addEventListener("change", draw);
       });
       if ($("#lbGo")) $("#lbGo").onclick = draw;
       if ($("#lbDl")) {
@@ -745,115 +806,34 @@
   }
 
   function policy(kind) {
-    const pages = {
-      terms: {
-        t: "Terms of service",
-        b: `<p>Last updated 30 September 2026. These terms govern helixkinglabs.com and any Helix King Labs account. Creating an account, passing the gate, or placing an order is agreement to these terms, the <a href="/use" data-link>permitted-use</a> rules, the <a href="/privacy" data-link>privacy notice</a>, and the <a href="/refunds" data-link>refund policy</a>.</p>
-            <h2>Eligibility</h2>
-            <p>You must be 21 or older. You confirm you are purchasing research materials for laboratory research, not for consumption, clinical use, compounding, or resale as a drug or supplement.</p>
-            <h2>What we sell</h2>
-            <p>Research SKUs ship as dried research material in a labeled vial. We do not offer mixed product, filled syringes, pens, or bacteriostatic water on this catalog.</p>
-            <h2>What we do not claim</h2>
-            <p>Nothing on this site is medical advice, a diagnosis, a protocol, or a claim to treat, cure, or prevent disease. Research tools are arithmetic and labeling aids. They are not instructions for use on a person or an animal.</p>
-            <h2>Accounts</h2>
-            <p>You are responsible for the email and password on the account. Prices are visible after an account exists. We may close an account that refuses the use terms, that is used by a minor, or that is used to publish outcome claims in our name.</p>
-            <h2>Orders</h2>
-            <p>An order recorded on this site is an offer to purchase the named research lots. Settlement may complete off-site. All sales are final except the narrow window in the refund policy.</p>
-            <h2>Intellectual property</h2>
-            <p>The crowned ape mark, Helix King Labs name, vial photography, and site copy are ours. You may not scrape the catalog to build a competing storefront or a public price list.</p>
-            <h2>Limitation</h2>
-            <p>To the maximum extent permitted by law, Helix King Labs is not liable for indirect, incidental, or consequential damages, or for use of research materials outside the permitted-use terms. Some states do not allow certain limitations; those limits apply only to the extent allowed.</p>
-            <h2>Governing law</h2>
-            <p>These terms are governed by the laws of the Commonwealth of Kentucky, without regard to conflict-of-law rules, except where a mandatory consumer statute in your place of residence says otherwise.</p>
-            <p>Questions: <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a></p>`,
-      },
-      shipping: {
-        t: "Shipping",
-        b: `<p>Last updated 30 September 2026.</p>
-            <p>Free shipping when merchandise after discounts is $199 or more. Under that cutoff, standard shipping applies. Shipping is not commissionable and is not discounted by HELIX10 or an affiliate code.</p>
-            <p>Research vials ship as dried material. Cold pack is used when the lot record requires it. Tracking posts on the order when the label is booked.</p>
-            <p>We do not ship mixed solutions.</p>`,
-      },
-      privacy: {
-        t: "Privacy notice",
-        b: `<p>Last updated 30 September 2026. This notice covers helixkinglabs.com, the account system, the email list, and measurement tags we may load after you choose a cookie option. It is a notice, not legal advice.</p>
-            <h2>Who we are</h2>
-            <p>Helix King Labs. Contact: <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a>. Domain: helixkinglabs.com.</p>
-            <h2>Information we collect</h2>
-            <ul>
-              <li>Account: email, name you give, password hash (scrypt), age and terms flags, order history, affiliate code on the cart.</li>
-              <li>Gate and subscribe: email, source page, timestamp.</li>
-              <li>Session: httpOnly cookie that identifies a signed-in account. We do not store the Google or Apple password.</li>
-              <li>Google Sign-In, when configured: verified email and provider subject from the ID token.</li>
-              <li>Technical: IP used for rate limits, user agent, pages requested.</li>
-              <li>Measurement, only after you accept analytics cookies: Google Analytics identifiers and Meta (Facebook) Pixel identifiers, including a hashed email if Advanced Matching is later enabled.</li>
-            </ul>
-            <h2>Cookies and similar tech</h2>
-            <ul>
-              <li>Strictly necessary — session cookie, gate confirmation, cart contents in local storage. These run without an analytics opt-in.</li>
-              <li>Measurement — Google Tag Manager container GTM-KZDZHCKC loads on every page and fires Google Analytics 4 (G-6HZJNLG29P) for page views. The Meta Pixel is not installed. Additional tags added in Tag Manager later will be listed here.</li>
-            </ul>
-            <p>We do not use TikTok Pixel at this time.</p>
-            <h2>Why we use it</h2>
-            <p>To run the catalog and accounts, to remember the gate, to send lot alerts you requested, to prevent abuse, and — if you opt in — to measure which public pages are read. We do not sell the email list. We do not use research-use confirmations as a marketing interest profile.</p>
-            <h2>Sharing</h2>
-            <p>We share data with processors who run infrastructure we select: hosting, email delivery when SMTP is connected, Google (Sign-In and, if enabled, Analytics), and Meta (if the Pixel is enabled). We do not sell personal information for money. Under California law, loading a Meta Pixel or Google Analytics tag can be treated as “sharing” for cross-context advertising. You can refuse that share.</p>
-            <h2 id="do-not-sell">Do not sell or share</h2>
-            <p>Use the cookie bar to refuse analytics cookies, or write <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a> with the subject line “Do not sell or share.” We will keep the necessary account records and stop measurement tags on future visits from that browser when you refuse cookies.</p>
-            <h2>Retention</h2>
-            <p>Account and order records are kept while the account is open and for a limited period after close so a dispute can be answered. Subscribe records stay until you ask to be removed. Server logs rotate. Incoming certificates that are not accepted for resale stay in operations and are not published.</p>
-            <h2>Your choices</h2>
-            <p>Request access, correction, or deletion of account and list data at the contact above. You may close an account. You may refuse analytics cookies. Global Privacy Control signals, when the browser sends them, are treated as a refusal of analytics cookies.</p>
-            <h2>Children</h2>
-            <p>This site is 21+. We do not knowingly collect data from anyone under 21.</p>
-            <h2>Security</h2>
-            <p>Passwords are scrypt-hashed. Sessions are httpOnly cookies. Do not paste client secrets, bank details, or government IDs into a chat, a ticket, or a form that does not ask for them.</p>
-            <h2>International</h2>
-            <p>If you write from the EEA or UK, the lawful bases we rely on are contract (account and order), legitimate interests (security and abuse prevention), and consent (analytics cookies and the email list).</p>
-            <p>Updates will be posted on this page with a new date.</p>`,
-      },
-      use: {
-        t: "Permitted use",
-        b: `<p>You must be 21+ to enter the catalog.</p>
-            <p>Documented compounds ship as dried research material for laboratory research only. Not for human or animal consumption. Not a drug. Not a dietary supplement. Not a mixed solution. No protocols are published.</p>
-            <p>Research context on a product page is not an indication, not a direction for use, and not a claim about a person or an animal.</p>
-            <p>Helix King Labs is not a clinic and not a 503A or 503B pharmacy.</p>`,
-      },
-      refunds: {
-        t: "Refunds",
-        b: `<p class="lede">No returns. No refunds. All sales are final.</p>
-            <p>Last updated 30 September 2026. Read this before you place an order.</p>
-            <h2>No returns</h2>
-            <p>We do not accept returns. Research lots leave as sealed vials under a controlled chain of custody. Once a vial is out of that chain we cannot restock it. Review the name, fill, form, and quantity on the product page before you pay.</p>
-            <h2>No refunds</h2>
-            <p>Once an order is placed and processed it cannot be cancelled or refunded. Descriptions and lot numbers are published so the purchase can be checked before checkout. Public certificates attach when a lot is accepted for resale.</p>
-            <h2>Missing, incorrect, or damaged</h2>
-            <p>If the shipment arrives missing a line, with the wrong SKU, or with a broken seal or broken vial, write within seven days of delivery to <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a>. Include the order number and photographs of the outer carton, inner pack, and the item. We will replace the affected line or close the ticket under this policy. Opened lots and any lot that has been reconstituted after delivery are not eligible.</p>
-            <h2>Contact</h2>
-            <p>info@helixkinglabs.com. Placing an order is agreement to this policy.</p>
-            <p><a href="/terms" data-link>Terms</a> · <a href="/shipping" data-link>Shipping</a> · <a href="/use" data-link>Permitted use</a></p>`,
-      },
-    };
-    const p = pages[kind];
-    return `<section class="page wrap prose"><h1>${p.t}</h1>${p.b}</section>`;
+    if (window.HKL_LEGAL) return window.HKL_LEGAL.render(kind);
+    return `<section class="page wrap"><h1>Policy</h1><p>Legal text failed to load.</p></section>`;
   }
 
   function account() {
     if (state.user) {
+      const u = state.user;
+      const addr = u.address || {};
       return `<section class="page wrap">
         <div class="kicker">Account</div>
-        <h1>${state.user.email}</h1>
-        <p class="lede">Signed in with ${state.user.provider || "email"}. First-order code ${
-          state.user.firstOrderOpen ? "HELIX10 is open on this account." : "has already been applied."
-        }</p>
-        ${
-          state.user.affiliate && state.user.affiliate.status === "live"
-            ? `<p><a class="btn" href="/affiliates" data-link>Affiliate desk · ${state.user.affiliate.code}</a></p>`
-            : state.user.hasOrdered
-              ? `<p><a class="btn ghost" href="/affiliates" data-link>Apply for an affiliate desk</a></p>`
-              : `<p class="lede">Affiliate desk opens after this account records an order.</p>`
-        }
-        <button class="btn ghost" id="logoutBtn">Sign out</button>
+        <h1>${u.email}</h1>
+        <p class="lede">First-order code ${u.firstOrderOpen ? "HELIX10 is open on this account." : "has already been applied."}</p>
+        <form id="profileForm" class="tool-form">
+          <input name="name" value="${u.name || ""}" placeholder="Name" />
+          <input name="email" type="email" value="${u.email}" required />
+          <input name="company" value="${u.company || "Independent research"}" placeholder="Company" />
+          <select name="researchField">
+            ${["Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${u.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
+          </select>
+          <input name="phone" value="${u.phone || ""}" placeholder="Phone, optional" />
+          <input name="line1" value="${addr.line1 || ""}" placeholder="Ship-to address" />
+          <input name="city" value="${addr.city || ""}" placeholder="City" />
+          <input name="region" value="${addr.region || ""}" placeholder="State" />
+          <input name="postal" value="${addr.postal || ""}" placeholder="Postal code" />
+          <label class="check"><input type="checkbox" name="emailOptIn" ${u.emailOptIn ? "checked" : ""} /> Lot alerts and promotions. Order mail is separate.</label>
+          <button class="btn" type="submit">Save profile</button>
+        </form>
+        <p style="margin-top:16px"><button class="btn ghost" type="button" id="passkeyAdd">Add passkey</button> <button class="btn ghost" id="logoutBtn" type="button">Sign out</button></p>
         <div id="orderList" style="margin-top:28px"></div>
       </section>`;
     }
@@ -861,14 +841,26 @@
       <div>
         <div class="kicker">Create account</div>
         <h1>Open the catalog.</h1>
-        <p class="lede">Prices unlock after the account exists. HELIX10 attaches here, not on the homepage.</p>
+        <p class="lede">List prices are on the catalog. An account is required to purchase. HELIX10 attaches here.</p>
         <form id="regForm">
           <div class="row-form" style="flex-direction:column;align-items:stretch">
             <input name="name" type="text" placeholder="Name" />
             <input name="email" type="email" placeholder="Email" required />
             <input name="password" type="password" placeholder="Password (8+)" required minlength="8" />
+            <input name="company" type="text" placeholder="Company name" value="Independent research" required />
+            <select name="researchField" required aria-label="Research field">
+              <option value="">Research field</option>
+              <option>Molecular Biology</option>
+              <option>Biochemistry</option>
+              <option>Peptide Chemistry</option>
+              <option>Chemical Biology</option>
+              <option>Biotechnology Research</option>
+              <option>Academic Research</option>
+              <option>Pharmacology</option>
+            </select>
             <label class="check"><input type="checkbox" name="age" required /> I am 21 or older.</label>
             <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms and the refund policy. All sales are final. Documented compounds are research-only. This is not a clinic or pharmacy.</label>
+            <label class="check"><input type="checkbox" name="researchAck" required /> Chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</label>
             <button class="btn" type="submit">Create account</button>
             ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleBtn">Continue with Google</button>` : ""}
             ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleBtn">Continue with Apple</button>` : ""}
@@ -884,6 +876,8 @@
             <input name="email" type="email" placeholder="Email" required />
             <input name="password" type="password" placeholder="Password" required />
             <button class="btn" type="submit">Sign in</button>
+            <button class="btn ghost" type="button" id="magicBtn">Email me a link</button>
+            <button class="btn ghost" type="button" id="passkeyBtn">Passkey</button>
             ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleLoginBtn">Continue with Google</button>` : ""}
             ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleLoginBtn">Continue with Apple</button>` : ""}
           </div>
@@ -941,6 +935,7 @@
         <div><span>Shipping${quote.shippingLabel === "Free" ? " · free over $199" : ""}</span><span>${
           quote.shipping === 0 ? "Free" : money(quote.shipping)
         }</span></div>
+        ${quote.surcharge ? `<div><span>Venmo surcharge</span><span>${money(quote.surcharge)}</span></div>` : ""}
         <div class="grand"><span>Total</span><span>${money(quote.total)}</span></div>
       </div>
       <label class="aff-field">Affiliate code
@@ -954,10 +949,17 @@
           : `<p class="lede">Free shipping is on this order.</p>`
       }
       <p class="lede">One 10% on the cart. An affiliate code replaces HELIX10. Free shipping over $199 after discounts.</p>
-      <p class="hard">${(state.site.channels && state.site.channels.publicNote) || "Accounts, pricing, and the cart are live. Checkout is not open yet."}</p>
-      <p class="lede">${(state.site.channels && state.site.channels.checkoutHint) || "Your cart stays on this device."}</p>
-
-      <button class="btn" id="checkoutBtn" disabled style="margin-top:16px;opacity:.55;cursor:not-allowed">${(state.site.channels && state.site.channels.checkoutLabel) || "Checkout not open"}</button>
+      <form id="payForm" class="tool-form">
+        <input name="company" type="text" value="${(state.user && state.user.company) || "Independent research"}" required placeholder="Company name" />
+        <select name="researchField" required aria-label="Research field">
+          ${["Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
+        </select>
+        <label class="check"><input type="radio" name="paymentMethod" value="crypto" ${state.payMethod !== "venmo" ? "checked" : ""} /> Crypto via NOWPayments</label>
+        <label class="check"><input type="radio" name="paymentMethod" value="venmo" ${state.payMethod === "venmo" ? "checked" : ""} /> Venmo @fibkingpeps · 10% on merchandise only</label>
+        <label class="check"><input type="checkbox" name="researchAck" required /> Chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</label>
+        <button class="btn" type="submit">Place order</button>
+      </form>
+      <p class="hard">The order does not ship until crypto is finished or Venmo is confirmed.</p>
       <div id="orderDone"></div>
     </section>`;
   }
@@ -974,8 +976,8 @@
       <div class="gate-card">
         <img src="/img/logo.jpg" alt="Helix King Labs" />
         <div class="kicker">Door</div>
-        <h1 id="gateTitle">Confirm before the catalog.</h1>
-        <p>21+ and permitted use. Email optional. Prices unlock after an account.</p>
+        <p class="gate-title" id="gateTitle">Confirm before the catalog.</p>
+        <p>21+ and permitted use. Email optional. List prices are shown after this gate. An account is required to purchase.</p>
         <form id="gateForm">
           <label class="check"><input type="checkbox" name="age" required /> I am 21 or older.</label>
           <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms. Research materials stay in the lab. This is not a clinic or a pharmacy.</label>
@@ -1199,7 +1201,7 @@
     box.innerHTML = `<div class="popup-card">
       <div class="kicker">Account</div>
       <h2>Sign in to add a vial</h2>
-      <p>Pricing and checkout sit on an account so the lot is tied to the order. Create one, then add this fill.</p>
+      <p>An account is required to purchase so the lot is tied to the order. Create one, then add this fill.</p>
       <div class="consent-actions">
         <button class="btn" type="button" id="needAcct">Open account</button>
         <button class="btn ghost" type="button" id="needStay">Stay here</button>
@@ -1301,14 +1303,16 @@
         const mountPdp = (item, push) => {
           picked = item;
           const fam = extras.family || {};
-          const path = "/product/" + (item.familySlug || fam.slug || slug) + "?sku=" + encodeURIComponent(item.sku);
+          const canon = "/product/" + (item.familySlug || fam.slug || slug);
+          const path = canon + "?sku=" + encodeURIComponent(item.sku);
           if (push) history.pushState({}, "", path);
           app.innerHTML = productView(item, data.lots, data.related, variants, extras);
           setPageMeta(
-            (item.name || "Research peptide") + " " + (item.size || "") + " — Helix King Labs",
-            (item.name || "Research peptide") + " " + (item.size || "") + " research peptide. Research use only. Not for human or animal consumption.",
-            path
+            (item.name || "Research peptide") + " | Helix King Labs",
+            (item.name || "Research peptide") + " research material. Research use only. Not for human dosing, injection, or ingestion.",
+            canon
           );
+          setProductSchema(item, variants, canon);
           bindPdp(item, variants, mountPdp);
         };
         mountPdp(picked, false);
@@ -1365,10 +1369,40 @@
         app.innerHTML = policy("shipping");
       } else if (p === "/privacy") {
         app.innerHTML = policy("privacy");
+      } else if (p === "/do-not-sell" || p === "/do-not-sell-or-share") {
+        app.innerHTML = policy("dns");
       } else if (p === "/use") {
         app.innerHTML = policy("use");
       } else if (p === "/refunds" || p === "/returns") {
         app.innerHTML = policy("refunds");
+      } else if (p === "/chargebacks" || p === "/chargeback") {
+        app.innerHTML = policy("chargebacks");
+      } else if (p === "/magic") {
+        const token = new URLSearchParams(location.search).get("token") || "";
+        app.innerHTML = `<section class="page wrap"><h1>Signing in</h1><p class="lede" id="magicMsg">Checking the link.</p></section>`;
+        if (!token) {
+          $("#magicMsg").textContent = "This link is missing a token.";
+        } else {
+          api("/api/auth/magic/consume", { method: "POST", body: { token } })
+            .then(async (out) => {
+              state.user = out.user;
+              state.gateOk = true;
+              localStorage.setItem("hkl_gate", "1");
+              await loadBase();
+              go("/account");
+            })
+            .catch(() => {
+              const msg = $("#magicMsg");
+              if (msg) msg.textContent = "This link is expired or already used.";
+            });
+        }
+      } else if (p.startsWith("/account/receipt/")) {
+        const id = decodeURIComponent(p.split("/")[3] || "");
+        const d = await api("/api/orders");
+        const order = (d.orders || []).find((o) => o.id === id);
+        app.innerHTML = order
+          ? `<section class="page wrap prose"><div class="kicker">Receipt</div><h1>${order.id}</h1><p>${(order.created || "").slice(0, 10)} · ${order.paymentMethod || "payment"} · ${order.status} · ${order.fulfillment || "hold"}</p><p>${(order.quote.lines || []).map((l) => l.name + " " + l.size + " × " + l.qty).join("<br>")}</p><p>Total ${money(order.quote.total)}</p><p>${order.tracking ? "Tracking " + order.tracking : "Tracking posts when the label is booked."}</p><p><a href="/account" data-link>Account</a></p></section>`
+          : `<section class="page wrap"><h1>Not found</h1><a href="/account" data-link>Account</a></section>`;
       } else if (p === "/account") {
         app.innerHTML = account();
         if (state.user) {
@@ -1381,7 +1415,7 @@
                 return;
               }
               box.innerHTML = `<h2>Orders</h2>` + d.orders.map((o) =>
-                `<p class="hard">${o.id} · ${o.created.slice(0, 10)} · ${money(o.quote.total)} · ${o.status}${o.tracking ? " · " + o.tracking : ""}</p>`
+                `<p class="hard"><a href="/account/receipt/${o.id}" data-link>${o.id}</a> · ${(o.created || "").slice(0, 10)} · ${money(o.quote && o.quote.total)} · ${o.paymentMethod || "payment"} · ${o.status} · ${o.fulfillment || "hold"}${o.tracking ? " · " + o.tracking : ""}</p>`
               ).join("");
             })
             .catch(() => {});
@@ -1394,29 +1428,34 @@
           const board = await api("/api/ops/board").catch(() => ({ totals: {}, orders: [], affiliates: [] }));
           const t = board.totals || {};
           app.innerHTML = `<section class="page wrap">
-            <div class="kicker">Ops</div>
-            <h1>Backend</h1>
-            <p class="lede">Customers do not see this page. ${t.orders || 0} orders · ${money(t.merchandise || 0)} merch · ${t.accounts || 0} accounts · ${t.list || 0} on the list.</p>
+            <div class="kicker">Seller desk</div>
+            <h1>Orders, lots, and payment hold.</h1>
+            <p class="lede">Customers do not see this page. ${t.orders || 0} orders · ${money(t.merchandise || 0)} merch · ${t.accounts || 0} accounts · ${t.list || 0} on the list. Nothing ships until you mark the order settled.</p>
+            <p class="desk-links"><a href="/api/ops/export?kind=orders">Export orders</a> · <a href="/api/ops/export?kind=inventory">Export inventory</a> · <a href="/tools/label" data-link>Label maker</a></p>
             <h2>Orders</h2>
-            <p class="lede">Recorded here. Mark settled when Exodus or the Telegram group clears. Void restores stock. Tracking posts on shipped.</p>
+            <p class="lede">Settled means you confirmed Venmo or crypto finished. Shipped is refused until then. Void restores stock.</p>
             ${
               (board.orders || []).length
-                ? `<table class="table"><thead><tr><th>Order</th><th>Email</th><th>Total</th><th>Status</th><th>Track</th><th></th></tr></thead><tbody>${(board.orders || [])
+                ? `<table class="table"><thead><tr><th>Order</th><th>Buyer</th><th>Rail</th><th>Total</th><th>Hold</th><th>Track</th><th></th></tr></thead><tbody>${(board.orders || [])
                     .map((o) => `<tr data-oid="${o.id}">
-                      <td>${o.id}</td>
-                      <td>${o.email || ""}</td>
+                      <td>${o.id}<div class="sub">${(o.created || "").slice(0, 10)}</div></td>
+                      <td>${o.email || ""}<div class="sub">${o.company || "—"} · ${o.researchField || "—"} · ${o.researchAck ? "ack" : "no ack"}</div></td>
+                      <td>${o.paymentMethod || "—"}${o.dispute ? " · dispute" : ""}</td>
                       <td>${money((o.quote && o.quote.total) || 0)}</td>
-                      <td>${o.status || ""}</td>
-                      <td><input class="op-track" type="text" value="${o.tracking || ""}" placeholder="Label" /></td>
+                      <td>${o.fulfillment || o.status || ""}</td>
+                      <td><input class="op-track" type="text" value="${o.tracking || ""}" placeholder="Tracking" /></td>
                       <td>
                         <button type="button" class="btn ghost op-status" data-status="settled">Settled</button>
                         <button type="button" class="btn ghost op-status" data-status="shipped">Shipped</button>
                         <button type="button" class="btn ghost op-status" data-status="voided">Void</button>
+                        <button type="button" class="btn ghost op-dispute">Dispute</button>
                       </td>
                     </tr>`)
                     .join("")}</tbody></table>`
                 : `<p class="lede">No recorded orders yet.</p>`
             }
+            <div id="invDesk" style="margin-top:36px"></div>
+            <div id="custDesk" style="margin-top:36px"></div>
             <div id="channelDesk" style="margin-top:28px"></div>
             <h2>Affiliates</h2>
             ${
@@ -1500,11 +1539,67 @@
                 });
                 toast("Order updated.");
                 render();
-              } catch {
-                toast("Order update failed.");
+              } catch (err) {
+                toast(err.message === "settle_first" ? "Mark settled before shipped." : "Order update failed.");
               }
             };
           });
+          app.querySelectorAll(".op-dispute").forEach((btn) => {
+            btn.onclick = async () => {
+              const row = btn.closest("tr");
+              const note = window.prompt("Dispute note") || "";
+              if (!note.trim()) return;
+              try {
+                await api("/api/ops/disputes", { method: "POST", body: { orderId: row.getAttribute("data-oid"), note } });
+                toast("Dispute logged.");
+                render();
+              } catch {
+                toast("Could not log dispute.");
+              }
+            };
+          });
+          api("/api/ops/desk").then((d) => {
+            const inv = $("#invDesk");
+            if (inv) {
+              const rows = d.inventory || [];
+              inv.innerHTML = `<h2>Inventory and lots</h2>
+                <p class="lede">${(d.summary && d.summary.low) || 0} fills under 3 on hand. Cost can move up or down. Save writes that row. Certificate pending does not publish a file.</p>
+                <div style="overflow:auto"><table class="table" id="invTable"><thead><tr><th>SKU</th><th>Name</th><th>Lot</th><th>On hand</th><th>Cost</th><th>Certificate</th><th></th></tr></thead><tbody>
+                ${rows.map((r) => `<tr data-sku="${r.sku}">
+                  <td>${r.sku}</td><td>${r.name} ${r.size}${r.low ? " · low" : ""}</td>
+                  <td><input class="inv-lot" value="${r.lot || ""}" /></td>
+                  <td><input class="inv-hand" type="number" min="0" value="${r.on_hand}" /></td>
+                  <td><input class="inv-cost" type="number" step="0.01" value="${r.unit_cost ?? ""}" /></td>
+                  <td><select class="inv-cert"><option ${r.certificate !== "accepted" ? "selected" : ""}>pending</option><option ${r.certificate === "accepted" ? "selected" : ""}>accepted</option></select></td>
+                  <td><button type="button" class="btn ghost inv-save">Save</button></td>
+                </tr>`).join("")}
+                </tbody></table></div>`;
+              inv.querySelectorAll(".inv-save").forEach((btn) => {
+                btn.onclick = async () => {
+                  const row = btn.closest("tr");
+                  try {
+                    await api("/api/ops/inventory", { method: "POST", body: {
+                      sku: row.getAttribute("data-sku"),
+                      lot: row.querySelector(".inv-lot").value,
+                      on_hand: row.querySelector(".inv-hand").value,
+                      unit_cost: row.querySelector(".inv-cost").value,
+                      certificate: row.querySelector(".inv-cert").value,
+                    }});
+                    toast("Lot saved.");
+                  } catch {
+                    toast("Could not save lot.");
+                  }
+                };
+              });
+            }
+            const cust = $("#custDesk");
+            if (cust) {
+              const rows = d.customers || [];
+              cust.innerHTML = `<h2>Accounts</h2>` + (rows.length
+                ? `<table class="table"><thead><tr><th>Email</th><th>Company</th><th>Field</th><th>Orders</th></tr></thead><tbody>${rows.map((c) => `<tr><td>${c.email}</td><td>${c.company || "—"}</td><td>${c.researchField || "—"}</td><td>${c.orders}</td></tr>`).join("")}</tbody></table>`
+                : `<p class="lede">No accounts yet.</p>`);
+            }
+          }).catch(() => {});
           api("/api/ops/incoming-coas").then((d) => {
             const box = $("#incomingList");
             if (!box) return;
@@ -1528,7 +1623,7 @@
       } else if (p === "/cart") {
         let quote = null;
         if (state.user && state.cart.length) {
-          quote = await api("/api/cart/quote", { method: "POST", body: { items: state.cart, affiliateCode: state.aff } });
+          quote = await api("/api/cart/quote", { method: "POST", body: { items: state.cart, affiliateCode: state.aff, paymentMethod: state.payMethod } });
         }
         app.innerHTML = cartView(quote);
       } else {
@@ -1549,16 +1644,18 @@
     if (p && p.startsWith("/product/")) return;
     const map = {
       "/": ["Helix King Labs — Premium research peptides", "Premium research peptides with a lot on the vial. Research use only. Not a clinic. Not a pharmacy."],
-      "/shop": ["Research peptide catalog — Helix King Labs", "Browse premium research peptides. Sign in for pricing. Research use only."],
+      "/shop": ["Research peptide catalog — Helix King Labs", "Premium research peptides. List prices after the age gate. Account required to purchase."],
       "/about": ["About Helix King Labs", "U.S. research catalog. Documented peptides, lot QR on the vial. Not a clinic. Not a pharmacy."],
       "/certificates": ["Certificates of analysis — Helix King Labs", "Lot certificates publish when a research lot is accepted. Search by lot or compound."],
       "/testing": ["Peptide testing methods — Helix King Labs", "Intended testing panel for research peptides. Lot files attach when a lot clears."],
       "/tools": ["Research calculator — Helix King Labs", "Concentration arithmetic for research vials. Not a protocol."],
       "/tools/calculator": ["Research calculator — Helix King Labs", "Concentration arithmetic for research vials. Not a protocol. Not mixed product."],
-      "/terms": ["Terms of service — Helix King Labs", "Account, catalog, and permitted-use terms for Helix King Labs."],
-      "/privacy": ["Privacy notice — Helix King Labs", "How Helix King Labs collects account, order, and measurement data. Google Tag Manager and GA4."],
-      "/refunds": ["Refund policy — Helix King Labs", "All sales final. Seven-day window for missing, incorrect, or damaged shipments."],
-      "/shipping": ["Shipping — Helix King Labs", "Free shipping over $199 merchandise after discounts. Research peptides only."],
+      "/terms": ["Terms and conditions — Helix King Labs", "Use and purchase terms for helixkinglabs.com. Research materials only. Kentucky law."],
+      "/privacy": ["Privacy notice — Helix King Labs", "What Helix King Labs collects on the account, the order, and measurement tags."],
+      "/do-not-sell": ["Do not sell or share — Helix King Labs", "Helix King Labs does not sell personal information. Opt out of measurement here."],
+      "/refunds": ["Refund and returns — Helix King Labs", "All sales final. Seven-day window for missing, incorrect, or damaged shipments."],
+      "/chargebacks": ["Chargeback policy — Helix King Labs", "Contact Helix King Labs before a payment dispute. Crypto and Venmo rails."],
+      "/shipping": ["Shipping policy — Helix King Labs", "Shipping $9.95. Free at $199 merchandise after discounts. Dried research vials only."],
       "/use": ["Permitted use — Helix King Labs", "21+. Research materials only. Not for human or animal consumption."],
     };
     const row = map[p] || ["Helix King Labs", "Premium research peptides. Research use only."];
@@ -1770,10 +1867,9 @@
             body: {
               sku: reviewForm.dataset.sku,
               rating: fd.get("rating"),
-              text: fd.get("text"),
             },
           });
-          toast("Verified review posted.");
+          toast("Rating saved.");
           render();
         } catch (err) {
           toast(err.message === "verified_purchase_required" ? "Order this fill first." : err.message);
@@ -1821,6 +1917,9 @@
               password: fd.get("password"),
               age: !!fd.get("age"),
               terms: !!fd.get("terms"),
+              company: fd.get("company"),
+              researchField: fd.get("researchField"),
+              researchAck: !!fd.get("researchAck"),
             },
           });
           state.user = out.user;
@@ -1933,6 +2032,92 @@
         render();
       };
     }
+    const profile = $("#profileForm");
+    if (profile) {
+      profile.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(profile);
+        try {
+          const out = await api("/api/account", { method: "POST", body: {
+            name: fd.get("name"),
+            email: fd.get("email"),
+            company: fd.get("company"),
+            researchField: fd.get("researchField"),
+            phone: fd.get("phone"),
+            address: { line1: fd.get("line1"), city: fd.get("city"), region: fd.get("region"), postal: fd.get("postal") },
+            emailOptIn: !!fd.get("emailOptIn"),
+          }});
+          state.user = out.user;
+          toast("Profile saved.");
+          render();
+        } catch (err) {
+          toast(err.message === "exists" ? "That email is already an account." : "Could not save profile.");
+        }
+      });
+    }
+    const magicBtn = $("#magicBtn");
+    if (magicBtn) {
+      magicBtn.onclick = async () => {
+        const email = (document.querySelector("#loginForm input[name=email]") || {}).value || "";
+        if (!email) return toast("Enter the email first.");
+        try {
+          const out = await api("/api/auth/magic", { method: "POST", body: { email } });
+          toast(out.sent ? "Sign-in link sent." : "Link queued. Mail sends when orders@ is connected on the server.");
+        } catch {
+          toast("Could not send the link.");
+        }
+      };
+    }
+    async function passkeyLogin() {
+      if (!window.PublicKeyCredential) return toast("This browser has no passkey.");
+      const opts = await api("/api/auth/passkey/login/options", { method: "POST", body: {} });
+      const cred = await navigator.credentials.get({ publicKey: {
+        challenge: Uint8Array.from(atob(opts.challenge.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)),
+        timeout: opts.timeout,
+        rpId: opts.rpId,
+        userVerification: opts.userVerification,
+      }});
+      const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+      const out = await api("/api/auth/passkey/login", { method: "POST", body: {
+        id: cred.id,
+        clientDataJSON: b64(cred.response.clientDataJSON),
+        authenticatorData: b64(cred.response.authenticatorData),
+        signature: b64(cred.response.signature),
+      }});
+      state.user = out.user;
+      state.gateOk = true;
+      localStorage.setItem("hkl_gate", "1");
+      await loadBase();
+      go("/account");
+    }
+    const passkeyBtn = $("#passkeyBtn");
+    if (passkeyBtn) passkeyBtn.onclick = () => passkeyLogin().catch(() => toast("Passkey was not accepted."));
+    const passkeyAdd = $("#passkeyAdd");
+    if (passkeyAdd) {
+      passkeyAdd.onclick = async () => {
+        if (!window.PublicKeyCredential) return toast("This browser has no passkey.");
+        try {
+          const opts = await api("/api/auth/passkey/register/options", { method: "POST", body: {} });
+          const toBuf = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+          const cred = await navigator.credentials.create({ publicKey: {
+            challenge: toBuf(opts.challenge),
+            rp: opts.rp,
+            user: { id: toBuf(btoa(opts.user.id)), name: opts.user.name, displayName: opts.user.displayName },
+            pubKeyCredParams: opts.pubKeyCredParams,
+            timeout: opts.timeout,
+            authenticatorSelection: opts.authenticatorSelection,
+          }});
+          const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+          const key = cred.response.getPublicKey && cred.response.getPublicKey();
+          if (!key) return toast("This browser did not return a passkey.");
+          const out = await api("/api/auth/passkey/register", { method: "POST", body: { id: cred.id, clientDataJSON: b64(cred.response.clientDataJSON), publicKey: b64(key) } });
+          state.user = out.user;
+          toast("Passkey saved on this account.");
+        } catch {
+          toast("Passkey was not saved.");
+        }
+      };
+    }
 
     document.querySelectorAll("[data-remove]").forEach((btn) => {
       btn.onclick = () => {
@@ -2014,11 +2199,56 @@
       };
     }
 
-    const checkoutBtn = $("#checkoutBtn");
-    if (checkoutBtn) {
-      checkoutBtn.onclick = () => {
-        toast("Checkout is not open yet. Your cart is saved on this device.");
-      };
+    const payForm = $("#payForm");
+    if (payForm) {
+      payForm.addEventListener("change", (e) => {
+        if (e.target && e.target.name === "paymentMethod") {
+          state.payMethod = e.target.value;
+          render();
+        }
+      });
+      payForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(payForm);
+        try {
+          const out = await api("/api/checkout", {
+            method: "POST",
+            body: {
+              items: state.cart,
+              affiliateCode: state.aff,
+              company: fd.get("company"),
+              researchField: fd.get("researchField"),
+              researchAck: !!fd.get("researchAck"),
+              paymentMethod: fd.get("paymentMethod"),
+            },
+          });
+          const order = out.order || {};
+          const pay = order.payment || {};
+          state.cart = [];
+          saveCart();
+          const box = $("#orderDone");
+          if (box) {
+            box.innerHTML = pay.invoiceUrl
+              ? `<p class="lede">${order.id} recorded. <a href="${pay.invoiceUrl}">Pay with crypto</a>. The order ships when the payment is finished.</p>`
+              : pay.provider === "venmo"
+                ? `<p class="lede">${order.id} recorded. Venmo @fibkingpeps the total ${money(order.quote && order.quote.total)}. Put ${order.id} in the note. We confirm before anything ships.</p>`
+                : `<p class="lede">${order.id} recorded. Crypto invoice is pending the processor key. Nothing ships until payment is finished.</p>`;
+          }
+          toast("Order recorded. Payment still open.");
+        } catch (err) {
+          toast(err.message || "Checkout failed");
+        }
+      });
+    }
+    const navToggle = $("#navToggle");
+    if (navToggle && !navToggle.dataset.bound) {
+      navToggle.dataset.bound = "1";
+      navToggle.addEventListener("click", () => {
+        const nav = document.querySelector(".nav");
+        if (!nav) return;
+        const open = nav.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
     }
   }
 
