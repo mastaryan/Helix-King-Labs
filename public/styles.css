@@ -380,3 +380,19 @@ input:focus, select:focus { border-color: var(--silver-2); }
   .grid.cats, .product, .capture, .footer-grid, .account-grid { grid-template-columns: 1fr; }
   .header { padding: 0 16px; }
 }
+
+.dose.out { text-decoration: line-through; opacity: 0.55; }
+.home-names { font-family: var(--mono); letter-spacing: 0.04em; }
+.social-row { display: flex; gap: 18px; margin-top: 22px; }
+.social-row a { border: 1px solid var(--line-2); padding: 10px 14px; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12px; }
+.tiers .sources { margin-top: 10px; }
+.home-names.mob { display: none; }
+@media (max-width: 720px) {
+  .home-names.desk { display: none; }
+  .home-names.mob { display: block; }
+}
+
+.social-row { display: flex; gap: 22px; margin-top: 28px; flex-wrap: wrap; }
+.social-row a { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 0; padding: 0; letter-spacing: 0.08em; text-transform: none; font-size: 12px; color: var(--silver-2); }
+.soc { width: 46px; height: 46px; border: 1px solid var(--silver); border-radius: 50%; display: grid; place-items: center; }
+.soc svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; }

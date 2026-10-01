@@ -53,3 +53,9 @@ LC30,lipo-c,Lipo C+,30 mL,HK-N-022,Identity pass,night,wellness,44,,,,PLACEHOLDE
 CRN30,l-carnitine,L-Carnitine,30 mL,HK-N-023,Identity pass,night,wellness,32,,,,PLACEHOLDER — enter customer_price and unit_cost
 SCBD,sleepy-cbd,Sleepy CBD,30 mL,HK-N-030,Potency pass,night,wellness,48,,,,PLACEHOLDER — enter customer_price and unit_cost
 CBD30,cbd,CBD,30 mL,HK-N-031,Potency pass,night,wellness,42,,,,PLACEHOLDER — enter customer_price and unit_cost
+ELR5,pgl-el1,PGL-EL1,5 mg,HK-EL05,Pending,documented,research,150,,,,Edit customer_price and unit_cost
+ELR10,pgl-el1,PGL-EL1,10 mg,HK-EL10,Pending,documented,research,225,,,,Edit customer_price and unit_cost
+ELR5-TR10,pgl-el1-pair,PGL-EL1 + PGL-GI1,10 mg + 5 mg,HK-PR15,Pending,documented,research,174,,,,Edit customer_price and unit_cost
+ELR5-TR20,pgl-el1-pair,PGL-EL1 + PGL-GI1,20 mg + 5 mg,HK-PR25,Pending,documented,research,190,,,,Edit customer_price and unit_cost
+ELR10-TR20,pgl-el1-pair,PGL-EL1 + PGL-GI1,20 mg + 10 mg,HK-PR210,Pending,documented,research,265,,,,Edit customer_price and unit_cost
+ELR10-TR30,pgl-el1-pair,PGL-EL1 + PGL-GI1,30 mg + 10 mg,HK-PR310,Pending,documented,research,279,,,,Edit customer_price and unit_cost

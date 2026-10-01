@@ -1,17 +1,17 @@
 {
   "voice": "Process and documentation. Not outcomes.",
   "homepage": {
-    "headline": "Premium research peptides. Lot on the vial.",
+    "headline": "Premium research peptides.",
     "proof": "Research-use materials only. Not for human or animal consumption.",
-    "number": "PGL-GIC1 · PGL-GI1 · Wolverine · Tesamorelin",
-    "sub": "Helix King Labs supplies documented research peptides with a house label and a lot QR. Not a clinic. Not a pharmacy."
+    "number": "PGL-GIC1 \u00b7 PGL-GI1 \u00b7 PGL-EL1 \u00b7 PGL-EL1 + PGL-GI1",
+    "sub": "Helix King Labs supplies documented research peptides with a lot on the vial. Not a clinic. Not a pharmacy."
   },
   "ticker": [
     "Research use only",
     "Premium research peptides",
     "21+ only",
     "Free shipping on orders over $199",
-    "First order: HELIX10 after you sign in — unless an affiliate code is on the cart",
+    "First order: HELIX10 after you sign in \u2014 unless an affiliate code is on the cart",
     "Not a clinic. Not a pharmacy."
   ],
   "allowed": [
@@ -47,28 +47,24 @@
     "lyophilized"
   ],
   "replacements": {
-    "best peptide for fat loss": "documented compound — see the lot certificate",
+    "best peptide for fat loss": "documented compound \u2014 see the lot certificate",
     "before and after": "lot history and purity table",
-    "how to inject": "[removed — not published]",
+    "how to inject": "[removed \u2014 not published]",
     "stack protocol": "related SKUs",
     "customers saw results": "lot record"
   },
   "faq": [
     {
-      "q": "Why is there a gate?",
-      "a": "This catalog is 21+ and research-use only. The gate is the same check you would get at a laboratory supply counter: confirm age and that you are buying documented research materials, not a treatment."
-    },
-    {
       "q": "Why do I need an account?",
-      "a": "Pricing, stock, and checkout sit behind an account so we know who placed the order and which lot went out. Add to cart without signing in and you will get a short prompt to create one. HELIX10 applies to the first recorded order unless an affiliate code is already on the cart."
+      "a": "The catalog is 21+ and research-use only. Registering states that you are requesting documented research materials, not a treatment. Pricing and checkout sit on the account so the lot can be tied to the order. First recorded order: HELIX10."
     },
     {
       "q": "Where are the certificates?",
-      "a": "Search lots on Certificates. A vial QR opens /testing?lot=XXXX on this site — not the outside laboratory. Public PDFs attach when a lot is accepted for the shop."
+      "a": "Search lots on Certificates. Each vial carries its own QR. The QR opens this site\u2019s lot page, not a third-party laboratory. The certificate file attaches when that lot is accepted."
     },
     {
       "q": "What form do the vials ship in?",
-      "a": "Dried research material in a sealed vial. We do not ship mixed solutions, filled pens, or research water on this catalog."
+      "a": "Research materials are packaged and shipped as sealed vials. We do not ship mixed solutions, injectable pens, or reconstituted product. Research use only."
     },
     {
       "q": "Are these for human use?",
@@ -76,15 +72,33 @@
     },
     {
       "q": "Do you run sitewide discounts?",
-      "a": "No sitewide sales. First-time buyers get HELIX10 on the first recorded order. Affiliates earn 10% on merchandise after discounts and their code replaces HELIX10 — the two never stack. Free shipping over $199 after discounts."
+      "a": "First-time buyers get HELIX10 on the first recorded order. Sign up to become an affiliate and earn 10% on research materials. The two do not stack. Free shipping on orders of $199 after discounts."
     }
   ],
   "emailSequence": [
-    { "when": "Subscribe", "job": "Catalog note + permitted-use line." },
-    { "when": "Order day", "job": "Confirmation plus the lot file when it exists." },
-    { "when": "In transit", "job": "Shipped + tracking." },
-    { "when": "Day 21", "job": "Running-low nudge. No outcome language." },
-    { "when": "Day 30", "job": "Reorder offer — small, time-boxed." },
-    { "when": "Day 60", "job": "Win-back: new lots documented." }
+    {
+      "when": "Subscribe",
+      "job": "Catalog note + permitted-use line."
+    },
+    {
+      "when": "Order day",
+      "job": "Confirmation plus the lot file when it exists."
+    },
+    {
+      "when": "In transit",
+      "job": "Shipped + tracking."
+    },
+    {
+      "when": "Day 21",
+      "job": "Running-low nudge. No outcome language."
+    },
+    {
+      "when": "Day 30",
+      "job": "Reorder offer \u2014 small, time-boxed."
+    },
+    {
+      "when": "Day 60",
+      "job": "Win-back: new lots documented."
+    }
   ]
 }

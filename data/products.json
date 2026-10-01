@@ -78,7 +78,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/pgl-gic1-10.jpg?v=30",
       "hero": true,
-      "blurb": "Documented multi-receptor research analog. Listed by research name only.",
+      "blurb": "A coded multi-receptor research peptide in the PGL series, supplied as a single compound. Listed by research name only. Third-party testing ",
       "panel": "12-point",
       "variantIds": [
         "RT10",
@@ -105,7 +105,7 @@
         "components": [
           "PGL-GIC1"
         ],
-        "body": "Specs on this page are identity, fill, form, storage, and the lot. No protocol language is published."
+        "body": "A coded multi-receptor research peptide in the PGL series, supplied as a single compound. Listed by research name only. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -119,7 +119,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/pgl-gi1-10.jpg?v=30",
       "hero": false,
-      "blurb": "Documented dual-agonist research analog. Listed by research name only.",
+      "blurb": "A coded dual-agonist research peptide. Not a batch or alternate name of PGL-G1. Listed by research name only. Third-party testing attaches t",
       "panel": "12-point",
       "variantIds": [
         "TR10",
@@ -146,10 +146,89 @@
         "components": [
           "PGL-GI1"
         ],
-        "body": "The certificate names this lot. This page does not publish a protocol."
+        "body": "A coded dual-agonist research peptide. Not a batch or alternate name of PGL-G1. Listed by research name only. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
+    },
+    {
+      "id": "pgl-el1",
+      "slug": "pgl-el1",
+      "name": "PGL-EL1",
+      "category": "documented",
+      "useClass": "research",
+      "form": "Dried research material in a clear glass vial",
+      "image": "/img/pgl-el1-10.jpg?v=30",
+      "hero": false,
+      "blurb": "A selective, long-acting amylin receptor agonist supplied as dried research material. Listed by the research name PGL-EL1 only. Third-party ",
+      "panel": "Pending",
+      "variantIds": [
+        "ELR5",
+        "ELR10"
+      ],
+      "sizes": [
+        "5 mg",
+        "10 mg"
+      ],
+      "cardImage": "/img/pgl-el1-10.jpg?v=30",
+      "featured": true,
+      "releaseState": "live",
+      "shopVisible": true,
+      "about": {
+        "ref": "PGL-EL1",
+        "class": "Selective amylin receptor agonist",
+        "cas": "NA",
+        "formula": "Not published on the storefront",
+        "mw": "NA",
+        "purityNote": "Attaches when the lot is accepted",
+        "use": "Research use only. Not for diagnostic or therapeutic use.",
+        "components": [
+          "PGL-EL1"
+        ],
+        "body": "A selective, long-acting amylin receptor agonist supplied as dried research material. Listed by the research name PGL-EL1 only. Third-party testing attaches to the lot when the lot is accepted."
+      }
+    },
+    {
+      "id": "pgl-el1-pair",
+      "slug": "pgl-el1-pair",
+      "name": "PGL-EL1 + PGL-GI1",
+      "category": "documented",
+      "useClass": "kit",
+      "form": "Two clear glass vials. Not mixed.",
+      "image": "/img/pair-10-5.jpg?v=30",
+      "hero": false,
+      "blurb": "Two separate vials, not mixed and not co-formulated: one PGL-GI1 and one PGL-EL1. The pair is listed $15 under the sum of the two catalog pr",
+      "panel": "Pending",
+      "variantIds": [
+        "ELR5-TR10",
+        "ELR5-TR20",
+        "ELR10-TR20",
+        "ELR10-TR30"
+      ],
+      "sizes": [
+        "10 mg + 5 mg",
+        "20 mg + 5 mg",
+        "20 mg + 10 mg",
+        "30 mg + 10 mg"
+      ],
+      "cardImage": "/img/pair-10-5.jpg?v=30",
+      "featured": true,
+      "releaseState": "live",
+      "shopVisible": true,
+      "about": {
+        "ref": "PGL-EL1 + PGL-GI1",
+        "class": "Two-vial research pair. Not mixed.",
+        "cas": "NA",
+        "formula": "Not published on the storefront",
+        "mw": "NA",
+        "purityNote": "Each vial attaches when its lot is accepted",
+        "use": "Research use only. Not for diagnostic or therapeutic use.",
+        "components": [
+          "PGL-GI1",
+          "PGL-EL1"
+        ],
+        "body": "Two separate vials, not mixed and not co-formulated: one PGL-GI1 and one PGL-EL1. The pair is listed $15 under the sum of the two catalog prices. Each vial keeps its own lot. Research use only."
+      }
     },
     {
       "id": "pgl-g1",
@@ -160,7 +239,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/pgl-g1-5.jpg?v=30",
       "hero": false,
-      "blurb": "Documented incretin-class research analog. Listed by research name only.",
+      "blurb": "A coded incretin-class research peptide, supplied as a single compound. Listed by research name only. Third-party testing attaches to the lo",
       "panel": "12-point",
       "variantIds": [
         "SM5",
@@ -187,7 +266,7 @@
         "components": [
           "PGL-G1"
         ],
-        "body": "Fill, form, appearance, storage, lot."
+        "body": "A coded incretin-class research peptide, supplied as a single compound. Listed by research name only. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -201,7 +280,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/cgl-1-5.jpg?v=30",
       "hero": false,
-      "blurb": "Documented amylin-class research analog. Listed by research name only.",
+      "blurb": "A coded amylin-class research peptide, supplied as a single compound. Listed by research name only. Third-party testing attaches to the lot ",
       "panel": "12-point",
       "variantIds": [
         "CGL5",
@@ -224,7 +303,7 @@
         "components": [
           "CGL-1"
         ],
-        "body": "Listed by research name only."
+        "body": "A coded amylin-class research peptide, supplied as a single compound. Listed by research name only. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -238,7 +317,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/bpc-157-5.jpg?v=30",
       "hero": false,
-      "blurb": "Documented pentadecapeptide. Certificate on every lot.",
+      "blurb": "Body Protection Compound-157 is a synthetic 15-amino-acid peptide derived from a protective protein found in gastric juice. Supplied as drie",
       "panel": "12-point",
       "variantIds": [
         "BPC5",
@@ -263,7 +342,7 @@
         "components": [
           "BPC-157"
         ],
-        "body": "Single-compound research material. Strengths are separate lots. The selected fill shows one vial."
+        "body": "Body Protection Compound-157 is a synthetic 15-amino-acid peptide derived from a protective protein found in gastric juice. Supplied as dried research material for laboratory research. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -279,7 +358,7 @@
       "cardImage": "/img/tb-500-5.jpg?v=30",
       "hero": false,
       "featured": false,
-      "blurb": "Single-compound research material. Two documented fills.",
+      "blurb": "A synthetic peptide corresponding to an active region of thymosin beta-4, a protein found in platelets and other tissue. Supplied as dried r",
       "panel": "12-point",
       "variantIds": [
         "TB5",
@@ -300,7 +379,7 @@
         "components": [
           "TB-500"
         ],
-        "body": "Single-compound research material. Strengths are separate lots. The selected fill shows one vial."
+        "body": "A synthetic peptide corresponding to an active region of thymosin beta-4, a protein found in platelets and other tissue. Supplied as dried research material for laboratory research. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -314,7 +393,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/ghk-cu-50.jpg?v=30",
       "hero": false,
-      "blurb": "Documented copper tripeptide. Two documented fills.",
+      "blurb": "GHK-Cu (glycyl-L-histidyl-L-lysine copper complex) is a copper tripeptide studied for skin remodeling and barrier research. Supplied as drie",
       "panel": "12-point",
       "variantIds": [
         "CU50",
@@ -337,10 +416,16 @@
         "components": [
           "GHK-Cu"
         ],
-        "body": "Copper tripeptide research material. Two documented fills."
+        "body": "GHK-Cu (glycyl-L-histidyl-L-lysine copper complex) is a copper tripeptide studied for skin remodeling and barrier research. Supplied as dried research material. Published research context is not an indication. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "sources": [
+        {
+          "label": "Published research",
+          "href": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6073405/"
+        }
+      ]
     },
     {
       "id": "ipamorelin",
@@ -351,7 +436,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/ipamorelin-5.jpg?v=30",
       "hero": false,
-      "blurb": "Documented ghrelin-mimetic research lot. Not CJC-1295.",
+      "blurb": "A synthetic five-amino-acid peptide studied as a selective growth hormone secretagogue in research models. Supplied as dried research materi",
       "panel": "12-point",
       "variantIds": [
         "IPA5",
@@ -374,7 +459,7 @@
         "components": [
           "Ipamorelin"
         ],
-        "body": "Single-compound research material. Not a blend with CJC-1295."
+        "body": "A synthetic five-amino-acid peptide studied as a selective growth hormone secretagogue in research models. Supplied as dried research material. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -388,7 +473,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/sermorelin-5.jpg?v=30",
       "hero": false,
-      "blurb": "Documented GHRH(1-29) research lot.",
+      "blurb": "A synthetic 29-amino-acid peptide studied as a growth hormone-releasing hormone analog in research models. Supplied as dried research materi",
       "panel": "12-point",
       "variantIds": [
         "SER5",
@@ -411,7 +496,7 @@
         "components": [
           "Sermorelin"
         ],
-        "body": "Single-compound research material. Strengths are separate lots."
+        "body": "A synthetic 29-amino-acid peptide studied as a growth hormone-releasing hormone analog in research models. Supplied as dried research material. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -425,7 +510,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/tesamorelin-5.jpg?v=30",
       "hero": false,
-      "blurb": "Documented GHRH-analog research lot.",
+      "blurb": "A synthetic growth hormone-releasing hormone analog supplied as dried research material for laboratory research. This vial is not a finished",
       "panel": "12-point",
       "variantIds": [
         "TSM5",
@@ -448,7 +533,7 @@
         "components": [
           "Tesamorelin"
         ],
-        "body": "Single-compound research material."
+        "body": "A synthetic growth hormone-releasing hormone analog supplied as dried research material for laboratory research. This vial is not a finished drug product. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -462,7 +547,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/mots-c-10.jpg?v=30",
       "hero": false,
-      "blurb": "Documented mitochondrial ORF research peptide.",
+      "blurb": "MOTS-c is a 16-amino-acid mitochondrial-derived peptide studied for cellular metabolism in research models. Supplied as dried research mater",
       "panel": "12-point",
       "variantIds": [
         "MS10",
@@ -487,10 +572,16 @@
         "components": [
           "MOTS-c"
         ],
-        "body": "Single-compound research material."
+        "body": "MOTS-c is a 16-amino-acid mitochondrial-derived peptide studied for cellular metabolism in research models. Supplied as dried research material. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "sources": [
+        {
+          "label": "Published research",
+          "href": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9905433/"
+        }
+      ]
     },
     {
       "id": "nad",
@@ -501,7 +592,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/nad-100.jpg?v=30",
       "hero": false,
-      "blurb": "Documented dinucleotide research lot.",
+      "blurb": "Nicotinamide adenine dinucleotide is a coenzyme studied for cellular energy metabolism and DNA repair pathways in research models. Supplied ",
       "panel": "12-point",
       "variantIds": [
         "NJ100",
@@ -526,7 +617,7 @@
         "components": [
           "NAD+"
         ],
-        "body": "Documented dinucleotide research lot. Three fills."
+        "body": "Nicotinamide adenine dinucleotide is a coenzyme studied for cellular energy metabolism and DNA repair pathways in research models. Supplied as dried research material. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -540,7 +631,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/5am-5.jpg?v=30",
       "hero": false,
-      "blurb": "Documented small-molecule research lot.",
+      "blurb": "5-amino-1-methylquinolinium is a small-molecule NNMT inhibitor studied for metabolic regulation in research models. It is a small molecule, ",
       "panel": "12-point",
       "variantIds": [
         "5AM",
@@ -565,7 +656,7 @@
         "components": [
           "5-Amino-1MQ"
         ],
-        "body": "Single-compound research material."
+        "body": "5-amino-1-methylquinolinium is a small-molecule NNMT inhibitor studied for metabolic regulation in research models. It is a small molecule, not a peptide chain. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -579,7 +670,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/ss-31-10.jpg?v=30",
       "hero": false,
-      "blurb": "Documented mitochondria-targeted research tetrapeptide.",
+      "blurb": "A mitochondria-targeted tetrapeptide studied for mitochondrial function in research models. Supplied as dried research material. Third-party",
       "panel": "12-point",
       "variantIds": [
         "2S10",
@@ -602,10 +693,16 @@
         "components": [
           "SS-31"
         ],
-        "body": "Single-compound research material."
+        "body": "A mitochondria-targeted tetrapeptide studied for mitochondrial function in research models. Supplied as dried research material. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "sources": [
+        {
+          "label": "Published research",
+          "href": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11409442/"
+        }
+      ]
     },
     {
       "id": "kpv",
@@ -616,7 +713,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/kpv-5.jpg?v=30",
       "hero": false,
-      "blurb": "Documented tripeptide research lot.",
+      "blurb": "A tripeptide of lysine, proline, and valine, studied for inflammatory signaling in research models. Supplied as dried research material. Thi",
       "panel": "12-point",
       "variantIds": [
         "KPV5",
@@ -641,10 +738,16 @@
         "components": [
           "KPV"
         ],
-        "body": "Single-compound research material."
+        "body": "A tripeptide of lysine, proline, and valine, studied for inflammatory signaling in research models. Supplied as dried research material. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "sources": [
+        {
+          "label": "Published research",
+          "href": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2431115/"
+        }
+      ]
     },
     {
       "id": "pgl-sr1",
@@ -655,7 +758,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/pgl-sr1-12.jpg?v=30",
       "hero": false,
-      "blurb": "Documented somatropin-class research analog. Listed by research name only.",
+      "blurb": "A coded somatropin-class research material, supplied by IU fill. Listed by research name only. Third-party testing attaches to the lot when ",
       "panel": "12-point",
       "variantIds": [
         "H12",
@@ -680,7 +783,7 @@
         "components": [
           "PGL-SR1"
         ],
-        "body": "Listed by research name only."
+        "body": "A coded somatropin-class research material, supplied by IU fill. Listed by research name only. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -694,7 +797,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/bpc-tb-5-5.jpg?v=30",
       "hero": false,
-      "blurb": "BPC-157 10 mg + TB-500 10 mg. One vial. 1:1. 20 mg total.",
+      "blurb": "A 1:1 blend of BPC-157 and TB-500 in one vial. Components stay on the label. Supplied as dried research material, not a mixed solution. Thir",
       "panel": "12-point",
       "variantIds": [
         "BB10",
@@ -718,7 +821,7 @@
           "BPC-157 10 mg",
           "TB-500 10 mg"
         ],
-        "body": "Public name Wolverine. Ops SKU BB20. Fill is BPC-157 10 mg and TB-500 10 mg in one vial (20 mg total, 1:1). Components stay on the label. Research use only."
+        "body": "A 1:1 blend of BPC-157 and TB-500 in one vial. Components stay on the label. Supplied as dried research material, not a mixed solution. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -732,7 +835,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/glow.jpg?v=30",
       "hero": false,
-      "blurb": "Named three-component blend. 70 mg vial. Certificate lists component identity.",
+      "blurb": "A three-component research blend in one vial: GHK-Cu 50 mg, BPC-157 10 mg, and TB-500 10 mg (70 mg total). Components stay on the label. Thi",
       "panel": "12-point",
       "variantIds": [
         "GLOW"
@@ -755,7 +858,7 @@
           "BPC-157",
           "TB-500"
         ],
-        "body": "Catalog name GLOW. Components are listed on this page and on the lot certificate."
+        "body": "A three-component research blend in one vial: GHK-Cu 50 mg, BPC-157 10 mg, and TB-500 10 mg (70 mg total). Components stay on the label. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -769,7 +872,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/klow.jpg?v=30",
       "hero": false,
-      "blurb": "Named four-component blend. 80 mg vial. Certificate lists component identity.",
+      "blurb": "A four-component research blend in one vial: GHK-Cu 50 mg, BPC-157 10 mg, TB-500 10 mg, and KPV 10 mg (80 mg total). Components stay on the ",
       "panel": "12-point",
       "variantIds": [
         "KLOW"
@@ -793,7 +896,7 @@
           "TB-500",
           "KPV"
         ],
-        "body": "Catalog name KLOW. Components are listed on this page and on the lot certificate."
+        "body": "A four-component research blend in one vial: GHK-Cu 50 mg, BPC-157 10 mg, TB-500 10 mg, and KPV 10 mg (80 mg total). Components stay on the label. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -954,7 +1057,7 @@
       "form": "Metered nasal spray",
       "image": "/img/selank.jpg?v=30",
       "hero": false,
-      "blurb": "Tuftsin-analog research spray. 10 mg / 10 mL.",
+      "blurb": "A synthetic heptapeptide analog of tuftsin, supplied as a metered nasal spray for laboratory research. Third-party testing attaches to the l",
       "panel": "12-point",
       "variantIds": [
         "SEL10"
@@ -975,10 +1078,16 @@
         "components": [
           "Selank Nasal Spray"
         ],
-        "body": "Specs on this page are fill, form, appearance, storage, and lot. No protocol language is published."
+        "body": "A synthetic heptapeptide analog of tuftsin, supplied as a metered nasal spray for laboratory research. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "sources": [
+        {
+          "label": "Published research",
+          "href": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4757669/"
+        }
+      ]
     },
     {
       "id": "semax-ns",
@@ -989,7 +1098,7 @@
       "form": "Metered nasal spray",
       "image": "/img/semax.jpg?v=30",
       "hero": false,
-      "blurb": "ACTH-fragment research spray. 10 mg / 10 mL.",
+      "blurb": "A synthetic heptapeptide analog of an ACTH fragment, supplied as a metered nasal spray for laboratory research. Third-party testing attaches",
       "panel": "12-point",
       "variantIds": [
         "SMX10"
@@ -1010,7 +1119,7 @@
         "components": [
           "Semax Nasal Spray"
         ],
-        "body": "Specs on this page are fill, form, appearance, storage, and lot. No protocol language is published."
+        "body": "A synthetic heptapeptide analog of an ACTH fragment, supplied as a metered nasal spray for laboratory research. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
       "shopVisible": true
@@ -1277,16 +1386,16 @@
       "slug": "pgl-gic1-rt10",
       "name": "PGL-GIC1",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White to off-white lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": true,
       "purity": "99.41%",
       "lot": "HK-2701",
       "image": "/img/pgl-gic1-10.jpg?v=30",
       "price": 49,
-      "stock": 40,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1309,15 +1418,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White to off-white dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1325,13 +1434,16 @@
         ],
         [
           "Release",
-          "99.41%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "RT15",
@@ -1341,16 +1453,16 @@
       "slug": "pgl-gic1-rt15",
       "name": "PGL-GIC1",
       "size": "15 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White to off-white lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.41%",
       "lot": "HK-2748",
       "image": "/img/pgl-gic1-15.jpg?v=30",
       "price": 69,
-      "stock": 24,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1373,15 +1485,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White to off-white dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1389,13 +1501,16 @@
         ],
         [
           "Release",
-          "99.41%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "RT20",
@@ -1405,16 +1520,16 @@
       "slug": "pgl-gic1-rt20",
       "name": "PGL-GIC1",
       "size": "20 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White to off-white lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.38%",
       "lot": "HK-2702",
       "image": "/img/pgl-gic1-20.jpg?v=30",
       "price": 79,
-      "stock": 36,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1437,15 +1552,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White to off-white dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1453,13 +1568,16 @@
         ],
         [
           "Release",
-          "99.38%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "RT30",
@@ -1469,16 +1587,16 @@
       "slug": "pgl-gic1-rt30",
       "name": "PGL-GIC1",
       "size": "30 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White to off-white lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.44%",
       "lot": "HK-2703",
       "image": "/img/pgl-gic1-30.jpg?v=30",
       "price": 99,
-      "stock": 28,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1501,15 +1619,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White to off-white dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1517,13 +1635,16 @@
         ],
         [
           "Release",
-          "99.44%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "TR10",
@@ -1533,16 +1654,16 @@
       "slug": "pgl-gi1-tr10",
       "name": "PGL-GI1",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.36%",
       "lot": "HK-2704",
       "image": "/img/pgl-gi1-10.jpg?v=30",
       "price": 39,
-      "stock": 44,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1565,15 +1686,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1581,13 +1702,16 @@
         ],
         [
           "Release",
-          "99.36%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "TR15",
@@ -1597,16 +1721,16 @@
       "slug": "pgl-gi1-tr15",
       "name": "PGL-GI1",
       "size": "15 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.36%",
       "lot": "HK-2749",
       "image": "/img/pgl-gi1-15.jpg?v=30",
       "price": 45,
-      "stock": 24,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1629,15 +1753,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1645,13 +1769,16 @@
         ],
         [
           "Release",
-          "99.36%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "TR20",
@@ -1661,16 +1788,16 @@
       "slug": "pgl-gi1-tr20",
       "name": "PGL-GI1",
       "size": "20 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.29%",
       "lot": "HK-2705",
       "image": "/img/pgl-gi1-20.jpg?v=30",
       "price": 55,
-      "stock": 32,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1693,15 +1820,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1709,13 +1836,16 @@
         ],
         [
           "Release",
-          "99.29%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "TR30",
@@ -1725,16 +1855,16 @@
       "slug": "pgl-gi1-tr30",
       "name": "PGL-GI1",
       "size": "30 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.33%",
       "lot": "HK-2706",
       "image": "/img/pgl-gi1-30.jpg?v=30",
       "price": 69,
-      "stock": 24,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1757,15 +1887,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1773,13 +1903,16 @@
         ],
         [
           "Release",
-          "99.33%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "SM5",
@@ -1789,16 +1922,16 @@
       "slug": "pgl-g1-sm5",
       "name": "PGL-G1",
       "size": "5 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.27%",
       "lot": "HK-2750",
       "image": "/img/pgl-g1-5.jpg?v=30",
       "price": 29,
-      "stock": 32,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1821,15 +1954,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1837,13 +1970,16 @@
         ],
         [
           "Release",
-          "99.27%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "SM10",
@@ -1853,16 +1989,16 @@
       "slug": "pgl-g1-sm10",
       "name": "PGL-G1",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.27%",
       "lot": "HK-2707",
       "image": "/img/pgl-g1-10.jpg?v=30",
       "price": 39,
-      "stock": 48,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1885,15 +2021,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1901,13 +2037,16 @@
         ],
         [
           "Release",
-          "99.27%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "SM20",
@@ -1917,16 +2056,16 @@
       "slug": "pgl-g1-sm20",
       "name": "PGL-G1",
       "size": "20 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.31%",
       "lot": "HK-2708",
       "image": "/img/pgl-g1-20.jpg?v=30",
       "price": 49,
-      "stock": 30,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1949,15 +2088,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -1965,13 +2104,16 @@
         ],
         [
           "Release",
-          "99.31%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "SM30",
@@ -1981,16 +2123,16 @@
       "slug": "pgl-g1-sm30",
       "name": "PGL-G1",
       "size": "30 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.22%",
       "lot": "HK-2709",
       "image": "/img/pgl-g1-30.jpg?v=30",
       "price": 59,
-      "stock": 22,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2013,15 +2155,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2029,13 +2171,16 @@
         ],
         [
           "Release",
-          "99.22%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "CGL5",
@@ -2045,16 +2190,16 @@
       "slug": "cgl-1-cgl5",
       "name": "CGL-1",
       "size": "5 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.17%",
       "lot": "HK-2718",
       "image": "/img/cgl-1-5.jpg?v=30",
       "price": 59,
-      "stock": 30,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2077,15 +2222,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2093,13 +2238,16 @@
         ],
         [
           "Release",
-          "99.17%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "CGL10",
@@ -2109,16 +2257,16 @@
       "slug": "cgl-1-cgl10",
       "name": "CGL-1",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.21%",
       "lot": "HK-2719",
       "image": "/img/cgl-1-10.jpg?v=30",
       "price": 99,
-      "stock": 22,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2141,15 +2289,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2157,13 +2305,16 @@
         ],
         [
           "Release",
-          "99.21%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "BPC5",
@@ -2173,16 +2324,16 @@
       "slug": "bpc-157-bpc5",
       "name": "BPC-157",
       "size": "5 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.27%",
       "lot": "HK-2611",
       "image": "/img/bpc-157-5.jpg?v=30",
       "price": 29,
-      "stock": 36,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2205,15 +2356,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2221,13 +2372,16 @@
         ],
         [
           "Release",
-          "99.27%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "BPC10",
@@ -2237,16 +2391,16 @@
       "slug": "bpc-157-bpc10",
       "name": "BPC-157",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.34%",
       "lot": "HK-2714",
       "image": "/img/bpc-157-10.jpg?v=30",
       "price": 49,
-      "stock": 28,
+      "stock": 2,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2269,15 +2423,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2285,13 +2439,16 @@
         ],
         [
           "Release",
-          "99.34%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 2,
+      "stockStatus": "low",
+      "stockThreshold": 5
     },
     {
       "id": "BPC20",
@@ -2301,16 +2458,16 @@
       "slug": "bpc-157-bpc20",
       "name": "BPC-157",
       "size": "20 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.34%",
       "lot": "HK-2751",
       "image": "/img/bpc-157-20.jpg?v=30",
       "price": 79,
-      "stock": 20,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2333,15 +2490,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2349,13 +2506,16 @@
         ],
         [
           "Release",
-          "99.34%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "TB5",
@@ -2365,9 +2525,9 @@
       "slug": "tb-500-5mg",
       "name": "TB-500",
       "size": "5 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White to off-white lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.22%",
@@ -2375,7 +2535,7 @@
       "image": "/img/tb-500-5.jpg?v=30",
       "price": 39,
       "cost": null,
-      "stock": 40,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2397,15 +2557,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White to off-white dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2413,12 +2573,15 @@
         ],
         [
           "Release",
-          "99.22%"
+          "Certificate not published"
         ]
       ],
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "TB10",
@@ -2428,9 +2591,9 @@
       "slug": "tb-500-10mg",
       "name": "TB-500",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White to off-white lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.19%",
@@ -2438,7 +2601,7 @@
       "image": "/img/tb-500-10.jpg?v=30",
       "price": 69,
       "cost": null,
-      "stock": 40,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2460,15 +2623,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White to off-white dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2476,12 +2639,15 @@
         ],
         [
           "Release",
-          "99.19%"
+          "Certificate not published"
         ]
       ],
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "CU50",
@@ -2491,16 +2657,16 @@
       "slug": "ghk-cu-cu50",
       "name": "GHK-Cu",
       "size": "50 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "Blue-green lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.38%",
       "lot": "HK-2740",
       "image": "/img/ghk-cu-50.jpg?v=30",
       "price": 29,
-      "stock": 60,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2524,15 +2690,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in amber vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "Blue-green dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2540,13 +2706,16 @@
         ],
         [
           "Release",
-          "99.38%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "CU100",
@@ -2556,16 +2725,16 @@
       "slug": "ghk-cu-cu100",
       "name": "GHK-Cu",
       "size": "100 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "Blue-green lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.42%",
       "lot": "HK-2720",
       "image": "/img/ghk-cu-100.jpg?v=30",
       "price": 49,
-      "stock": 54,
+      "stock": 7,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2589,15 +2758,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in amber vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "Blue-green dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2605,13 +2774,16 @@
         ],
         [
           "Release",
-          "99.42%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 7,
+      "stockStatus": "ok",
+      "stockThreshold": 5
     },
     {
       "id": "IPA5",
@@ -2621,16 +2793,16 @@
       "slug": "ipamorelin-ipa5",
       "name": "Ipamorelin",
       "size": "5 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.05%",
       "lot": "HK-2752",
       "image": "/img/ipamorelin-5.jpg?v=30",
       "price": 29,
-      "stock": 32,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2652,15 +2824,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2668,13 +2840,16 @@
         ],
         [
           "Release",
-          "99.05%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "IPA10",
@@ -2684,16 +2859,16 @@
       "slug": "ipamorelin-ipa10",
       "name": "Ipamorelin",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.05%",
       "lot": "HK-2741",
       "image": "/img/ipamorelin.jpg?v=30",
       "price": 49,
-      "stock": 36,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2715,15 +2890,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2731,13 +2906,16 @@
         ],
         [
           "Release",
-          "99.05%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "SER5",
@@ -2747,16 +2925,16 @@
       "slug": "sermorelin-ser5",
       "name": "Sermorelin",
       "size": "5 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.41%",
       "lot": "HK-2743",
       "image": "/img/sermorelin-5.jpg?v=30",
       "price": 35,
-      "stock": 40,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2778,15 +2956,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2794,13 +2972,16 @@
         ],
         [
           "Release",
-          "99.41%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "SER10",
@@ -2810,16 +2991,16 @@
       "slug": "sermorelin-ser10",
       "name": "Sermorelin",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.36%",
       "lot": "HK-2744",
       "image": "/img/sermorelin-10.jpg?v=30",
       "price": 59,
-      "stock": 32,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2841,15 +3022,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2857,13 +3038,16 @@
         ],
         [
           "Release",
-          "99.36%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "TSM5",
@@ -2873,16 +3057,16 @@
       "slug": "tesamorelin-tsm5",
       "name": "Tesamorelin",
       "size": "5 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.08%",
       "lot": "HK-2753",
       "image": "/img/tesamorelin-5.jpg?v=30",
       "price": 49,
-      "stock": 24,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2904,15 +3088,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2920,13 +3104,16 @@
         ],
         [
           "Release",
-          "99.08%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "TSM10",
@@ -2936,16 +3123,16 @@
       "slug": "tesamorelin-tsm10",
       "name": "Tesamorelin",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.08%",
       "lot": "HK-2715",
       "image": "/img/tesamorelin-10.jpg?v=30",
       "price": 89,
-      "stock": 26,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2967,15 +3154,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -2983,13 +3170,16 @@
         ],
         [
           "Release",
-          "99.08%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "MS10",
@@ -2999,16 +3189,16 @@
       "slug": "mots-c-ms10",
       "name": "MOTS-c",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "98.45%",
       "lot": "HK-2726",
       "image": "/img/mots-c-10.jpg?v=30",
       "price": 39,
-      "stock": 24,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3030,15 +3220,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3046,13 +3236,16 @@
         ],
         [
           "Release",
-          "98.45%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "MS20",
@@ -3062,16 +3255,16 @@
       "slug": "mots-c-ms20",
       "name": "MOTS-c",
       "size": "20 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "98.61%",
       "lot": "HK-2727",
       "image": "/img/mots-c-20.jpg?v=30",
       "price": 65,
-      "stock": 16,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3093,15 +3286,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3109,13 +3302,16 @@
         ],
         [
           "Release",
-          "98.61%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "MS40",
@@ -3125,16 +3321,16 @@
       "slug": "mots-c-ms40",
       "name": "MOTS-c",
       "size": "40 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "98.61%",
       "lot": "HK-2757",
       "image": "/img/mots-c-40.jpg?v=30",
       "price": 99,
-      "stock": 16,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3156,15 +3352,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3172,13 +3368,16 @@
         ],
         [
           "Release",
-          "98.61%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "NJ100",
@@ -3188,16 +3387,16 @@
       "slug": "nad-nj100",
       "name": "NAD+",
       "size": "100 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White crystalline solid",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.05%",
       "lot": "HK-2754",
       "image": "/img/nad-100.jpg?v=30",
       "price": 29,
-      "stock": 32,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3219,15 +3418,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White crystalline solid"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3235,13 +3434,16 @@
         ],
         [
           "Release",
-          "99.05%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "NJ500",
@@ -3251,16 +3453,16 @@
       "slug": "nad-nj500",
       "name": "NAD+",
       "size": "500 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White crystalline solid",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.05%",
       "lot": "HK-2607",
       "image": "/img/nad-500.jpg?v=30",
       "price": 49,
-      "stock": 28,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3282,15 +3484,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White crystalline solid"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3298,13 +3500,16 @@
         ],
         [
           "Release",
-          "99.05%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "NJ1000",
@@ -3314,16 +3519,16 @@
       "slug": "nad-nj1000",
       "name": "NAD+",
       "size": "1000 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White crystalline solid",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.12%",
       "lot": "HK-2717",
       "image": "/img/nad-1000.jpg?v=30",
       "price": 69,
-      "stock": 16,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3345,15 +3550,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White crystalline solid"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3361,13 +3566,16 @@
         ],
         [
           "Release",
-          "99.12%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "5AM",
@@ -3377,16 +3585,16 @@
       "slug": "5-amino-1mq-5am",
       "name": "5-Amino-1MQ",
       "size": "5 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White crystalline solid",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.48%",
       "lot": "HK-2710",
       "image": "/img/5am-5.jpg?v=30",
       "price": 29,
-      "stock": 50,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3408,15 +3616,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White crystalline solid"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3424,13 +3632,16 @@
         ],
         [
           "Release",
-          "99.48%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "10AM",
@@ -3440,16 +3651,16 @@
       "slug": "5-amino-1mq-10am",
       "name": "5-Amino-1MQ",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White crystalline solid",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.52%",
       "lot": "HK-2711",
       "image": "/img/5am-10.jpg?v=30",
       "price": 39,
-      "stock": 40,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3471,15 +3682,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White crystalline solid"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3487,13 +3698,16 @@
         ],
         [
           "Release",
-          "99.52%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "50AM",
@@ -3503,16 +3717,16 @@
       "slug": "5-amino-1mq-50am",
       "name": "5-Amino-1MQ",
       "size": "50 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White crystalline solid",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.52%",
       "lot": "HK-2758",
       "image": "/img/5am-50.jpg?v=30",
       "price": 55,
-      "stock": 16,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3534,15 +3748,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White crystalline solid"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3550,13 +3764,16 @@
         ],
         [
           "Release",
-          "99.52%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "2S10",
@@ -3566,16 +3783,16 @@
       "slug": "ss-31-2s10",
       "name": "SS-31",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.19%",
       "lot": "HK-2712",
       "image": "/img/ss-31-10.jpg?v=30",
       "price": 49,
-      "stock": 34,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3597,15 +3814,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3613,13 +3830,16 @@
         ],
         [
           "Release",
-          "99.19%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "2S50",
@@ -3629,16 +3849,16 @@
       "slug": "ss-31-2s50",
       "name": "SS-31",
       "size": "50 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.24%",
       "lot": "HK-2713",
       "image": "/img/ss-31-50.jpg?v=30",
       "price": 159,
-      "stock": 18,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3660,15 +3880,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3676,13 +3896,16 @@
         ],
         [
           "Release",
-          "99.24%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "KPV5",
@@ -3692,16 +3915,16 @@
       "slug": "kpv-kpv5",
       "name": "KPV",
       "size": "5 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.80%",
       "lot": "HK-2721",
       "image": "/img/kpv-5.jpg?v=30",
       "price": 29,
-      "stock": 38,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3723,15 +3946,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3739,13 +3962,16 @@
         ],
         [
           "Release",
-          "99.80%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "KPV10",
@@ -3755,16 +3981,16 @@
       "slug": "kpv-kpv10",
       "name": "KPV",
       "size": "10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.76%",
       "lot": "HK-2722",
       "image": "/img/kpv-10.jpg?v=30",
       "price": 49,
-      "stock": 26,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3786,15 +4012,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3802,13 +4028,16 @@
         ],
         [
           "Release",
-          "99.76%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "KPV20",
@@ -3818,16 +4047,16 @@
       "slug": "kpv-kpv20",
       "name": "KPV",
       "size": "20 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.76%",
       "lot": "HK-2755",
       "image": "/img/kpv-20.jpg?v=30",
       "price": 59,
-      "stock": 20,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3849,15 +4078,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3865,13 +4094,16 @@
         ],
         [
           "Release",
-          "99.76%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "H12",
@@ -3881,16 +4113,16 @@
       "slug": "pgl-sr1-h12",
       "name": "PGL-SR1",
       "size": "12 IU",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.14%",
       "lot": "HK-2728",
       "image": "/img/pgl-sr1-12.jpg?v=30",
       "price": 72,
-      "stock": 20,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3912,15 +4144,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3928,13 +4160,16 @@
         ],
         [
           "Release",
-          "99.14%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "H24",
@@ -3944,16 +4179,16 @@
       "slug": "pgl-sr1-h24",
       "name": "PGL-SR1",
       "size": "24 IU",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.18%",
       "lot": "HK-2729",
       "image": "/img/pgl-sr1-24.jpg?v=30",
       "price": 118,
-      "stock": 16,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -3975,15 +4210,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -3991,13 +4226,16 @@
         ],
         [
           "Release",
-          "99.18%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "H36",
@@ -4007,16 +4245,16 @@
       "slug": "pgl-sr1-h36",
       "name": "PGL-SR1",
       "size": "36 IU",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "documented",
       "hero": false,
       "purity": "99.09%",
       "lot": "HK-2730",
       "image": "/img/pgl-sr1-36.jpg?v=30",
       "price": 154,
-      "stock": 12,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -4038,15 +4276,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -4054,13 +4292,16 @@
         ],
         [
           "Release",
-          "99.09%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "BB10",
@@ -4070,16 +4311,16 @@
       "slug": "bpc-tb-bb10",
       "name": "Wolverine",
       "size": "BPC-157 5 mg + TB-500 5 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "blends",
       "hero": false,
       "purity": "99.50%",
       "lot": "HK-2756",
       "image": "/img/bpc-tb-5-5.jpg?v=30",
       "price": 49,
-      "stock": 24,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -4110,15 +4351,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -4126,13 +4367,16 @@
         ],
         [
           "Release",
-          "99.50%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "BB20",
@@ -4142,16 +4386,16 @@
       "slug": "bpc-157-tb-500",
       "name": "Wolverine",
       "size": "BPC-157 10 mg + TB-500 10 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White lyophilized cake",
-      "storage": "2\u20138 \u00b0C, desiccated",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "blends",
       "hero": false,
       "purity": "99.50%",
       "lot": "HK-2725",
       "image": "/img/bpc-tb-blend.jpg?v=30",
       "price": 89,
-      "stock": 30,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -4182,15 +4426,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White dried cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -4198,13 +4442,16 @@
         ],
         [
           "Release",
-          "99.50%"
+          "Certificate not published"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "GLOW",
@@ -4214,16 +4461,16 @@
       "slug": "glow-glow",
       "name": "GLOW",
       "size": "70 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White to pale-blue cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "blends",
       "hero": false,
       "purity": "99.50%",
       "lot": "HK-2724",
       "image": "/img/glow.jpg?v=30",
       "price": 99,
-      "stock": 22,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -4247,15 +4494,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White to pale-blue cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -4263,7 +4510,7 @@
         ],
         [
           "Release",
-          "99.50%"
+          "Certificate not published"
         ],
         [
           "Blend",
@@ -4277,7 +4524,10 @@
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "KLOW",
@@ -4287,16 +4537,16 @@
       "slug": "klow-klow",
       "name": "KLOW",
       "size": "80 mg",
-      "form": "Dried research material in glass vial",
-      "appearance": "White to pale-blue cake",
-      "storage": "2\u20138 \u00b0C, desiccated, protected from light",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
       "category": "blends",
       "hero": false,
       "purity": "99.50%",
       "lot": "HK-2723",
       "image": "/img/klow.jpg?v=30",
       "price": 119,
-      "stock": 20,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -4320,15 +4570,15 @@
         ],
         [
           "Form",
-          "Lyophilized solid in glass vial"
+          "Dried research material in a clear glass vial"
         ],
         [
-          "Appearance",
-          "White to pale-blue cake"
+          "Vial",
+          "Clear glass"
         ],
         [
           "Storage",
-          "2\u20138 \u00b0C, desiccated, protected from light"
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
         ],
         [
           "Current lot",
@@ -4336,7 +4586,7 @@
         ],
         [
           "Release",
-          "99.50%"
+          "Certificate not published"
         ],
         [
           "Blend",
@@ -4350,7 +4600,10 @@
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": true,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5
     },
     {
       "id": "BAC3",
@@ -4691,15 +4944,15 @@
       "name": "Selank Nasal Spray",
       "size": "10 mg / 10 mL",
       "form": "Metered nasal spray",
-      "appearance": "Clear colorless solution",
-      "storage": "2\u20138 \u00b0C after opening",
+      "appearance": "Nasal spray bottle",
+      "storage": "2\u20138 \u00b0C. Do not freeze.",
       "category": "serums",
       "hero": false,
       "purity": "99.71%",
       "lot": "HK-2733",
       "image": "/img/selank.jpg?v=30",
       "price": 40,
-      "stock": 34,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -4724,12 +4977,8 @@
           "Metered nasal spray"
         ],
         [
-          "Appearance",
-          "Clear colorless solution"
-        ],
-        [
           "Storage",
-          "2\u20138 \u00b0C after opening"
+          "2\u20138 \u00b0C. Do not freeze."
         ],
         [
           "Current lot",
@@ -4737,16 +4986,21 @@
         ],
         [
           "Release",
-          "99.71%"
+          "Certificate not published"
+        ],
+        [
+          "Container",
+          "Nasal spray bottle"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
       "unavailableReason": null,
-      "available": 34,
-      "stockStatus": "ok",
-      "shopVisible": true
+      "available": 0,
+      "stockStatus": "out",
+      "shopVisible": true,
+      "stockThreshold": 5
     },
     {
       "id": "SMX10",
@@ -4757,15 +5011,15 @@
       "name": "Semax Nasal Spray",
       "size": "10 mg / 10 mL",
       "form": "Metered nasal spray",
-      "appearance": "Clear colorless solution",
-      "storage": "2\u20138 \u00b0C after opening",
+      "appearance": "Nasal spray bottle",
+      "storage": "2\u20138 \u00b0C. Do not freeze.",
       "category": "serums",
       "hero": false,
       "purity": "99.47%",
       "lot": "HK-2734",
       "image": "/img/semax.jpg?v=30",
       "price": 42,
-      "stock": 34,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -4790,12 +5044,8 @@
           "Metered nasal spray"
         ],
         [
-          "Appearance",
-          "Clear colorless solution"
-        ],
-        [
           "Storage",
-          "2\u20138 \u00b0C after opening"
+          "2\u20138 \u00b0C. Do not freeze."
         ],
         [
           "Current lot",
@@ -4803,16 +5053,21 @@
         ],
         [
           "Release",
-          "99.47%"
+          "Certificate not published"
+        ],
+        [
+          "Container",
+          "Nasal spray bottle"
         ]
       ],
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
       "unavailableReason": null,
-      "available": 34,
-      "stockStatus": "ok",
-      "shopVisible": true
+      "available": 0,
+      "stockStatus": "out",
+      "shopVisible": true,
+      "stockThreshold": 5
     },
     {
       "id": "T25",
@@ -5294,6 +5549,460 @@
       "stockStatus": "out",
       "shopVisible": false,
       "shopNote": "Hidden from public shop."
+    },
+    {
+      "id": "ELR5",
+      "sku": "ELR5",
+      "family": "pgl-el1",
+      "familySlug": "pgl-el1",
+      "slug": "pgl-el1-elr5",
+      "name": "PGL-EL1",
+      "size": "5 mg",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
+      "category": "documented",
+      "hero": false,
+      "purity": "Pending",
+      "lot": "HK-EL05",
+      "image": "/img/pgl-el1-5.jpg?v=30",
+      "price": 150,
+      "stock": 0,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5,
+      "panel": "Pending",
+      "useClass": "research",
+      "related": [
+        "TR10",
+        "ELR5-TR10"
+      ],
+      "specs": [
+        [
+          "Public name",
+          "PGL-EL1"
+        ],
+        [
+          "Ops SKU",
+          "ELR5"
+        ],
+        [
+          "Net content",
+          "5 mg"
+        ],
+        [
+          "Form",
+          "Dried research material in a clear glass vial"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Storage",
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
+        ],
+        [
+          "Current lot",
+          "HK-EL05"
+        ],
+        [
+          "Release",
+          "Certificate not published"
+        ]
+      ],
+      "cost": null,
+      "pricePlaceholder": false,
+      "releaseState": "live",
+      "shopVisible": true,
+      "components": []
+    },
+    {
+      "id": "ELR10",
+      "sku": "ELR10",
+      "family": "pgl-el1",
+      "familySlug": "pgl-el1",
+      "slug": "pgl-el1-elr10",
+      "name": "PGL-EL1",
+      "size": "10 mg",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
+      "category": "documented",
+      "hero": false,
+      "purity": "Pending",
+      "lot": "HK-EL10",
+      "image": "/img/pgl-el1-10.jpg?v=30",
+      "price": 225,
+      "stock": 0,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5,
+      "panel": "Pending",
+      "useClass": "research",
+      "related": [
+        "TR20",
+        "ELR10-TR20"
+      ],
+      "specs": [
+        [
+          "Public name",
+          "PGL-EL1"
+        ],
+        [
+          "Ops SKU",
+          "ELR10"
+        ],
+        [
+          "Net content",
+          "10 mg"
+        ],
+        [
+          "Form",
+          "Dried research material in a clear glass vial"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Storage",
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
+        ],
+        [
+          "Current lot",
+          "HK-EL10"
+        ],
+        [
+          "Release",
+          "Certificate not published"
+        ]
+      ],
+      "cost": null,
+      "pricePlaceholder": false,
+      "releaseState": "live",
+      "shopVisible": true,
+      "components": []
+    },
+    {
+      "id": "ELR5-TR10",
+      "sku": "ELR5-TR10",
+      "family": "pgl-el1-pair",
+      "familySlug": "pgl-el1-pair",
+      "slug": "pgl-el1-pair-elr5-tr10",
+      "name": "PGL-EL1 + PGL-GI1",
+      "size": "10 mg + 5 mg",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
+      "category": "documented",
+      "hero": false,
+      "purity": "Pending",
+      "lot": "HK-PR15",
+      "image": "/img/pair-10-5.jpg?v=30",
+      "price": 174,
+      "stock": 0,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5,
+      "panel": "Pending",
+      "useClass": "research",
+      "related": [
+        "ELR5",
+        "TR10"
+      ],
+      "specs": [
+        [
+          "Public name",
+          "PGL-EL1 + PGL-GI1"
+        ],
+        [
+          "Ops SKU",
+          "ELR5-TR10"
+        ],
+        [
+          "Net content",
+          "10 mg + 5 mg"
+        ],
+        [
+          "Form",
+          "Dried research material in a clear glass vial"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Storage",
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
+        ],
+        [
+          "Current lot",
+          "HK-PR15"
+        ],
+        [
+          "Release",
+          "Certificate not published"
+        ],
+        [
+          "Pair",
+          "PGL-GI1 10 mg + PGL-EL1 5 mg. Two vials. Not mixed."
+        ]
+      ],
+      "cost": null,
+      "pricePlaceholder": false,
+      "releaseState": "live",
+      "shopVisible": true,
+      "components": [
+        "TR10",
+        "ELR5"
+      ]
+    },
+    {
+      "id": "ELR5-TR20",
+      "sku": "ELR5-TR20",
+      "family": "pgl-el1-pair",
+      "familySlug": "pgl-el1-pair",
+      "slug": "pgl-el1-pair-elr5-tr20",
+      "name": "PGL-EL1 + PGL-GI1",
+      "size": "20 mg + 5 mg",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
+      "category": "documented",
+      "hero": false,
+      "purity": "Pending",
+      "lot": "HK-PR25",
+      "image": "/img/pair-20-5.jpg?v=30",
+      "price": 190,
+      "stock": 0,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5,
+      "panel": "Pending",
+      "useClass": "research",
+      "related": [
+        "ELR5",
+        "TR20"
+      ],
+      "specs": [
+        [
+          "Public name",
+          "PGL-EL1 + PGL-GI1"
+        ],
+        [
+          "Ops SKU",
+          "ELR5-TR20"
+        ],
+        [
+          "Net content",
+          "20 mg + 5 mg"
+        ],
+        [
+          "Form",
+          "Dried research material in a clear glass vial"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Storage",
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
+        ],
+        [
+          "Current lot",
+          "HK-PR25"
+        ],
+        [
+          "Release",
+          "Certificate not published"
+        ],
+        [
+          "Pair",
+          "PGL-GI1 20 mg + PGL-EL1 5 mg. Two vials. Not mixed."
+        ]
+      ],
+      "cost": null,
+      "pricePlaceholder": false,
+      "releaseState": "live",
+      "shopVisible": true,
+      "components": [
+        "TR20",
+        "ELR5"
+      ]
+    },
+    {
+      "id": "ELR10-TR20",
+      "sku": "ELR10-TR20",
+      "family": "pgl-el1-pair",
+      "familySlug": "pgl-el1-pair",
+      "slug": "pgl-el1-pair-elr10-tr20",
+      "name": "PGL-EL1 + PGL-GI1",
+      "size": "20 mg + 10 mg",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
+      "category": "documented",
+      "hero": false,
+      "purity": "Pending",
+      "lot": "HK-PR210",
+      "image": "/img/pair-20-10.jpg?v=30",
+      "price": 265,
+      "stock": 0,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5,
+      "panel": "Pending",
+      "useClass": "research",
+      "related": [
+        "ELR10",
+        "TR20"
+      ],
+      "specs": [
+        [
+          "Public name",
+          "PGL-EL1 + PGL-GI1"
+        ],
+        [
+          "Ops SKU",
+          "ELR10-TR20"
+        ],
+        [
+          "Net content",
+          "20 mg + 10 mg"
+        ],
+        [
+          "Form",
+          "Dried research material in a clear glass vial"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Storage",
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
+        ],
+        [
+          "Current lot",
+          "HK-PR210"
+        ],
+        [
+          "Release",
+          "Certificate not published"
+        ],
+        [
+          "Pair",
+          "PGL-GI1 20 mg + PGL-EL1 10 mg. Two vials. Not mixed."
+        ]
+      ],
+      "cost": null,
+      "pricePlaceholder": false,
+      "releaseState": "live",
+      "shopVisible": true,
+      "components": [
+        "TR20",
+        "ELR10"
+      ]
+    },
+    {
+      "id": "ELR10-TR30",
+      "sku": "ELR10-TR30",
+      "family": "pgl-el1-pair",
+      "familySlug": "pgl-el1-pair",
+      "slug": "pgl-el1-pair-elr10-tr30",
+      "name": "PGL-EL1 + PGL-GI1",
+      "size": "30 mg + 10 mg",
+      "form": "Dried research material in a clear glass vial",
+      "appearance": "Clear glass vial",
+      "storage": "\u221220 \u00b0C long term. Desiccated. Protected from light.",
+      "category": "documented",
+      "hero": false,
+      "purity": "Pending",
+      "lot": "HK-PR310",
+      "image": "/img/pair-30-10.jpg?v=30",
+      "price": 279,
+      "stock": 0,
+      "available": 0,
+      "stockStatus": "out",
+      "stockThreshold": 5,
+      "panel": "Pending",
+      "useClass": "research",
+      "related": [
+        "ELR10",
+        "TR30"
+      ],
+      "specs": [
+        [
+          "Public name",
+          "PGL-EL1 + PGL-GI1"
+        ],
+        [
+          "Ops SKU",
+          "ELR10-TR30"
+        ],
+        [
+          "Net content",
+          "30 mg + 10 mg"
+        ],
+        [
+          "Form",
+          "Dried research material in a clear glass vial"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Vial",
+          "Clear glass"
+        ],
+        [
+          "Storage",
+          "\u221220 \u00b0C long term. Desiccated. Protected from light."
+        ],
+        [
+          "Current lot",
+          "HK-PR310"
+        ],
+        [
+          "Release",
+          "Certificate not published"
+        ],
+        [
+          "Pair",
+          "PGL-GI1 30 mg + PGL-EL1 10 mg. Two vials. Not mixed."
+        ]
+      ],
+      "cost": null,
+      "pricePlaceholder": false,
+      "releaseState": "live",
+      "shopVisible": true,
+      "components": [
+        "TR30",
+        "ELR10"
+      ]
     }
   ],
   "skuIndex": {
@@ -5358,16 +6067,22 @@
     "LC30": 58,
     "CRN30": 59,
     "SCBD": 60,
-    "CBD30": 61
+    "CBD30": 61,
+    "ELR5": 62,
+    "ELR10": 63,
+    "ELR5-TR10": 64,
+    "ELR5-TR20": 65,
+    "ELR10-TR20": 66,
+    "ELR10-TR30": 67
   },
   "homeOffers": [
     "pgl-gic1",
     "pgl-gi1",
+    "pgl-el1",
+    "pgl-el1-pair",
     "bpc-tb",
     "tesamorelin",
     "pgl-g1",
-    "bpc-157",
-    "glow",
-    "ghk-cu"
+    "bpc-157"
   ]
 }

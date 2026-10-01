@@ -5,7 +5,7 @@
     user: null,
     catalog: null,
     copy: null,
-    cart: JSON.parse(localStorage.getItem("hkl_cart") || "[]"),
+    cart: [],
     aff: (localStorage.getItem("hkl_aff") || "").toUpperCase(),
     gateOk: localStorage.getItem("hkl_gate") === "1",
     captureOk: localStorage.getItem("hkl_capture") === "1",
@@ -22,9 +22,43 @@
       ? null
       : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 
+  function cartStorageKey() {
+    return state.user && state.user.id ? "hkl_cart_" + state.user.id : null;
+  }
+
+  function paintCartCount() {
+    const el = $("#cartCount");
+    if (!el) return;
+    const n = state.user ? state.cart.reduce((a, l) => a + (Number(l.qty) || 0), 0) : 0;
+    el.textContent = n ? String(n) : "";
+    el.style.display = n ? "" : "none";
+  }
+
+  function loadUserCart() {
+    localStorage.removeItem("hkl_cart");
+    if (!state.user || !state.user.id) {
+      state.cart = [];
+      paintCartCount();
+      return;
+    }
+    try {
+      const raw = JSON.parse(localStorage.getItem(cartStorageKey()) || "[]");
+      state.cart = Array.isArray(raw) ? raw : [];
+    } catch {
+      state.cart = [];
+    }
+    paintCartCount();
+  }
+
   function saveCart() {
-    localStorage.setItem("hkl_cart", JSON.stringify(state.cart));
-    $("#cartCount").textContent = state.cart.reduce((a, l) => a + l.qty, 0);
+    localStorage.removeItem("hkl_cart");
+    if (!state.user || !state.user.id) {
+      state.cart = [];
+      paintCartCount();
+      return;
+    }
+    localStorage.setItem(cartStorageKey(), JSON.stringify(state.cart));
+    paintCartCount();
   }
 
   function toast(msg) {
@@ -183,7 +217,7 @@
           ${vars
             .map(
               (v) =>
-                `<a class="dose" href="/product/${f.slug}?sku=${encodeURIComponent(v.sku)}" data-link>${v.size}</a>`
+                `<a class="dose ${((v.available != null ? v.available : v.stock) <= 0) ? "out" : ""}" href="/product/${f.slug}?sku=${encodeURIComponent(v.sku)}" data-link>${v.size}</a>`
             )
             .join("")}
         </div>
@@ -193,6 +227,47 @@
         ${priceBlock(from, range)}
       </div>
     </article>`;
+  }
+
+
+
+  function specRows(p, about) {
+    const skip = new Set(["NA", "Not published on the storefront", ""]);
+    const rows = (p.specs || []).filter((row) => row && !skip.has(String(row[1] || "").trim()));
+    if (!rows.some((row) => row[0] === "Use")) {
+      rows.push(["Use", (about && about.use) || "Research use only. Not for diagnostic or therapeutic use."]);
+    }
+    const comps = ((about && about.components) || []).filter(Boolean);
+    if (comps.length > 1 && !rows.some((row) => row[0] === "Components" || row[0] === "Pair")) {
+      rows.push(["Components", comps.join(" · ")]);
+    }
+    return rows;
+  }
+
+  function categoryName(p) {
+    const id = p.category || "";
+    if (id === "blends") return "Documented blends";
+    if (id === "serums") return "Research serums";
+    return "Documented compounds";
+  }
+
+  function familyBlurb(fam) {
+    const body = (fam && fam.about && fam.about.body) || (fam && fam.blurb) || "";
+    return body;
+  }
+
+  function sourceLinks(fam) {
+    const rows = (fam && fam.sources) || [];
+    if (!rows.length) return "";
+    return `<p class="sources">${rows.map((r) => `<a href="${r.href}" rel="noopener noreferrer">${r.label}</a>`).join(" · ")}</p>`;
+  }
+
+
+  function faqAnswer(f) {
+    if (f.q === "Where are the certificates?") {
+      return `Search lots on <a href="/certificates" data-link>Certificates</a>. Each vial carries its own QR. The QR opens this site’s lot page, not a third-party laboratory. The certificate file attaches when that lot is accepted.`;
+    }
+    return f.a;
   }
 
   function home() {
@@ -216,44 +291,27 @@
         <div class="kicker">Helix King Labs</div>
         <h1>${copy.headline}</h1>
         <p class="proof">${copy.proof}</p>
-        <p class="hard">${copy.number}</p>
         <div class="hero-actions">
-          <a class="btn" href="/product/${heroFam ? heroFam.slug : hero.slug}" data-link>Shop ${hero.name} ${hero.size}</a>
-          <a class="btn ghost" href="/shop" data-link>Open the catalog</a>
+          <a class="btn" href="/shop" data-link>Open the catalog</a>
         </div>
       </div>
     </section>
     <section class="section">
       <div class="wrap">
-        <div class="kicker">On the bench</div>
-        <h2>Live families</h2>
-        <p class="lede">PGL-GIC1, PGL-GI1, Wolverine, Tesamorelin first. PGL-G1, BPC-157, GLOW, GHK-Cu next. Pick a fill on the card to open that vial.</p>
+        <h2>Favorite research products</h2>
+        <p class="lede home-names desk">${featured.map((f) => f.name).join(" · ")}</p>
+        <p class="lede home-names mob">${featured.slice(0, 4).map((f) => f.name).join(" · ")}</p>
         <div class="grid cards home-cards">${featured.map(familyCard).join("")}</div>
       </div>
     </section>
     <section class="section">
       <div class="wrap">
-        <div class="kicker">Catalog</div>
-        <h2>Shop by class</h2>
-        <p class="lede">Research vials only. Cosmetic, tallow, BAC, and wellness lots stay off the shop. Nothing on this catalog ships as a mixed solution.</p>
-        <div class="grid cats">
-          ${state.catalog.categories
-            .map(
-              (c) => `<a class="cat-tile" href="/shop?cat=${c.id}" data-link>
-              <h3>${c.name}</h3><p>${c.blurb}</p></a>`
-            )
-            .join("")}
-        </div>
-      </div>
-    </section>
-    <section class="section">
-      <div class="wrap">
-        <div class="kicker">Gate language, in plain sentences</div>
+        <div class="kicker">FAQ</div>
         <h2>Questions</h2>
         <div class="faq">
           ${state.copy.faq
             .map(
-              (f) => `<details><summary>${f.q}</summary><p>${f.a}</p></details>`
+              (f) => `<details><summary>${f.q}</summary><p>${faqAnswer(f)}</p></details>`
             )
             .join("")}
         </div>
@@ -262,13 +320,13 @@
     <section class="section">
       <div class="wrap capture">
         <div>
-          <div class="kicker">List</div>
-          <h2>Lot alerts</h2>
-          <p class="lede">Leave an email for lot alerts and the library link.</p>
+          <div class="kicker">Updates</div>
+          <h2>New shipments</h2>
+          <p class="lede">Leave an email for new shipments, new research materials, and special promotions.</p>
         </div>
         <form id="homeCapture">
           <input type="email" name="email" placeholder="Email" required />
-          <button class="btn" type="submit">Get lot alerts</button>
+          <button class="btn" type="submit">Get updates</button>
         </form>
       </div>
     </section>`;
@@ -281,7 +339,7 @@
     return `<section class="page wrap">
       <div class="kicker">Catalog</div>
       <h1>${label ? label.name : "Full catalog"}</h1>
-      <p class="lede">Documented research peptides, grouped by compound. One photo per family. Tap a fill to open that vial. Selank and Semax stay. BAC water and cosmetic lots stay off this catalog.</p>
+      <p class="lede">Documented research peptides with lot and COA information.</p>
       <div class="badges" style="margin-bottom:22px">
         <a class="badge" href="/shop" data-link>All</a>
         ${state.catalog.categories
@@ -313,13 +371,14 @@
         <div>
           <div class="kicker">${classLabel}</div>
           <h1>${p.name}</h1>
-          <p class="hard">${p.size} · ${p.form}</p>
+          <p class="hard">${p.size} · ${categoryName(p)}</p>
           <div class="sku-line">Lot ${p.lot}</div>
           <div class="dose-row" aria-label="Strengths" id="pdpDoses">
             ${vars
               .map((v) => {
                 const href = `/product/${v.familySlug || fam.slug || p.familySlug}?sku=${v.sku}`;
-                return `<a class="dose ${v.sku === p.sku ? "on" : ""}" href="${href}" data-sku="${v.sku}">${v.size}</a>`;
+                const gone = (v.available != null ? v.available : v.stock) <= 0;
+                return `<a class="dose ${v.sku === p.sku ? "on" : ""} ${gone ? "out" : ""}" href="${href}" data-sku="${v.sku}">${v.size}</a>`;
               })
               .join("")}
           </div>
@@ -346,40 +405,24 @@
               ? "Out of stock"
               : "Add " + p.name + " · " + p.size
           }</button>
+          ${((p.available != null ? p.available : p.stock) <= 0) ? `<p class="hard">Sold out. This fill cannot be added until a lot is accepted.</p>` : ""}
           ${
             state.user
               ? ""
               : `<p class="hard">Sign in to add this vial. First recorded order takes HELIX10 unless an affiliate code is already on the cart.</p>`
           }
-          <div class="tiers">
-            HELIX10 is first-order only. An affiliate code replaces it. They do not stack. Free shipping over $199 after discounts.
-          </div>
+          <div class="tiers">${familyBlurb(fam)}${sourceLinks(fam)}</div>
           <table class="spec">
-            ${(p.specs || [])
+            ${specRows(p, about)
               .map((row) => `<tr><th>${row[0]}</th><td>${row[1]}</td></tr>`)
               .join("")}
           </table>
           <div class="cert-box">
             <h3>Lot file</h3>
-            <p>Certificates publish when testing is complete. Methods are listed on the testing page.</p>
+            <p>Certificate not published. The file attaches when this lot is accepted. The vial QR opens this page, not a third-party laboratory.</p>
             <p style="margin-top:10px"><a href="/certificates" data-link>Certificates</a> · <a href="/testing" data-link>Testing methods</a></p>
           </div>
         </div>
-      </div>
-      <div class="about-panel">
-        <div class="kicker">About this lot</div>
-        <h2>${about.ref || p.name}</h2>
-        <p class="lede">${about.body || ""}</p>
-        <table class="spec">
-          <tr><th>Ref</th><td>${about.ref || p.name}</td></tr>
-          <tr><th>Class</th><td>${about.class || classLabel}</td></tr>
-          <tr><th>CAS</th><td>${about.cas || "NA"}</td></tr>
-          <tr><th>Formula</th><td>${about.formula || "NA"}</td></tr>
-          <tr><th>M.W.</th><td>${about.mw || "NA"}</td></tr>
-          <tr><th>Purity</th><td>${p.purity} · ${about.purityNote || "HPLC"}</td></tr>
-          <tr><th>Use</th><td>${about.use || "Research use only. Not for diagnostic or therapeutic use."}</td></tr>
-          <tr><th>Components</th><td>${(about.components || [p.name]).join(" · ")}</td></tr>
-        </table>
       </div>
       <div class="reviews" id="reviewBlock">
         <div class="kicker">Verified purchase reviews</div>
@@ -537,11 +580,16 @@
   function about() {
     return `<section class="page wrap prose">
       <div class="kicker">About</div>
-      <h1>A U.S. research catalog with a lot on every vial.</h1>
-      <p>Helix King Labs supplies premium research peptides for laboratory work. Each vial on this catalog is labeled with the compound name, fill, and lot. We ship dried research material only. Mixed solutions, pens, and research water are not on the shop.</p>
-      <p>Quality is the point. Lots are held to a written testing panel. Certificates publish on this domain when a lot is accepted. The QR on the vial opens <span class="mono">/testing?lot=XXXX</span> here — not a third-party lab page.</p>
+      <h1>A research catalog with a lot and COA on every vial.</h1>
+      <p>Helix King Labs supplies premium research peptides for laboratory work. Each vial on this catalog is labeled with the compound name, fill, and lot. We ship dried research material only. Mixed solutions, pens, and research water are not available.</p>
+      <p>Quality is the point. Lots are held to a written testing panel. Certificates publish on this domain when a lot is accepted. The QR on the vial opens here — not a third-party lab page.</p>
       <p>We are proud to support U.S. research buyers. Helix King Labs is not a clinic and not a pharmacy. Nothing on this site is a treatment, a protocol, or a claim to diagnose, cure, or prevent disease.</p>
-      <p>Contact <a href="mailto:info@helixkinglabs.com">info@helixkinglabs.com</a>. Research room: <a href="https://t.me/+gk0d_zGjGORkNDc5" rel="noopener noreferrer">Telegram</a>. Brand: <a href="https://x.com/HelixKingLabs" rel="noopener noreferrer">@HelixKingLabs on X</a> and <a href="https://www.instagram.com/HelixKingLabs/" rel="noopener noreferrer">Instagram</a>.</p>
+      <div class="social-row" aria-label="Contact">
+        <a href="mailto:info@helixkinglabs.com" aria-label="Email"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></span>Email</a>
+        <a href="https://t.me/+gk0d_zGjGORkNDc5" rel="noopener noreferrer" aria-label="Telegram"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 5 3 12l6 2 2 6 3-4 5 4z"/></svg></span>Telegram</a>
+        <a href="https://www.instagram.com/HelixKingLabs/" rel="noopener noreferrer" aria-label="Instagram"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/></svg></span>Instagram</a>
+        <a href="https://x.com/HelixKingLabs" rel="noopener noreferrer" aria-label="X"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></span>X</a>
+      </div>
     </section>`;
   }
 
@@ -603,8 +651,9 @@
       <h1>Research concentration calculator</h1>
       <p>Laboratory arithmetic only. Enter the milligrams on the vial and the milliliters of diluent. The page returns concentration. It does not recommend an amount, a schedule, or use on a person or an animal. Helix King Labs does not sell mixed product.</p>
       <form class="tool-form" id="calcForm" onsubmit="return false">
-        <label>Vial contents (mg)<input id="cMg" type="number" step="0.01" value="10" /></label>
-        <label>Diluent volume (mL)<input id="cMl" type="number" step="0.1" value="2" /></label>
+        <label>Vial contents (mg)<input id="cMg" type="number" step="0.01" min="0" value="20" /></label>
+        <label>Diluent volume (mL)<input id="cMl" type="number" step="0.01" min="0" value="2" /></label>
+        <label>Amount to draw (mg)<input id="cDose" type="number" step="0.01" min="0" value="2" /></label>
       </form>
       <div class="calc-out" id="calcOut"></div>
       <p>Concentration = mg ÷ mL. Prefer the tested milligram figure from the lot certificate when one exists.</p>
@@ -672,10 +721,16 @@
           return;
         }
         const conc = mg / ml;
-        out.innerHTML = `<p>Concentration</p><strong>${conc.toFixed(3)} mg/mL</strong>
+        let draw = "";
+        if (dose > 0 && conc > 0) {
+          const mlDraw = dose / conc;
+          const units = mlDraw * 100;
+          draw = `<p>Draw</p><strong>${mlDraw.toFixed(2)} mL · ${units.toFixed(0)} units</strong><p>Units assume a U-100 syringe, 100 units per 1 mL.</p>`;
+        }
+        out.innerHTML = `<p>Material strength</p><strong>${conc.toFixed(2)} mg/mL</strong>${draw}
           <p>Research arithmetic only. Nothing on this page is a use instruction.</p>`;
       };
-      ["cMg", "cMl"].forEach((id) => {
+      ["cMg", "cMl", "cDose"].forEach((id) => {
         const el = $("#" + id);
         if (el) el.addEventListener("input", run);
       });
@@ -755,6 +810,7 @@
         t: "Permitted use",
         b: `<p>You must be 21+ to enter the catalog.</p>
             <p>Documented compounds ship as dried research material for laboratory research only. Not for human or animal consumption. Not a drug. Not a dietary supplement. Not a mixed solution. No protocols are published.</p>
+            <p>Research context on a product page is not an indication, not a direction for use, and not a claim about a person or an animal.</p>
             <p>Helix King Labs is not a clinic and not a 503A or 503B pharmacy.</p>`,
       },
       refunds: {
@@ -806,7 +862,7 @@
             <input name="email" type="email" placeholder="Email" required />
             <input name="password" type="password" placeholder="Password (8+)" required minlength="8" />
             <label class="check"><input type="checkbox" name="age" required /> I am 21 or older.</label>
-            <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms and the refund policy. All sales are final. Documented compounds are research-only. Cosmetics are cosmetics. This is not a clinic or pharmacy.</label>
+            <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms and the refund policy. All sales are final. Documented compounds are research-only. This is not a clinic or pharmacy.</label>
             <button class="btn" type="submit">Create account</button>
             ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleBtn">Continue with Google</button>` : ""}
             ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleBtn">Continue with Apple</button>` : ""}
@@ -851,8 +907,8 @@
               <div>
                 <div>${l.name} · ${l.size}</div>
                 <div class="sub">Lot ${l.lot}${
-                  l.available != null ? " · " + l.available + " on hand" : ""
-                }${l.oversold ? " · over available" : l.stockStatus === "low" ? " · low" : l.stockStatus === "out" ? " · out" : ""}</div>
+                  ""
+                }</div>
                 <div class="qty cart-qty">
                   <button type="button" data-qty-delta="${l.id}" data-delta="-1">−</button>
                   <span class="qty-n">${l.qty}</span>
@@ -877,7 +933,7 @@
         }</span><span>${quote.couponOff ? "−" + money(quote.couponOff) : "—"}</span></div>
         <div><span>Merchandise</span><span>${money(quote.merchandise != null ? quote.merchandise : quote.total)}</span></div>
         <div><span>Shipping${quote.shippingLabel === "Free" ? " · free over $199" : ""}</span><span>${
-          quote.shipping === 0 ? "Free" : "Standard"
+          quote.shipping === 0 ? "Free" : money(quote.shipping)
         }</span></div>
         <div class="grand"><span>Total</span><span>${money(quote.total)}</span></div>
       </div>
@@ -894,7 +950,7 @@
       <p class="lede">One 10% on the cart. An affiliate code replaces HELIX10. Free shipping over $199 after discounts.</p>
       <p class="hard">${(state.site.channels && state.site.channels.publicNote) || "Accounts, pricing, and the cart are live. Checkout is not open yet."}</p>
       <p class="lede">${(state.site.channels && state.site.channels.checkoutHint) || "Your cart stays on this device."}</p>
-      <p class="lede" style="margin-top:12px">Research room: <a href="${(state.site.channels && state.site.channels.telegramInvite) || "https://t.me/+gk0d_zGjGORkNDc5"}" rel="noopener noreferrer">Telegram</a></p>
+
       <button class="btn" id="checkoutBtn" disabled style="margin-top:16px;opacity:.55;cursor:not-allowed">${(state.site.channels && state.site.channels.checkoutLabel) || "Checkout not open"}</button>
       <div id="orderDone"></div>
     </section>`;
@@ -916,7 +972,7 @@
         <p>21+ and permitted use. Email optional. Prices unlock after an account.</p>
         <form id="gateForm">
           <label class="check"><input type="checkbox" name="age" required /> I am 21 or older.</label>
-          <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms. Research materials stay in the lab. Cosmetics stay cosmetics. This is not a clinic or a pharmacy.</label>
+          <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms. Research materials stay in the lab. This is not a clinic or a pharmacy.</label>
           <input type="email" name="email" placeholder="Email (optional)" />
           <div style="margin-top:16px;display:grid;gap:8px">
             <button class="btn" type="submit">Enter Helix King Labs</button>
@@ -1029,6 +1085,7 @@
       api("/api/site").catch(() => ({ channels: state.site.channels })),
     ]);
     state.user = sess.user;
+    loadUserCart();
     state.auth = sess.auth || state.auth;
     state.copy = copy;
     state.catalog = catalog;
@@ -1864,6 +1921,8 @@
       logoutBtn.onclick = async () => {
         await api("/api/auth/logout", { method: "POST", body: {} });
         state.user = null;
+        state.cart = [];
+        paintCartCount();
         toast("Signed out.");
         render();
       };

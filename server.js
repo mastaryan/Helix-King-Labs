@@ -39,7 +39,7 @@ const certificates = JSON.parse(fs.readFileSync(path.join(DATA, "certificates.js
 const copyDeck = JSON.parse(fs.readFileSync(path.join(DATA, "copy-deck.json"), "utf8"));
 const PRICING_CSV = path.join(DATA, "catalog-pricing.csv");
 const INVENTORY_CSV = path.join(DATA, "inventory.csv");
-const STOCK_THRESHOLD = 3;
+const STOCK_THRESHOLD = 5;
 const REVIEWS = path.join(DATA, "reviews.json");
 
 function loadReviews() {
