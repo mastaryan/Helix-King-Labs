@@ -182,11 +182,16 @@
     </a>`;
   }
 
+  function onHand(p) {
+    return p.available != null ? Number(p.available) : Number(p.stock || 0);
+  }
+
   function stockBadge(p) {
-    const n = p.available != null ? p.available : p.stock;
-    const status = p.stockStatus || (n <= 0 ? "out" : n < 3 ? "low" : "ok");
+    const n = onHand(p);
+    const threshold = Number(p.stockThreshold) || 5;
+    const status = n <= 0 ? "out" : n < threshold ? "low" : "ok";
     if (status === "out") return `<span class="badge stock out">Out of stock</span>`;
-    if (status === "low") return `<span class="badge stock low">Low · ${n} on hand</span>`;
+    if (status === "low") return `<span class="badge stock low">Low</span>`;
     return "";
   }
 
@@ -204,9 +209,8 @@
         ? { price: Math.min(...lows) }
         : lead;
     const range = lows.length ? { min: Math.min(...lows), max: Math.max(...lows) } : null;
-    const worst = vars.some((v) => (v.available != null ? v.available : v.stock) <= 0)
-      ? vars.find((v) => (v.available != null ? v.available : v.stock) <= 0)
-      : vars.find((v) => v.stockStatus === "low" || (v.available != null ? v.available : v.stock) < 3);
+    const allOut = vars.length > 0 && vars.every((v) => onHand(v) <= 0);
+    const worst = allOut ? vars[0] : null;
     return `<article class="card">
       <a href="/product/${f.slug}" data-link>
         <div class="ph"><img src="${img}" alt="${f.name}" /></div>
@@ -394,18 +398,20 @@
             <input id="qty" type="number" min="1" max="20" value="1" style="width:72px;min-width:72px;text-align:center" />
             <button type="button" id="qtyPlus">+</button>
           </div>
-          <button class="btn" id="addBtn" ${
-            isPending(p) || !state.user || (p.available != null ? p.available : p.stock) <= 0 ? "disabled" : ""
-          }>${
-            isPending(p)
-              ? "Waiting for testing to complete"
-              : !state.user
-              ? "Sign in to add"
-              : (p.available != null ? p.available : p.stock) <= 0
-              ? "Out of stock"
-              : "Add " + p.name + " · " + p.size
-          }</button>
-          ${((p.available != null ? p.available : p.stock) <= 0) ? `<p class="hard">Sold out. This fill cannot be added until a lot is accepted.</p>` : ""}
+          ${
+            !state.user
+              ? `<a class="btn" href="/account" data-link>Sign in to add</a>`
+              : `<button class="btn" id="addBtn" ${
+                  isPending(p) || onHand(p) <= 0 ? "disabled" : ""
+                }>${
+                  isPending(p)
+                    ? "Waiting for testing to complete"
+                    : onHand(p) <= 0
+                    ? "Out of stock"
+                    : "Add " + p.name + " · " + p.size
+                }</button>`
+          }
+          ${state.user && onHand(p) <= 0 ? `<p class="hard">Sold out. This fill cannot be added until a lot is accepted.</p>` : ""}
           ${
             state.user
               ? ""
