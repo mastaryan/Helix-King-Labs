@@ -12,21 +12,6 @@
       "terms": true,
       "created": "2026-09-28T15:11:28.201Z",
       "role": "ops"
-    },
-    {
-      "id": "1d631339e27caa185dbd14f1dbcf7ec920dee30aa8bfa894",
-      "email": "test@gmail.com",
-      "name": "Ryan",
-      "salt": "9190de46b2e3f68b28a5bdd7bbc0484c",
-      "derived": "3fdcd3cd6ace62964030e8678eb095ecf44ef9091941a6dfedfa3a30895fb020",
-      "provider": "password",
-      "providers": [
-        "password"
-      ],
-      "firstOrderUsed": false,
-      "age": true,
-      "terms": true,
-      "created": "2026-10-01T04:00:10.375Z"
     }
   ],
   "sessions": [
@@ -34,11 +19,6 @@
       "id": "918ac433ed8d58652356760e5e418d3acc0fb49ae724ff12",
       "userId": "13bda7df67ee9bb2785dee87f5e8a1083ec946694a1db046",
       "exp": 1791817888533
-    },
-    {
-      "id": "d6a5e457722e0e1a42f6a2b005225009091da880eb748c0d",
-      "userId": "1d631339e27caa185dbd14f1dbcf7ec920dee30aa8bfa894",
-      "exp": 1792036810378
     }
   ],
   "captures": [],
@@ -47,14 +27,6 @@
     "::ffff:127.0.0.1:reg": {
       "n": 1,
       "t": 1790608288031
-    },
-    "::1:login": {
-      "n": 4,
-      "t": 1790827189250
-    },
-    "::1:reg": {
-      "n": 1,
-      "t": 1790827210294
     }
   },
   "affiliates": []
