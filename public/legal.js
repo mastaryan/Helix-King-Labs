@@ -355,7 +355,6 @@
         ${contactBlock()}
         <p class="legal-accept">Acceptance of an order is acceptance of this instrument and of the instruments incorporated into the Terms.</p>
       </footer>
-      <nav class="legal-related" aria-label="Related instruments">${links}</nav>
     </article>`;
   }
 

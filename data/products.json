@@ -163,11 +163,9 @@
       "blurb": "A selective, long-acting amylin receptor agonist supplied as dried research material. Listed by the research name PGL-EL1 only. Third-party ",
       "panel": "Pending",
       "variantIds": [
-        "ELR5",
         "ELR10"
       ],
       "sizes": [
-        "5 mg",
         "10 mg"
       ],
       "cardImage": "/img/pgl-el1-10.jpg?v=30",
@@ -212,9 +210,9 @@
         "30 mg + 10 mg"
       ],
       "cardImage": "/img/pair-10-5.jpg?v=30",
-      "featured": true,
+      "featured": false,
       "releaseState": "live",
-      "shopVisible": true,
+      "shopVisible": false,
       "about": {
         "ref": "PGL-EL1 + PGL-GI1",
         "class": "Two-vial research pair. Not mixed.",
@@ -5618,7 +5616,7 @@
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true,
+      "shopVisible": false,
       "components": []
     },
     {
@@ -5637,7 +5635,7 @@
       "purity": "Pending",
       "lot": "HK-EL10",
       "image": "/img/pgl-el1-10.jpg?v=30",
-      "price": 225,
+      "price": 125,
       "stock": 0,
       "available": 0,
       "stockStatus": "out",
@@ -5686,7 +5684,7 @@
           "Certificate not published"
         ]
       ],
-      "cost": null,
+      "cost": 27,
       "pricePlaceholder": false,
       "releaseState": "live",
       "shopVisible": true,
@@ -5764,7 +5762,7 @@
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true,
+      "shopVisible": false,
       "components": [
         "TR10",
         "ELR5"
@@ -5842,7 +5840,7 @@
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true,
+      "shopVisible": false,
       "components": [
         "TR20",
         "ELR5"
@@ -5920,7 +5918,7 @@
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true,
+      "shopVisible": false,
       "components": [
         "TR20",
         "ELR10"
@@ -5998,7 +5996,7 @@
       "cost": null,
       "pricePlaceholder": false,
       "releaseState": "live",
-      "shopVisible": true,
+      "shopVisible": false,
       "components": [
         "TR30",
         "ELR10"
@@ -6076,13 +6074,13 @@
     "ELR10-TR30": 67
   },
   "homeOffers": [
+    "pgl-el1",
     "pgl-gic1",
     "pgl-gi1",
-    "pgl-el1",
-    "pgl-el1-pair",
     "bpc-tb",
     "tesamorelin",
     "pgl-g1",
-    "bpc-157"
+    "bpc-157",
+    "ghk-cu"
   ]
 }

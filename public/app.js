@@ -431,38 +431,11 @@
           </div>
         </div>
       </div>
-      <div class="reviews" id="reviewBlock">
-        <div class="kicker">Verified purchase</div>
-        <h2>Rating</h2>
-        ${
-          reviews.length
-            ? `<p class="lede">${"●".repeat(Math.round(reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length))}${"○".repeat(5 - Math.round(reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length))} · ${reviews.length} verified purchase${reviews.length === 1 ? "" : "s"}</p>
-               <div class="rating-rows">${reviews
-                 .map(
-                   (r) => `<p class="review-meta">${"●".repeat(r.rating)}${"○".repeat(5 - r.rating)} · ${r.size} · Verified purchase</p>`
-                 )
-                 .join("")}</div>`
-            : `<p class="lede">No verified purchase rating on this fill yet.</p>`
-        }
-        ${
-          canReview
-            ? `<form id="reviewForm" data-sku="${p.sku}">
-                <label class="check">Stars
-                  <select name="rating" aria-label="Star rating">
-                    <option value="5">5</option><option value="4">4</option>
-                    <option value="3">3</option><option value="2">2</option><option value="1">1</option>
-                  </select>
-                </label>
-                <button class="btn" type="submit">Save rating</button>
-              </form>`
-            : `<p class="hard">A 1–5 rating unlocks after a recorded order of ${p.name} ${p.size}. No written review.</p>`
-        }
-      </div>
       ${
         related.length
           ? `<div style="margin-top:56px">
-              <div class="kicker">Related rail</div>
-              <h2>Companions</h2>
+              <div class="kicker">Related products</div>
+              <h2>Also on the catalog</h2>
               <div class="grid cards" style="margin-top:18px">${related.map(productCard).join("")}</div>
             </div>`
           : ""
@@ -1711,7 +1684,7 @@
       return;
     }
     box.classList.remove("hidden");
-    box.innerHTML = `<p>Necessary cookies run the gate, the cart, and the account. Google Tag Manager and GA4 page views load on this site. The Meta Pixel is off. <a href="/privacy" data-link>Privacy notice</a>.</p>
+    box.innerHTML = `<p>A necessary cookie keeps the gate, the cart, and the account. Optional measurement is off until you allow it. <a href="/privacy" data-link>Privacy notice</a>.</p>
       <div class="consent-actions">
         <button class="btn" type="button" id="cAccept">Accept analytics</button>
         <button class="btn ghost" type="button" id="cReject">Necessary only</button>
