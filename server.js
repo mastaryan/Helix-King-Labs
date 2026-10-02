@@ -12,14 +12,13 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const { URL } = require("node:url");
 const authx = require("./auth-extra");
-const QRCode = require("./node_modules/qrcode/lib/core/qrcode");
-const QRLevel = require("./node_modules/qrcode/lib/core/error-correction-level");
+const QRCode = require("qrcode");
 
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, "public");
 const DATA = path.join(ROOT, "data");
 const STORE = path.join(ROOT, "data", "store.json");
-const PORT = Number(process.env.PORT || 4173);
+const PORT = Number(process.env.PORT || 20011);
 const SESSION_HOURS = 14 * 24;
 const SECRET = process.env.HKL_SECRET || crypto.randomBytes(32).toString("hex");
 const PUBLIC_ORIGIN = String(process.env.HKL_PUBLIC_ORIGIN || "").replace(/\/$/, "");
@@ -1647,7 +1646,7 @@ async function api(req, res, url) {
     const lot = String(url.searchParams.get("lot") || "").trim().slice(0, 40);
     if (!lot) return send(res, 400, { error: "lot" });
     const target = "https://helixkinglabs.com/testing?lot=" + encodeURIComponent(lot);
-    const qr = QRCode.create(target, { errorCorrectionLevel: QRLevel.M });
+    const qr = await QRCode.create(target, { errorCorrectionLevel: "M" });
     return send(res, 200, {
       url: target,
       size: qr.modules.size,
@@ -2179,6 +2178,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`Helix King Labs storefront shell → http://localhost:${PORT}`);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Helix King Labs storefront shell → http://0.0.0.0:${PORT}`);
 });
