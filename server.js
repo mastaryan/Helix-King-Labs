@@ -261,7 +261,7 @@ function publicChannels() {
     checkoutLabel: c.checkoutLabel || "Checkout not open",
     checkoutHint: c.checkoutHint,
     telegramInvite: c.telegramInvite || "https://t.me/+gk0d_zGjGORkNDc5",
-    checkoutOpen: false,
+    checkoutOpen: Boolean(process.env.NOWPAYMENTS_API_KEY),
   };
 }
 
@@ -1845,7 +1845,7 @@ async function api(req, res, url) {
       lines,
       shipping: 25,
       surcharge: 0,
-      total: Math.round((merchandise + 20) * 100) / 100,
+      total: Math.round((merchandise + 25) * 100) / 100,
       paymentMethod: ["venmo", "cashapp", "crypto"].includes(body.paymentMethod) ? body.paymentMethod : "crypto",
       status: "awaiting_settlement",
       fulfillment: "hold_until_minimum",
@@ -1857,10 +1857,14 @@ async function api(req, res, url) {
       const row = gb.items.find((x) => x.sku === line.sku);
       row.kitsSold = (row.kitsSold || 0) + line.qty;
     }
+    const stored = { ...order, quote: { lines, total: order.total, shipping: 25, surcharge: 0 }, company: "", researchField: user.researchField || "" };
+    if (order.paymentMethod === "crypto") stored.payment = await createNowInvoice(stored);
+    else stored.payment = { provider: order.paymentMethod, handle: order.paymentMethod === "venmo" ? "fibkingpeps" : "FibKingPep", status: "awaiting_confirmation", amount: order.total, note: order.id };
+    order.payment = stored.payment;
     fs.writeFileSync(file, JSON.stringify(gb, null, 2));
-    store.orders.push({ ...order, quote: { lines, total: order.total, shipping: 25, surcharge: 0 }, company: "", researchField: user.researchField || "" });
+    store.orders.push(stored);
     saveStore(store);
-    return send(res, 200, { order });
+    return send(res, 200, { order: stored });
   }
 
   if (method === "POST" && (route === "/api/payments/nowpayments" || route === "/api/pay/nowpayments")) {

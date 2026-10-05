@@ -2358,6 +2358,8 @@
               ? `<p class="lede">${order.id} recorded. <a href="${pay.invoiceUrl}">Pay with crypto</a>. The order ships when the payment is finished.</p>`
               : pay.provider === "venmo"
                 ? `<p class="lede">${order.id} recorded. Venmo @fibkingpeps the total ${money(order.quote && order.quote.total)}. Put ${order.id} in the note. We confirm before anything ships.</p>`
+                : pay.provider === "cashapp"
+                ? `<p class="lede">${order.id} recorded. Cash App $FibKingPep the total ${money(order.quote && order.quote.total)}. Put ${order.id} in the note. We confirm before anything ships.</p>`
                 : `<p class="lede">${order.id} recorded. Crypto invoice is pending the processor key. Nothing ships until payment is finished.</p>`;
           }
           toast("Order recorded. Payment still open.");
@@ -2406,7 +2408,7 @@ document.addEventListener("submit", async (e) => {
     const items = (state.gbCart || []).map((l) => ({ sku: l.sku, qty: l.qty }));
     const res = await api("/api/group-buy/order", { method: "POST", body: { password: "HELIXGB", items, telegram: fd.get("telegram"), paymentMethod: fd.get("paymentMethod") } });
     const note = document.getElementById("gbNote");
-    if (note) note.textContent = res.order ? res.order.id + " recorded. Shipping $25. A line holds until it hits 5 kits and payment is confirmed." : (res.error || "Order failed.");
+    if (note) note.innerHTML = res.order ? res.order.id + " recorded. Shipping $25. " + (res.order.payment && res.order.payment.invoiceUrl ? `<a href="${res.order.payment.invoiceUrl}">Pay with crypto</a>. ` : "Payment holds until confirmed. ") + "A line holds until it hits 5 kits." : (res.error || "Order failed.");
   }
 });
 document.addEventListener("click", (e) => {
