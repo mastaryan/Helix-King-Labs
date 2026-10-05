@@ -911,7 +911,7 @@
             <input name="password" type="password" placeholder="Password (8+)" required minlength="8" />
             <input name="company" type="text" placeholder="Company name" />
             <select name="researchField" required aria-label="Research field">
-              <option value="">Research field</option>
+              <option selected>Independent researcher</option>
               <option>Molecular Biology</option>
               <option>Biochemistry</option>
               <option>Peptide Chemistry</option>
