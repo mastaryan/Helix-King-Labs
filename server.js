@@ -772,7 +772,7 @@ function quoteCart(items, user, opts) {
     coupon = affiliateCode;
     couponOff = Math.round(afterVolume * affRate * 100) / 100;
     discountKind = "affiliate";
-  } else if (user && !user.firstOrderUsed) {
+  } else if (user && !user.firstOrderUsed && afterVolume > 99) {
     coupon = price.firstOrderCoupon || "HELIX10";
     couponOff = Math.round(afterVolume * firstRate * 100) / 100;
     discountKind = "first_order";
@@ -1331,7 +1331,7 @@ async function api(req, res, url) {
     } else {
       order.payment = await createNowInvoice(order);
     }
-    user.firstOrderUsed = true;
+    if (quote.discountKind === "first_order") user.firstOrderUsed = true;
     store.orders.push(order);
     saveStore(store);
     return send(res, 200, { order });

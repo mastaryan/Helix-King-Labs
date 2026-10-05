@@ -417,7 +417,7 @@
           ${
             state.user
               ? ""
-              : `<p class="hard">Sign in to add this vial. First recorded order takes HELIX10 unless an affiliate code is already on the cart.</p>`
+              : `<p class="hard">Sign in to add this vial. HELIX10 applies on a first order over $99 unless an affiliate code is already on the cart.</p>`
           }
           <div class="tiers">${familyBlurb(fam)}${sourceLinks(fam)}</div>
           <table class="spec">
@@ -903,7 +903,7 @@
       <div>
         <div class="kicker">Create account</div>
         <h1>Open the catalog.</h1>
-        <p class="lede">List prices are on the catalog. An account is required to purchase. HELIX10 attaches here.</p>
+        <p class="lede">List prices are on the catalog. An account is required to purchase. HELIX10 applies on a first order over $99.</p>
         <form id="regForm">
           <div class="row-form" style="flex-direction:column;align-items:stretch">
             <input name="name" type="text" placeholder="Name" />
@@ -1001,7 +1001,7 @@
         <div class="grand"><span>Total</span><span>${money(quote.total)}</span></div>
       </div>
       <label class="aff-field">Affiliate code
-        <input id="affCode" type="text" maxlength="16" value="${state.aff || ""}" placeholder="Leave blank for HELIX10 on a first order" />
+        <input id="affCode" type="text" maxlength="16" value="${state.aff || ""}" placeholder="Leave blank for HELIX10 over $99" />
       </label>
       ${
         quote.shipping > 0
@@ -1010,7 +1010,7 @@
             )} more in merchandise.</p>`
           : `<p class="lede">Free shipping is on this order.</p>`
       }
-      <p class="lede">One 10% on the cart. An affiliate code replaces HELIX10. Free shipping over $199 after discounts.</p>
+      <p class="lede">One 10% on the cart. HELIX10 applies on a first order over $99. An affiliate code replaces it. Free shipping over $199 after discounts.</p>
       <form id="payForm" class="tool-form">
         <input name="company" type="text" value="${(state.user && state.user.company) || ""}" placeholder="Company name" />
         <select name="researchField" required aria-label="Research field">
