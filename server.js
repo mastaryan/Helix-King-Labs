@@ -1329,7 +1329,7 @@ async function api(req, res, url) {
         note: order.id,
       };
     } else {
-      order.payment = await createNowInvoice(order);
+      order.payment = await createNowPayment(order, body.network);
     }
     if (quote.discountKind === "first_order") user.firstOrderUsed = true;
     store.orders.push(order);
@@ -1858,7 +1858,7 @@ async function api(req, res, url) {
       row.kitsSold = (row.kitsSold || 0) + line.qty;
     }
     const stored = { ...order, quote: { lines, total: order.total, shipping: 25, surcharge: 0 }, company: "", researchField: user.researchField || "" };
-    if (order.paymentMethod === "crypto") stored.payment = await createNowInvoice(stored);
+    if (order.paymentMethod === "crypto") stored.payment = await createNowPayment(stored, body.network);
     else stored.payment = { provider: order.paymentMethod, handle: order.paymentMethod === "venmo" ? "fibkingpeps" : "FibKingPep", status: "awaiting_confirmation", amount: order.total, note: order.id };
     order.payment = stored.payment;
     fs.writeFileSync(file, JSON.stringify(gb, null, 2));
@@ -1926,30 +1926,26 @@ const RESEARCH_FIELDS = [
   "Pharmacology",
 ];
 
-function createNowInvoice(order) {
+function createNowPayment(order, network) {
   const key = process.env.NOWPAYMENTS_API_KEY;
   if (!key) {
-    return Promise.resolve({
-      provider: "nowpayments",
-      status: "invoice_pending",
-      message: "Crypto checkout is recorded. The invoice appears when the processor key is on the server.",
-    });
+    return Promise.resolve({ provider: "nowpayments", status: "key_missing", message: "Payment key is not on the server." });
   }
   const origin = PUBLIC_ORIGIN || "https://helixkinglabs.com";
+  const payCurrency = network === "solana" ? "usdcsol" : "usdc";
   const payload = JSON.stringify({
     price_amount: order.quote.total,
     price_currency: "usd",
+    pay_currency: payCurrency,
     order_id: order.id,
     order_description: "Helix King Labs research order " + order.id,
     ipn_callback_url: origin + "/api/payments/nowpayments",
-    success_url: origin + "/account?order=" + encodeURIComponent(order.id),
-    cancel_url: origin + "/cart",
   });
   return new Promise((resolve) => {
     const req = https.request(
       {
         hostname: "api.nowpayments.io",
-        path: "/v1/invoice",
+        path: "/v1/payment",
         method: "POST",
         headers: {
           "x-api-key": key,
@@ -1965,9 +1961,13 @@ function createNowInvoice(order) {
             const data = JSON.parse(raw);
             resolve({
               provider: "nowpayments",
-              status: data.invoice_url ? "invoice_ready" : "invoice_pending",
-              invoiceUrl: data.invoice_url || null,
-              invoiceId: data.id || null,
+              status: data.pay_address ? "awaiting_payment" : "payment_failed",
+              paymentId: data.payment_id || null,
+              payAddress: data.pay_address || null,
+              payAmount: data.pay_amount || null,
+              payCurrency: data.pay_currency || payCurrency,
+              network: network === "solana" ? "Solana" : "Ethereum",
+              message: data.message || data.code || null,
             });
           } catch {
             resolve({ provider: "nowpayments", status: "invoice_pending" });

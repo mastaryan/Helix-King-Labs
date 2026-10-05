@@ -1016,7 +1016,9 @@
         <select name="researchField" required aria-label="Research field">
           ${["Independent researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
         </select>
-        <label class="check"><input type="radio" name="paymentMethod" value="crypto" ${state.payMethod !== "venmo" ? "checked" : ""} /> Crypto via NOWPayments</label>
+        <label class="check"><input type="radio" name="paymentMethod" value="crypto" ${state.payMethod !== "venmo" && state.payMethod !== "cashapp" ? "checked" : ""} /> USDC on this page</label>
+        <label class="check"><input type="radio" name="network" value="ethereum" checked /> Ethereum</label>
+        <label class="check"><input type="radio" name="network" value="solana" /> Solana</label>
         <label class="check"><input type="radio" name="paymentMethod" value="venmo" ${state.payMethod === "venmo" ? "checked" : ""} /> Venmo @fibkingpeps</label>
         <label class="check"><input type="radio" name="paymentMethod" value="cashapp" ${state.payMethod === "cashapp" ? "checked" : ""} /> Cash App $FibKingPep</label>
         <label class="check"><input type="checkbox" name="researchAck" required /> Chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</label>
@@ -2354,6 +2356,7 @@
               researchField: fd.get("researchField"),
               researchAck: !!fd.get("researchAck"),
               paymentMethod: fd.get("paymentMethod"),
+              network: fd.get("network"),
             },
           });
           const order = out.order || {};
@@ -2362,13 +2365,13 @@
           saveCart();
           const box = $("#orderDone");
           if (box) {
-            box.innerHTML = pay.invoiceUrl
-              ? `<p class="lede">${order.id} recorded. <a href="${pay.invoiceUrl}">Pay with crypto</a>. The order ships when the payment is finished.</p>`
+            box.innerHTML = pay.payAddress
+              ? `<p class="lede">${order.id}. Pay ${pay.payAmount} ${pay.payCurrency} on ${pay.network} to finish this order.</p><p class="hard">${pay.payAddress}</p><p>The order stays on hold until this payment finishes. Do not send a different coin or network.</p>`
               : pay.provider === "venmo"
                 ? `<p class="lede">${order.id} recorded. Venmo @fibkingpeps the total ${money(order.quote && order.quote.total)}. Put ${order.id} in the note. We confirm before anything ships.</p>`
                 : pay.provider === "cashapp"
                 ? `<p class="lede">${order.id} recorded. Cash App $FibKingPep the total ${money(order.quote && order.quote.total)}. Put ${order.id} in the note. We confirm before anything ships.</p>`
-                : `<p class="lede">${order.id} recorded. Crypto invoice is pending the processor key. Nothing ships until payment is finished.</p>`;
+                : `<p class="lede">${order.id} could not open a payment. ${pay.message || "Check the processor key and restart the app."}</p>`;
           }
           toast("Order recorded. Payment still open.");
         } catch (err) {
