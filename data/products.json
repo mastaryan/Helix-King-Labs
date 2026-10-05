@@ -1392,7 +1392,7 @@
       "purity": "99.41%",
       "lot": "HK-2701",
       "image": "/img/pgl-gic1-10.jpg?v=30",
-      "price": 49,
+      "price": 35,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -1441,7 +1441,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 210
     },
     {
       "id": "RT15",
@@ -1508,7 +1509,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 410
     },
     {
       "id": "RT20",
@@ -1526,7 +1528,7 @@
       "purity": "99.38%",
       "lot": "HK-2702",
       "image": "/img/pgl-gic1-20.jpg?v=30",
-      "price": 79,
+      "price": 45,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -1575,7 +1577,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 270
     },
     {
       "id": "RT30",
@@ -1593,7 +1596,7 @@
       "purity": "99.44%",
       "lot": "HK-2703",
       "image": "/img/pgl-gic1-30.jpg?v=30",
-      "price": 99,
+      "price": 60,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -1642,7 +1645,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 360
     },
     {
       "id": "TR10",
@@ -1660,7 +1664,7 @@
       "purity": "99.36%",
       "lot": "HK-2704",
       "image": "/img/pgl-gi1-10.jpg?v=30",
-      "price": 39,
+      "price": 30,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -1709,7 +1713,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 180
     },
     {
       "id": "TR15",
@@ -1776,7 +1781,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 270
     },
     {
       "id": "TR20",
@@ -1794,7 +1800,7 @@
       "purity": "99.29%",
       "lot": "HK-2705",
       "image": "/img/pgl-gi1-20.jpg?v=30",
-      "price": 55,
+      "price": 35,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -1843,7 +1849,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 210
     },
     {
       "id": "TR30",
@@ -1861,7 +1868,7 @@
       "purity": "99.33%",
       "lot": "HK-2706",
       "image": "/img/pgl-gi1-30.jpg?v=30",
-      "price": 69,
+      "price": 45,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -1910,7 +1917,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 270
     },
     {
       "id": "SM5",
@@ -1977,7 +1985,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 170
     },
     {
       "id": "SM10",
@@ -2044,7 +2053,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 230
     },
     {
       "id": "SM20",
@@ -2111,7 +2121,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 290
     },
     {
       "id": "SM30",
@@ -2178,7 +2189,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 350
     },
     {
       "id": "CGL5",
@@ -2196,7 +2208,7 @@
       "purity": "99.17%",
       "lot": "HK-2718",
       "image": "/img/cgl-1-5.jpg?v=30",
-      "price": 59,
+      "price": 30,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -2245,7 +2257,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 180
     },
     {
       "id": "CGL10",
@@ -2312,7 +2325,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 590
     },
     {
       "id": "BPC5",
@@ -2379,7 +2393,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 170
     },
     {
       "id": "BPC10",
@@ -2397,7 +2412,7 @@
       "purity": "99.34%",
       "lot": "HK-2714",
       "image": "/img/bpc-157-10.jpg?v=30",
-      "price": 49,
+      "price": 25,
       "stock": 2,
       "panel": "12-point",
       "useClass": "research",
@@ -2446,7 +2461,8 @@
       "shopVisible": true,
       "available": 2,
       "stockStatus": "low",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 150
     },
     {
       "id": "BPC20",
@@ -2513,7 +2529,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 470
     },
     {
       "id": "TB5",
@@ -2579,7 +2596,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 230
     },
     {
       "id": "TB10",
@@ -2645,7 +2663,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 410
     },
     {
       "id": "CU50",
@@ -2663,7 +2682,7 @@
       "purity": "99.38%",
       "lot": "HK-2740",
       "image": "/img/ghk-cu-50.jpg?v=30",
-      "price": 29,
+      "price": 25,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -2713,7 +2732,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 150
     },
     {
       "id": "CU100",
@@ -2781,7 +2801,8 @@
       "shopVisible": true,
       "available": 7,
       "stockStatus": "ok",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 290
     },
     {
       "id": "IPA5",
@@ -2847,7 +2868,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 170
     },
     {
       "id": "IPA10",
@@ -2865,7 +2887,7 @@
       "purity": "99.05%",
       "lot": "HK-2741",
       "image": "/img/ipamorelin.jpg?v=30",
-      "price": 49,
+      "price": 30,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -2913,7 +2935,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 180
     },
     {
       "id": "SER5",
@@ -2979,7 +3002,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 210
     },
     {
       "id": "SER10",
@@ -3045,7 +3069,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 350
     },
     {
       "id": "TSM5",
@@ -3111,7 +3136,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 290
     },
     {
       "id": "TSM10",
@@ -3129,7 +3155,7 @@
       "purity": "99.08%",
       "lot": "HK-2715",
       "image": "/img/tesamorelin-10.jpg?v=30",
-      "price": 89,
+      "price": 50,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -3177,7 +3203,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 300
     },
     {
       "id": "MS10",
@@ -3195,7 +3222,7 @@
       "purity": "98.45%",
       "lot": "HK-2726",
       "image": "/img/mots-c-10.jpg?v=30",
-      "price": 39,
+      "price": 30,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -3243,7 +3270,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 180
     },
     {
       "id": "MS20",
@@ -3309,7 +3337,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 390
     },
     {
       "id": "MS40",
@@ -3375,7 +3404,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 590
     },
     {
       "id": "NJ100",
@@ -3441,7 +3471,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 170
     },
     {
       "id": "NJ500",
@@ -3459,7 +3490,7 @@
       "purity": "99.05%",
       "lot": "HK-2607",
       "image": "/img/nad-500.jpg?v=30",
-      "price": 49,
+      "price": 40,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -3507,7 +3538,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 240
     },
     {
       "id": "NJ1000",
@@ -3573,7 +3605,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 410
     },
     {
       "id": "5AM",
@@ -3639,7 +3672,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 170
     },
     {
       "id": "10AM",
@@ -3705,7 +3739,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 230
     },
     {
       "id": "50AM",
@@ -3771,7 +3806,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 330
     },
     {
       "id": "2S10",
@@ -3789,7 +3825,7 @@
       "purity": "99.19%",
       "lot": "HK-2712",
       "image": "/img/ss-31-10.jpg?v=30",
-      "price": 49,
+      "price": 30,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -3837,7 +3873,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 180
     },
     {
       "id": "2S50",
@@ -3903,7 +3940,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 950
     },
     {
       "id": "KPV5",
@@ -3969,7 +4007,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 170
     },
     {
       "id": "KPV10",
@@ -3987,7 +4026,7 @@
       "purity": "99.76%",
       "lot": "HK-2722",
       "image": "/img/kpv-10.jpg?v=30",
-      "price": 49,
+      "price": 30,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -4035,7 +4074,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 180
     },
     {
       "id": "KPV20",
@@ -4101,7 +4141,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 350
     },
     {
       "id": "H12",
@@ -4167,7 +4208,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 430
     },
     {
       "id": "H24",
@@ -4233,7 +4275,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 710
     },
     {
       "id": "H36",
@@ -4299,7 +4342,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 920
     },
     {
       "id": "BB10",
@@ -4317,7 +4361,7 @@
       "purity": "99.50%",
       "lot": "HK-2756",
       "image": "/img/bpc-tb-5-5.jpg?v=30",
-      "price": 49,
+      "price": 35,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -4374,7 +4418,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 210
     },
     {
       "id": "BB20",
@@ -4449,7 +4494,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 530
     },
     {
       "id": "GLOW",
@@ -4467,7 +4513,7 @@
       "purity": "99.50%",
       "lot": "HK-2724",
       "image": "/img/glow.jpg?v=30",
-      "price": 99,
+      "price": 50,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -4525,7 +4571,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 300
     },
     {
       "id": "KLOW",
@@ -4543,7 +4590,7 @@
       "purity": "99.50%",
       "lot": "HK-2723",
       "image": "/img/klow.jpg?v=30",
-      "price": 119,
+      "price": 60,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -4601,7 +4648,8 @@
       "shopVisible": true,
       "available": 0,
       "stockStatus": "out",
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 360
     },
     {
       "id": "BAC3",
@@ -4949,7 +4997,7 @@
       "purity": "99.71%",
       "lot": "HK-2733",
       "image": "/img/selank.jpg?v=30",
-      "price": 40,
+      "price": 25,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -4998,7 +5046,8 @@
       "available": 0,
       "stockStatus": "out",
       "shopVisible": true,
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 150
     },
     {
       "id": "SMX10",
@@ -5016,7 +5065,7 @@
       "purity": "99.47%",
       "lot": "HK-2734",
       "image": "/img/semax.jpg?v=30",
-      "price": 42,
+      "price": 25,
       "stock": 0,
       "panel": "12-point",
       "useClass": "research",
@@ -5065,7 +5114,8 @@
       "available": 0,
       "stockStatus": "out",
       "shopVisible": true,
-      "stockThreshold": 5
+      "stockThreshold": 5,
+      "kitPrice": 150
     },
     {
       "id": "T25",
@@ -5688,7 +5738,8 @@
       "pricePlaceholder": false,
       "releaseState": "live",
       "shopVisible": true,
-      "components": []
+      "components": [],
+      "kitPrice": 750
     },
     {
       "id": "ELR5-TR10",

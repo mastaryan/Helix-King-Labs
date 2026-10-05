@@ -393,6 +393,7 @@
             ${stockBadge(p)}
           </div>
           ${priceBlock(p)}
+          ${p.kitPrice ? `<p class="hard">10-vial kit ${money(p.kitPrice)}. Single cap is 9.</p>` : ''}
           <div class="qty">
             <button type="button" id="qtyMinus">−</button>
             <input id="qty" type="number" min="1" max="9" value="1" style="width:72px;min-width:72px;text-align:center" />
@@ -409,7 +410,8 @@
                     : onHand(p) <= 0
                     ? "Out of stock"
                     : "Add " + p.name + " · " + p.size
-                }</button>`
+                }</button>
+                ${p.kitPrice ? `<button class="btn ghost" id="addKit" type="button">Add kit of 10 · ${money(p.kitPrice)}</button>` : ''}`
           }
           ${state.user && onHand(p) <= 0 ? `<p class="hard">Sold out.</p>` : ""}
           ${
@@ -1315,10 +1317,21 @@
         }
         const id = picked.id;
         const q = Math.max(1, Number(qty.value) || 1);
-        const line = state.cart.find((l) => l.id === id);
+        const line = state.cart.find((l) => l.id === id && l.kind !== 'kit');
         const next = Math.min(available, 9, line ? line.qty + q : q);
         if (line) line.qty = next;
-        else state.cart.push({ id, qty: next });
+        else state.cart.push({ id, qty: next, kind: 'single' });
+        saveCart();
+        showAdded(picked);
+      };
+    }
+    if ($("#addKit")) {
+      $("#addKit").onclick = () => {
+        if (!state.user) return showNeedAccount();
+        const id = picked.id;
+        const line = state.cart.find((l) => l.id === id && l.kind === 'kit');
+        if (line) line.qty += 1;
+        else state.cart.push({ id, qty: 1, kind: 'kit' });
         saveCart();
         showAdded(picked);
       };

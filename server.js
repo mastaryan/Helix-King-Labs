@@ -739,8 +739,9 @@ function quoteCart(items, user, opts) {
     if (p.releaseState === "pending_testing") continue;
     if (!shopVisibleOf(p)) continue;
     const available = p.available != null ? Number(p.available) : Number(p.stock || 0);
-    const qty = Math.max(1, Math.min(20, Number(line.qty) || 1));
-    const unit = Number(p.price);
+    const kit = line.kind === 'kit';
+    const qty = Math.max(1, Math.min(kit ? 20 : 9, Number(line.qty) || 1));
+    const unit = Number(kit ? p.kitPrice : p.price);
     if (!Number.isFinite(unit)) continue;
     units += qty;
     subtotal += unit * qty;
@@ -749,7 +750,8 @@ function quoteCart(items, user, opts) {
       sku: p.sku,
       slug: p.slug,
       name: p.name,
-      size: p.size,
+      size: kit ? p.size + ' kit of 10' : p.size,
+      kind: kit ? 'kit' : 'single',
       lot: p.lot,
       qty,
       unit: p.price,
