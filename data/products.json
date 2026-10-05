@@ -1529,7 +1529,7 @@
       "lot": "HK-2702",
       "image": "/img/pgl-gic1-20.jpg?v=30",
       "price": 45,
-      "stock": 0,
+      "stock": 10,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -1575,8 +1575,8 @@
       "pricePlaceholder": false,
       "releaseState": "live",
       "shopVisible": true,
-      "available": 0,
-      "stockStatus": "out",
+      "available": 10,
+      "stockStatus": "in",
       "stockThreshold": 5,
       "kitPrice": 270
     },
@@ -2413,7 +2413,7 @@
       "lot": "HK-2714",
       "image": "/img/bpc-157-10.jpg?v=30",
       "price": 25,
-      "stock": 2,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2459,8 +2459,8 @@
       "pricePlaceholder": false,
       "releaseState": "live",
       "shopVisible": true,
-      "available": 2,
-      "stockStatus": "low",
+      "available": 0,
+      "stockStatus": "out",
       "stockThreshold": 5,
       "kitPrice": 150
     },
@@ -2752,7 +2752,7 @@
       "lot": "HK-2720",
       "image": "/img/ghk-cu-100.jpg?v=30",
       "price": 49,
-      "stock": 7,
+      "stock": 0,
       "panel": "12-point",
       "useClass": "research",
       "related": [
@@ -2799,8 +2799,8 @@
       "pricePlaceholder": false,
       "releaseState": "live",
       "shopVisible": true,
-      "available": 7,
-      "stockStatus": "ok",
+      "available": 0,
+      "stockStatus": "out",
       "stockThreshold": 5,
       "kitPrice": 290
     },
@@ -4668,7 +4668,7 @@
       "lot": "HK-2731",
       "image": "/img/bac-3.jpg?v=30",
       "price": 8,
-      "stock": 80,
+      "stock": 0,
       "panel": "8-point vehicle",
       "useClass": "research",
       "related": [
@@ -4713,7 +4713,9 @@
       "pricePlaceholder": false,
       "releaseState": "live",
       "shopVisible": false,
-      "shopNote": "Hidden from public shop."
+      "shopNote": "Hidden from public shop.",
+      "available": 0,
+      "stockStatus": "out"
     },
     {
       "id": "BAC10",
@@ -4732,7 +4734,7 @@
       "lot": "HK-2732",
       "image": "/img/bac-10.jpg?v=30",
       "price": 12,
-      "stock": 80,
+      "stock": 0,
       "panel": "8-point vehicle",
       "useClass": "research",
       "related": [
@@ -4777,7 +4779,9 @@
       "pricePlaceholder": false,
       "releaseState": "live",
       "shopVisible": false,
-      "shopNote": "Hidden from public shop."
+      "shopNote": "Hidden from public shop.",
+      "available": 0,
+      "stockStatus": "out"
     },
     {
       "id": "ALK30",
@@ -5134,7 +5138,7 @@
       "lot": "HK-T-041",
       "image": "/img/tallow-t25.jpg?v=30",
       "price": 54,
-      "stock": 58,
+      "stock": 0,
       "panel": "8-point cosmetic",
       "useClass": "cosmetic",
       "related": [
@@ -5179,8 +5183,8 @@
       "pricePlaceholder": false,
       "releaseState": "live",
       "unavailableReason": null,
-      "available": 58,
-      "stockStatus": "ok",
+      "available": 0,
+      "stockStatus": "out",
       "shopVisible": false,
       "shopNote": "Hidden from public shop."
     },
