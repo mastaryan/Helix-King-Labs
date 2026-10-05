@@ -734,7 +734,7 @@
         <button class="btn" id="lbGo" type="button">Generate label</button>
       </form>
       <div class="label-stage">
-        <canvas id="lbCanvas" width="320" height="160" aria-label="Label preview"></canvas>
+        <canvas id="lbCanvas" width="240" height="480" aria-label="Label preview"></canvas>
         <button class="btn ghost" id="lbDl" type="button">Download JPEG</button>
       </div>
       <p id="lbUrl" class="hard"></p>
@@ -759,36 +759,36 @@
   function bindTools() {
     const canvas = $("#lbCanvas");
     if (canvas) {
+      const mark = new Image();
+      mark.src = "/img/logo-personal.jpg";
       const paint = (modules, sizeN) => {
         const ctx = canvas.getContext("2d");
         const name = ($("#lbName") && $("#lbName").value.trim()) || "RESEARCH";
         const size = ($("#lbSize") && $("#lbSize").value.trim()) || "";
-        const sku = ($("#lbSkuText") && $("#lbSkuText").value.trim()) || "";
         const lot = ($("#lbLot") && $("#lbLot").value.trim()) || "PENDING";
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, 320, 160);
-        ctx.fillStyle = "#111111";
-        ctx.fillRect(0, 0, 320, 18);
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "700 9px 'IBM Plex Sans', sans-serif";
-        ctx.fillText("HELIX KING LABS", 8, 13);
-        ctx.fillStyle = "#111111";
-        ctx.font = "700 16px 'IBM Plex Sans', sans-serif";
-        ctx.fillText(name.slice(0, 16), 8, 46);
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, 240, 480);
+        if (mark.complete && mark.naturalWidth) ctx.drawImage(mark, 30, 16, 180, 180);
+        ctx.fillStyle = "#e8e8e8";
+        ctx.textAlign = "center";
+        ctx.font = "600 13px 'IBM Plex Sans', sans-serif";
+        ctx.fillText("HELIX KING LABS", 120, 214);
+        ctx.font = "700 18px 'IBM Plex Sans', sans-serif";
+        ctx.fillText(name.slice(0, 18), 120, 242);
+        ctx.font = "14px 'IBM Plex Mono', monospace";
+        ctx.fillText(size, 120, 266);
         ctx.font = "11px 'IBM Plex Mono', monospace";
-        ctx.fillText(size, 8, 68);
-        ctx.fillText(sku, 8, 86);
-        ctx.fillText("LOT " + lot, 8, 104);
-        ctx.font = "8px 'IBM Plex Mono', monospace";
-        ctx.fillText("Research use only", 8, 150);
+        ctx.fillText("LOT " + lot, 120, 292);
+        ctx.font = "9px 'IBM Plex Sans', sans-serif";
+        ctx.fillText("Research use only", 120, 468);
         if (!modules || !sizeN) return;
-        const cell = 90 / sizeN;
+        const cell = 120 / sizeN;
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(214, 28, 92, 92);
+        ctx.fillRect(58, 312, 124, 124);
         ctx.fillStyle = "#111111";
         for (let r = 0; r < sizeN; r++) {
           for (let c = 0; c < sizeN; c++) {
-            if (modules[r * sizeN + c]) ctx.fillRect(216 + c * cell, 30 + r * cell, cell, cell);
+            if (modules[r * sizeN + c]) ctx.fillRect(60 + c * cell, 314 + r * cell, cell, cell);
           }
         }
       };
