@@ -2393,7 +2393,7 @@ document.addEventListener("submit", async (e) => {
     const items = (state.gbCart || []).map((l) => ({ sku: l.sku, qty: l.qty }));
     const res = await api("/api/group-buy/order", { method: "POST", body: { password: "HELIXGB", items, telegram: fd.get("telegram"), paymentMethod: fd.get("paymentMethod") } });
     const note = document.getElementById("gbNote");
-    if (note) note.textContent = res.order ? res.order.id + " recorded. Shipping $20. A line holds until it hits 5 kits and payment is confirmed." : (res.error || "Order failed.");
+    if (note) note.textContent = res.order ? res.order.id + " recorded. Shipping $25. A line holds until it hits 5 kits and payment is confirmed." : (res.error || "Order failed.");
   }
 });
 document.addEventListener("click", (e) => {

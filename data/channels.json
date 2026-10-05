@@ -20,5 +20,10 @@
       "eta": "about 2 days",
       "smtp": "parked until the domain is live"
     }
+  },
+  "usdc": {
+    "ethereum": "0x3c5b1931B5c1887af025D75bC6FB9663B73D59A2",
+    "solana": "GbLQiM8YeGPGBynHatS6ZzYfVM1jMfPUkfjD9urMuoVG",
+    "public": false
   }
 }

@@ -3,29 +3,125 @@
   "title": "Group Buy 1",
   "password": "HELIXGB",
   "closes": "2026-10-08T22:00:00-04:00",
-  "shipping": 20,
+  "shipping": 25,
   "minKits": 5,
   "kitSize": 10,
-  "note": "USA customers. Wholesale kits. A line runs at 5 kits. Shipping is $20 flat. USDC on Solana or Ethereum. Venmo and Cash App have no surcharge.",
+  "note": "USA customers. Wholesale kits. A line runs at 5 kits. Shipping is $25 flat. USDC on Solana or Ethereum. Venmo and Cash App have no surcharge.",
   "items": [
-    {"sku": "RT10-KIT", "name": "PGL-GIC1", "size": "10 mg", "price": 75, "kitsSold": 0},
-    {"sku": "RT20-KIT", "name": "PGL-GIC1", "size": "20 mg", "price": 110, "kitsSold": 0},
-    {"sku": "RT30-KIT", "name": "PGL-GIC1", "size": "30 mg", "price": 150, "kitsSold": 0},
-    {"sku": "TR30-KIT", "name": "PGL-GI1", "size": "30 mg", "price": 75, "kitsSold": 0},
-    {"sku": "TSM20-KIT", "name": "Tesamorelin", "size": "20 mg", "price": 225, "kitsSold": 0},
-    {"sku": "NAD500-KIT", "name": "NAD+", "size": "500 mg", "price": 60, "kitsSold": 0},
-    {"sku": "MOTS20-KIT", "name": "MOTS-c", "size": "20 mg", "price": 90, "kitsSold": 0},
-    {"sku": "WOLV10-KIT", "name": "Wolverine", "size": "10 mg + 10 mg", "price": 150, "kitsSold": 0},
-    {"sku": "GHK100-KIT", "name": "GHK-Cu", "size": "100 mg", "price": 50, "kitsSold": 0},
-    {"sku": "KLOW80-KIT", "name": "KLOW", "size": "80 mg", "price": 175, "kitsSold": 0},
-    {"sku": "CGL5-KIT", "name": "CGL-1", "size": "5 mg", "price": 85, "kitsSold": 0},
-    {"sku": "H24-KIT", "name": "H24", "size": "24 IU", "price": 140, "kitsSold": 0},
-    {"sku": "H36-KIT", "name": "H36", "size": "36 IU", "price": 175, "kitsSold": 0},
-    {"sku": "BAC3-KIT", "name": "BAC water", "size": "3 mL", "price": 25, "kitsSold": 0},
-    {"sku": "BAC10-KIT", "name": "BAC water", "size": "10 mL", "price": 40, "kitsSold": 0}
+    {
+      "sku": "RT10-KIT",
+      "name": "PGL-GIC1",
+      "size": "10 mg",
+      "price": 45,
+      "kitsSold": 0
+    },
+    {
+      "sku": "RT20-KIT",
+      "name": "PGL-GIC1",
+      "size": "20 mg",
+      "price": 80,
+      "kitsSold": 0
+    },
+    {
+      "sku": "RT30-KIT",
+      "name": "PGL-GIC1",
+      "size": "30 mg",
+      "price": 105,
+      "kitsSold": 0
+    },
+    {
+      "sku": "TR30-KIT",
+      "name": "PGL-GI1",
+      "size": "30 mg",
+      "price": 65,
+      "kitsSold": 0
+    },
+    {
+      "sku": "TSM20-KIT",
+      "name": "Tesamorelin",
+      "size": "20 mg",
+      "price": 225,
+      "kitsSold": 0
+    },
+    {
+      "sku": "NAD500-KIT",
+      "name": "NAD+",
+      "size": "500 mg",
+      "price": 45,
+      "kitsSold": 0
+    },
+    {
+      "sku": "MOTS20-KIT",
+      "name": "MOTS-c",
+      "size": "20 mg",
+      "price": 95,
+      "kitsSold": 0
+    },
+    {
+      "sku": "WOLV10-KIT",
+      "name": "Wolverine",
+      "size": "10 mg + 10 mg",
+      "price": 125,
+      "kitsSold": 0
+    },
+    {
+      "sku": "GHK100-KIT",
+      "name": "GHK-Cu",
+      "size": "100 mg",
+      "price": 30,
+      "kitsSold": 0
+    },
+    {
+      "sku": "KLOW80-KIT",
+      "name": "KLOW",
+      "size": "80 mg",
+      "price": 155,
+      "kitsSold": 0
+    },
+    {
+      "sku": "CGL5-KIT",
+      "name": "CGL-1",
+      "size": "5 mg",
+      "price": 85,
+      "kitsSold": 0
+    },
+    {
+      "sku": "H24-KIT",
+      "name": "H24",
+      "size": "24 IU",
+      "price": 140,
+      "kitsSold": 0
+    },
+    {
+      "sku": "H36-KIT",
+      "name": "H36",
+      "size": "36 IU",
+      "price": 175,
+      "kitsSold": 0
+    },
+    {
+      "sku": "BAC3-KIT",
+      "name": "BAC water",
+      "size": "3 mL",
+      "price": 15,
+      "kitsSold": 0
+    },
+    {
+      "sku": "BAC10-KIT",
+      "name": "BAC water",
+      "size": "10 mL",
+      "price": 15,
+      "kitsSold": 0
+    }
   ],
   "archive": [
-    {"id": "GB-2026-10-04", "date": "2026-10-04", "title": "October 4 group buy", "status": "open", "coa": "pending"}
+    {
+      "id": "GB-2026-10-04",
+      "date": "2026-10-04",
+      "title": "October 4 group buy",
+      "status": "open",
+      "coa": "pending"
+    }
   ],
   "orders": []
 }

@@ -1841,7 +1841,7 @@ async function api(req, res, url) {
       email: user.email,
       telegram: String(body.telegram || "").slice(0, 40),
       lines,
-      shipping: 20,
+      shipping: 25,
       surcharge: 0,
       total: Math.round((merchandise + 20) * 100) / 100,
       paymentMethod: ["venmo", "cashapp", "crypto"].includes(body.paymentMethod) ? body.paymentMethod : "crypto",
@@ -1856,7 +1856,7 @@ async function api(req, res, url) {
       row.kitsSold = (row.kitsSold || 0) + line.qty;
     }
     fs.writeFileSync(file, JSON.stringify(gb, null, 2));
-    store.orders.push({ ...order, quote: { lines, total: order.total, shipping: 20, surcharge: 0 }, company: "", researchField: user.researchField || "" });
+    store.orders.push({ ...order, quote: { lines, total: order.total, shipping: 25, surcharge: 0 }, company: "", researchField: user.researchField || "" });
     saveStore(store);
     return send(res, 200, { order });
   }
