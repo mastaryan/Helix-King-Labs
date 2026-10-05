@@ -266,6 +266,7 @@ function publicChannels() {
 }
 
 function restoreStock(order) {
+  if (!order.stockDecremented) return;
   for (const line of (order.quote && order.quote.lines) || []) {
     const p = findProduct(line.sku);
     if (!p) continue;
@@ -601,7 +602,7 @@ function authProviders() {
   };
 }
 
-function upsertSocialUser({ email, name, provider, sub, age, terms }) {
+function upsertSocialUser({ email, name, provider, sub, age, terms, company, researchField }) {
   if (!sub) throw new Error("sub");
   const subKey = provider === "apple" ? "appleSub" : "googleSub";
   let u = store.users.find((x) => x[subKey] === sub);
@@ -619,8 +620,8 @@ function upsertSocialUser({ email, name, provider, sub, age, terms }) {
       firstOrderUsed: false,
       age: true,
       terms: true,
-      company,
-      researchField,
+      company: company || "",
+      researchField: researchField || "Independent researcher",
       researchAck: true,
       created: new Date().toISOString(),
     };
@@ -780,7 +781,7 @@ function quoteCart(items, user, opts) {
   const merchandise = Math.round((afterVolume - couponOff) * 100) / 100;
   const shipping = merchandise >= freeAt || merchandise <= 0 ? 0 : shipFee;
   const shippingLabel = shipping === 0 && merchandise >= freeAt ? "Free" : "Standard";
-  const paymentMethod = opts && opts.paymentMethod === "venmo" ? "venmo" : "crypto";
+  const paymentMethod = ["venmo", "cashapp", "crypto"].includes(opts && opts.paymentMethod) ? opts.paymentMethod : "crypto";
   const surchargeRate = 0;
   const surcharge = Math.round(merchandise * surchargeRate * 100) / 100;
   const total = Math.round((merchandise + surcharge + shipping) * 100) / 100;
@@ -1004,6 +1005,9 @@ async function api(req, res, url) {
       firstOrderUsed: false,
       age: true,
       terms: true,
+      company,
+      researchField,
+      researchAck,
       created: new Date().toISOString(),
     };
     store.users.push(u);
@@ -1305,8 +1309,8 @@ async function api(req, res, url) {
       id: "HK-" + token().slice(0, 8).toUpperCase(),
       userId: user.id,
       email: user.email,
-      company,
-      researchField,
+      company: company || "",
+      researchField: researchField || "Independent researcher",
       researchAck: true,
       quote,
       affiliateCode: quote.affiliateCode,
@@ -1331,6 +1335,19 @@ async function api(req, res, url) {
     } else {
       order.payment = await createNowPayment(order, body.network);
     }
+    if (paymentMethod === "crypto" && order.payment && ["payment_failed", "key_missing", "invoice_pending"].includes(order.payment.status)) {
+      return send(res, 400, { error: "payment_unavailable", message: order.payment.message || "Crypto payment is not available. Use Venmo or Cash App." });
+    }
+    for (const line of quote.lines) {
+      const p = findProduct(line.sku);
+      if (!p) continue;
+      const take = line.kind === "kit" ? line.qty * 10 : line.qty;
+      p.stock = Math.max(0, Number(p.stock || 0) - take);
+      p.available = Math.max(0, p.stock - Number(p.reserved || 0));
+      p.stockStatus = stockStatus(p.available, p.stockThreshold || STOCK_THRESHOLD);
+    }
+    writeInventoryCsv();
+    order.stockDecremented = true;
     if (quote.discountKind === "first_order") user.firstOrderUsed = true;
     store.orders.push(order);
     saveStore(store);
@@ -1860,6 +1877,9 @@ async function api(req, res, url) {
     const stored = { ...order, quote: { lines, total: order.total, shipping: 25, surcharge: 0 }, company: "", researchField: user.researchField || "" };
     if (order.paymentMethod === "crypto") stored.payment = await createNowPayment(stored, body.network);
     else stored.payment = { provider: order.paymentMethod, handle: order.paymentMethod === "venmo" ? "fibkingpeps" : "FibKingPep", status: "awaiting_confirmation", amount: order.total, note: order.id };
+    if (order.paymentMethod === "crypto" && stored.payment && ["payment_failed", "key_missing", "invoice_pending"].includes(stored.payment.status)) {
+      return send(res, 400, { error: "payment_unavailable", message: stored.payment.message || "Crypto payment is not available." });
+    }
     order.payment = stored.payment;
     fs.writeFileSync(file, JSON.stringify(gb, null, 2));
     store.orders.push(stored);
@@ -1893,6 +1913,7 @@ async function api(req, res, url) {
       payCurrency: body.pay_currency || null,
       actuallyPaid: body.actually_paid || null,
     });
+    if (order.status === "voided") return send(res, 200, { ok: true, skipped: "voided" });
     if (status === "finished" || status === "confirmed") {
       order.status = "settled";
       order.fulfillment = "hold";

@@ -1392,7 +1392,9 @@
       }).join("")}</div>
       ${gb.status === "closed" ? "" : `<form id="gbOrder" class="stack" style="margin-top:22px">
         <input name="telegram" placeholder="Telegram username" />
-        <label class="check"><input type="radio" name="paymentMethod" value="crypto" checked /> USDC · Solana or Ethereum</label>
+        <label class="check"><input type="radio" name="paymentMethod" value="crypto" checked /> USDC on this page</label>
+        <label class="check"><input type="radio" name="network" value="ethereum" checked /> Ethereum</label>
+        <label class="check"><input type="radio" name="network" value="solana" /> Solana</label>
         <label class="check"><input type="radio" name="paymentMethod" value="venmo" /> Venmo @fibkingpeps</label>
         <label class="check"><input type="radio" name="paymentMethod" value="cashapp" /> Cash App $FibKingPep</label>
         <button class="btn" type="submit">Place group-buy order</button>
@@ -2417,9 +2419,10 @@ document.addEventListener("submit", async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const items = (state.gbCart || []).map((l) => ({ sku: l.sku, qty: l.qty }));
-    const res = await api("/api/group-buy/order", { method: "POST", body: { password: "HELIXGB", items, telegram: fd.get("telegram"), paymentMethod: fd.get("paymentMethod") } });
+    const res = await api("/api/group-buy/order", { method: "POST", body: { password: "HELIXGB", items, telegram: fd.get("telegram"), paymentMethod: fd.get("paymentMethod"), network: fd.get("network") } });
     const note = document.getElementById("gbNote");
-    if (note) note.innerHTML = res.order ? res.order.id + " recorded. Shipping $25. " + (res.order.payment && res.order.payment.invoiceUrl ? `<a href="${res.order.payment.invoiceUrl}">Pay with crypto</a>. ` : "Payment holds until confirmed. ") + "A line holds until it hits 5 kits." : (res.error || "Order failed.");
+    const pay = res.order && res.order.payment || {};
+    if (note) note.innerHTML = res.order ? res.order.id + " recorded. Shipping $25. " + (pay.payAddress ? `Pay ${pay.payAmount} ${pay.payCurrency} on ${pay.network} to ${pay.payAddress}. ` : "Payment holds until confirmed. ") + "A line holds until it hits 5 kits." : (res.error || "Order failed.");
   }
 });
 document.addEventListener("click", (e) => {
