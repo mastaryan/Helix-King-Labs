@@ -1863,9 +1863,53 @@ async function api(req, res, url) {
     return send(res, 200, { order });
   }
 
+  if (method === "POST" && (route === "/api/payments/nowpayments" || route === "/api/pay/nowpayments")) {
+    let body;
+    try {
+      body = await readBody(req);
+    } catch {
+      return send(res, 400, { error: "bad_request" });
+    }
+    const secret = process.env.NOWPAYMENTS_IPN_SECRET;
+    if (!secret) return send(res, 503, { error: "ipn_secret_missing" });
+    const given = String(req.headers["x-nowpayments-sig"] || "");
+    const sorted = sortForIpn(body);
+    const expect = crypto.createHmac("sha512", secret).update(JSON.stringify(sorted)).digest("hex");
+    const a = Buffer.from(given);
+    const b = Buffer.from(expect);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return send(res, 401, { error: "bad_signature" });
+    const orderId = String(body.order_id || "");
+    const order = (store.orders || []).find((o) => o.id === orderId);
+    if (!order) return send(res, 200, { ok: true, matched: false });
+    const status = String(body.payment_status || "");
+    order.payment = Object.assign({}, order.payment, {
+      provider: "nowpayments",
+      paymentId: body.payment_id || null,
+      paymentStatus: status,
+      payCurrency: body.pay_currency || null,
+      actuallyPaid: body.actually_paid || null,
+    });
+    if (status === "finished" || status === "confirmed") {
+      order.status = "settled";
+      order.fulfillment = "hold";
+      order.settledAt = new Date().toISOString();
+    }
+    saveStore(store);
+    return send(res, 200, { ok: true });
+  }
+
   return send(res, 404, { error: "not_found" });
 }
 
+
+function sortForIpn(value) {
+  if (Array.isArray(value)) return value.map(sortForIpn);
+  if (!value || typeof value !== "object") return value;
+  return Object.keys(value).sort().reduce((out, key) => {
+    out[key] = sortForIpn(value[key]);
+    return out;
+  }, {});
+}
 
 const RESEARCH_FIELDS = [
   "Independent researcher",
@@ -1893,7 +1937,7 @@ function createNowInvoice(order) {
     price_currency: "usd",
     order_id: order.id,
     order_description: "Helix King Labs research order " + order.id,
-    ipn_callback_url: origin + "/api/pay/nowpayments",
+    ipn_callback_url: origin + "/api/payments/nowpayments",
     success_url: origin + "/account?order=" + encodeURIComponent(order.id),
     cancel_url: origin + "/cart",
   });
