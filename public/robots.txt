@@ -10,6 +10,8 @@ Disallow: /library
 Disallow: /tools/label
 Disallow: /tracking
 Disallow: /api/
+Disallow: /group-buy
+Disallow: /group-buys
 
 User-agent: GPTBot
 Allow: /

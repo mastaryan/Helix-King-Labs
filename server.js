@@ -779,7 +779,7 @@ function quoteCart(items, user, opts) {
   const shipping = merchandise >= freeAt || merchandise <= 0 ? 0 : shipFee;
   const shippingLabel = shipping === 0 && merchandise >= freeAt ? "Free" : "Standard";
   const paymentMethod = opts && opts.paymentMethod === "venmo" ? "venmo" : "crypto";
-  const surchargeRate = paymentMethod === "venmo" ? 0.1 : 0;
+  const surchargeRate = 0;
   const surcharge = Math.round(merchandise * surchargeRate * 100) / 100;
   const total = Math.round((merchandise + surcharge + shipping) * 100) / 100;
   const affiliatePayout =
@@ -1280,12 +1280,11 @@ async function api(req, res, url) {
       return send(res, 400, { error: "bad_request" });
     }
     if (!user) return send(res, 401, { error: "account_required" });
-    const company = String(body.company || user.company || "Independent research").trim().slice(0, 80);
+    const company = String(body.company || user.company || "").trim().slice(0, 80);
     const researchField = String(body.researchField || user.researchField || "");
-    if (!company) return send(res, 400, { error: "company" });
     if (!RESEARCH_FIELDS.includes(researchField)) return send(res, 400, { error: "research_field" });
     if (!body.researchAck) return send(res, 400, { error: "research_ack" });
-    const paymentMethod = body.paymentMethod === "venmo" ? "venmo" : "crypto";
+    const paymentMethod = ["venmo", "cashapp", "crypto"].includes(body.paymentMethod) ? body.paymentMethod : "crypto";
     user.company = company;
     user.researchField = researchField;
     user.researchAck = true;
@@ -1318,12 +1317,12 @@ async function api(req, res, url) {
       note: channels.publicNote,
       created: new Date().toISOString(),
     };
-    if (paymentMethod === "venmo") {
+    if (paymentMethod === "venmo" || paymentMethod === "cashapp") {
       order.payment = {
-        provider: "venmo",
-        handle: "fibkingpeps",
+        provider: paymentMethod,
+        handle: paymentMethod === "venmo" ? "fibkingpeps" : "",
         status: "awaiting_confirmation",
-        surcharge: quote.surcharge,
+        surcharge: 0,
         amount: quote.total,
         note: order.id,
       };
@@ -1767,11 +1766,94 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true });
   }
 
+
+  if (method === "POST" && route === "/api/wholesale") {
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const email = String(body.email || "").toLowerCase().trim();
+    const name = String(body.name || "").trim().slice(0, 80);
+    if (!validEmail(email) || !name) return send(res, 400, { error: "contact" });
+    store.wholesale = store.wholesale || [];
+    const request = {
+      id: "WH-" + token().slice(0, 8).toUpperCase(),
+      name,
+      email,
+      organization: String(body.organization || "").slice(0, 120),
+      volume: String(body.volume || "").slice(0, 160),
+      interest: String(body.interest || "").slice(0, 500),
+      note: String(body.note || "").slice(0, 500),
+      status: "pending_review",
+      created: new Date().toISOString(),
+    };
+    store.wholesale.push(request);
+    saveStore(store);
+    const box = loadOutbox();
+    box.messages.push({
+      to: "wholesale@helixkinglabs.com",
+      subject: "Wholesale request " + request.id,
+      text: [request.id, name, email, request.organization, request.volume, request.interest, request.note].join("\n"),
+      created: new Date().toISOString(),
+    });
+    saveOutbox(box);
+    return send(res, 200, { request, mailto: "wholesale@helixkinglabs.com" });
+  }
+
+  if (method === "GET" && route === "/api/group-buy") {
+    const file = path.join(DATA, "group-buy.json");
+    const raw = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : { items: [] };
+    return send(res, 200, raw);
+  }
+
+  if (method === "POST" && route === "/api/group-buy/order") {
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    if (String(body.password || "") !== "HELIXGB") return send(res, 401, { error: "password" });
+    if (!user) return send(res, 401, { error: "account_required" });
+    const file = path.join(DATA, "group-buy.json");
+    const gb = JSON.parse(fs.readFileSync(file, "utf8"));
+    const lines = [];
+    for (const item of body.items || []) {
+      const sku = gb.items.find((x) => x.sku === item.sku);
+      const qty = Math.max(0, Math.floor(Number(item.qty) || 0));
+      if (!sku || !qty) continue;
+      lines.push({ sku: sku.sku, name: sku.name, size: sku.size, qty, unit: "kit", vials: qty * 10, price: sku.price, line: Math.round(sku.price * qty * 100) / 100 });
+    }
+    if (!lines.length) return send(res, 400, { error: "empty" });
+    const merchandise = Math.round(lines.reduce((a, l) => a + l.line, 0) * 100) / 100;
+    const order = {
+      id: "GB-" + token().slice(0, 8).toUpperCase(),
+      channel: "group_buy",
+      buyId: gb.id,
+      userId: user.id,
+      email: user.email,
+      telegram: String(body.telegram || "").slice(0, 40),
+      lines,
+      shipping: 20,
+      surcharge: 0,
+      total: Math.round((merchandise + 20) * 100) / 100,
+      paymentMethod: ["venmo", "cashapp", "crypto"].includes(body.paymentMethod) ? body.paymentMethod : "crypto",
+      status: "awaiting_settlement",
+      fulfillment: "hold_until_minimum",
+      created: new Date().toISOString(),
+    };
+    gb.orders = gb.orders || [];
+    gb.orders.push(order);
+    for (const line of lines) {
+      const row = gb.items.find((x) => x.sku === line.sku);
+      row.kitsSold = (row.kitsSold || 0) + line.qty;
+    }
+    fs.writeFileSync(file, JSON.stringify(gb, null, 2));
+    store.orders.push({ ...order, quote: { lines, total: order.total, shipping: 20, surcharge: 0 }, company: "", researchField: user.researchField || "" });
+    saveStore(store);
+    return send(res, 200, { order });
+  }
+
   return send(res, 404, { error: "not_found" });
 }
 
 
 const RESEARCH_FIELDS = [
+  "Independent researcher",
   "Molecular Biology",
   "Biochemistry",
   "Peptide Chemistry",
@@ -1966,6 +2048,9 @@ function knownPaths() {
     "/chargebacks",
     "/chargeback",
     "/use",
+    "/wholesale",
+    "/group-buy",
+    "/group-buys",
     "/account",
     "/cart",
     "/ops",
@@ -2092,7 +2177,7 @@ function injectDocument(buf, pathname, status) {
     : "";
   const block = `${schema}<main id="app"><article class="page wrap"><h1>${escHtml(model.h1)}</h1>${model.body}</article></main>`;
   html = html.replace('<main id="app"></main>', block);
-  if (status === 404) html = html.replace('content="index,follow', 'content="noindex,follow');
+  if (status === 404 || pathname === "/group-buy" || pathname === "/group-buys") html = html.replace('content="index,follow', 'content="noindex,follow');
   return html;
 }
 

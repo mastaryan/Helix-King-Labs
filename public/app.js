@@ -395,7 +395,7 @@
           ${priceBlock(p)}
           <div class="qty">
             <button type="button" id="qtyMinus">−</button>
-            <input id="qty" type="number" min="1" max="20" value="1" style="width:72px;min-width:72px;text-align:center" />
+            <input id="qty" type="number" min="1" max="9" value="1" style="width:72px;min-width:72px;text-align:center" />
             <button type="button" id="qtyPlus">+</button>
           </div>
           ${
@@ -411,7 +411,7 @@
                     : "Add " + p.name + " · " + p.size
                 }</button>`
           }
-          ${state.user && onHand(p) <= 0 ? `<p class="hard">Sold out. This fill cannot be added until a lot is accepted.</p>` : ""}
+          ${state.user && onHand(p) <= 0 ? `<p class="hard">Sold out.</p>` : ""}
           ${
             state.user
               ? ""
@@ -444,20 +444,35 @@
   }
 
   function certIndex() {
+    const families = (state.catalog.families || []).filter((f) => f.shopVisible !== false);
+    const lots = families.reduce((n, f) => n + ((f.variants || []).length || 1), 0);
     return `<section class="page wrap">
-      <div class="kicker">Lot files</div>
+      <div class="kicker">Lot record</div>
       <h1>Certificates</h1>
-      <p class="lede">Lot certificates publish here when a lot clears the panel.</p>
-      <p class="hard"><a href="/library" data-link>Library</a> · <a href="/testing" data-link>Testing methods</a></p>
+      <p class="lede">Every research material on the catalog. A lot stays here after it closes. Results publish when that lot is accepted.</p>
+      <div class="grid cards" style="margin:18px 0">
+        <article class="card"><h3>${families.length}</h3><p>Compounds</p></article>
+        <article class="card"><h3>${lots}</h3><p>Lots on file</p></article>
+        <article class="card"><h3>0</h3><p>Passed</p></article>
+        <article class="card"><h3>Pending</h3><p>Purity and net content</p></article>
+      </div>
+      <div class="grid cards">${families.map((f) => `<a class="card" href="/certificates/${encodeURIComponent(f.slug || f.id)}" data-link><h3>${f.name}</h3><p>Report pending</p></a>`).join("")}</div>
+      <p class="hard">A certificate covers one lot. It is not a purity promise for the next lot. Research use only. Not for human dosing, injection, or ingestion.</p>
     </section>`;
   }
 
   function certDetail() {
+    const slug = decodeURIComponent(pathOf().split("/")[2] || "");
+    const fam = (state.catalog.families || []).find((f) => (f.slug || f.id) === slug);
+    if (!fam) return `<section class="page wrap"><h1>Not found</h1><a href="/certificates" data-link>Certificates</a></section>`;
+    const variants = fam.variants || [];
     return `<section class="page wrap">
-      <div class="kicker">Lot file</div>
-      <h1>Not published</h1>
-      <p class="lede">Lot certificates publish here when testing is complete.</p>
-      <p class="hard"><a href="/certificates" data-link>Back</a></p>
+      <div class="kicker">Lot record</div>
+      <h1>${fam.name}</h1>
+      <p class="lede">Select a fill. Prior lots stay on this page.</p>
+      ${variants.map((v) => `<article class="card" style="margin-bottom:12px"><h3>${v.size} · ${v.sku}</h3><p>Lot ${v.lot || "pending"}</p><p>Purity — · Net content — · Identity —</p><p><a href="/docs/report-pending.pdf">Report pending PDF</a></p></article>`).join("") || "<p>Report pending.</p>"}
+      <p class="hard">Verify a finished report on the laboratory named on that PDF. Research use only.</p>
+      <p><a href="/certificates" data-link>All certificates</a></p>
     </section>`;
   }
 
@@ -794,9 +809,9 @@
         <form id="profileForm" class="tool-form">
           <input name="name" value="${u.name || ""}" placeholder="Name" />
           <input name="email" type="email" value="${u.email}" required />
-          <input name="company" value="${u.company || "Independent research"}" placeholder="Company" />
+          <input name="company" value="${u.company || ""}" placeholder="Company name" />
           <select name="researchField">
-            ${["Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${u.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
+            ${["Independent researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${u.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
           </select>
           <input name="phone" value="${u.phone || ""}" placeholder="Phone, optional" />
           <input name="line1" value="${addr.line1 || ""}" placeholder="Ship-to address" />
@@ -820,7 +835,7 @@
             <input name="name" type="text" placeholder="Name" />
             <input name="email" type="email" placeholder="Email" required />
             <input name="password" type="password" placeholder="Password (8+)" required minlength="8" />
-            <input name="company" type="text" placeholder="Company name" value="Independent research" required />
+            <input name="company" type="text" placeholder="Company name" />
             <select name="researchField" required aria-label="Research field">
               <option value="">Research field</option>
               <option>Molecular Biology</option>
@@ -923,12 +938,13 @@
       }
       <p class="lede">One 10% on the cart. An affiliate code replaces HELIX10. Free shipping over $199 after discounts.</p>
       <form id="payForm" class="tool-form">
-        <input name="company" type="text" value="${(state.user && state.user.company) || "Independent research"}" required placeholder="Company name" />
+        <input name="company" type="text" value="${(state.user && state.user.company) || ""}" placeholder="Company name" />
         <select name="researchField" required aria-label="Research field">
-          ${["Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
+          ${["Independent researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
         </select>
         <label class="check"><input type="radio" name="paymentMethod" value="crypto" ${state.payMethod !== "venmo" ? "checked" : ""} /> Crypto via NOWPayments</label>
-        <label class="check"><input type="radio" name="paymentMethod" value="venmo" ${state.payMethod === "venmo" ? "checked" : ""} /> Venmo @fibkingpeps · 10% on merchandise only</label>
+        <label class="check"><input type="radio" name="paymentMethod" value="venmo" ${state.payMethod === "venmo" ? "checked" : ""} /> Venmo @fibkingpeps</label>
+        <label class="check"><input type="radio" name="paymentMethod" value="cashapp" ${state.payMethod === "cashapp" ? "checked" : ""} /> Cash App — no surcharge</label>
         <label class="check"><input type="checkbox" name="researchAck" required /> Chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</label>
         <button class="btn" type="submit">Place order</button>
       </form>
@@ -1236,13 +1252,68 @@
         const id = picked.id;
         const q = Math.max(1, Number(qty.value) || 1);
         const line = state.cart.find((l) => l.id === id);
-        const next = Math.min(available, line ? line.qty + q : q);
+        const next = Math.min(available, 9, line ? line.qty + q : q);
         if (line) line.qty = next;
         else state.cart.push({ id, qty: next });
         saveCart();
         showAdded(picked);
       };
     }
+  }
+
+
+  function wholesalePage() {
+    return `<section class="page wrap prose">
+      <div class="kicker">Wholesale desk</div>
+      <h1>Request access.</h1>
+      <p class="lede">Retail stays on the shop. Wholesale kits sit behind the password. Access is approved by hand.</p>
+      <ol>
+        <li>Send the request. It is queued for wholesale@helixkinglabs.com.</li>
+        <li>The desk replies with how to gain access.</li>
+        <li>Approved accounts open the group buy in progress.</li>
+      </ol>
+      <p>Review is not automatic. A fee may apply. Shop volume can also be invited.</p>
+      <form id="wholesaleForm" class="stack">
+        <input name="name" required placeholder="Name" />
+        <input name="email" type="email" required placeholder="Email" />
+        <input name="organization" placeholder="Organization, if any" />
+        <input name="volume" placeholder="Approximate monthly kits" />
+        <textarea name="interest" placeholder="Materials of interest"></textarea>
+        <button class="btn" type="submit">Request access</button>
+      </form>
+      <p id="wholesaleNote" class="hard"></p>
+    </section>`;
+  }
+
+  function groupBuyPage(gb) {
+    if (sessionStorage.getItem("hkl-gb") !== "1") {
+      return `<section class="page wrap prose">
+        <div class="kicker">Wholesale</div>
+        <h1>Group buy</h1>
+        <p>This page is for the Telegram room. Enter the password.</p>
+        <form id="gbGate"><input name="password" type="password" placeholder="Password" required /> <button class="btn" type="submit">Enter</button></form>
+      </section>`;
+    }
+    return `<section class="page wrap">
+      <div class="kicker">Wholesale · kits of 10</div>
+      <h1>${gb.title}</h1>
+      <p class="lede">Window closes 11 Oct 2026, 10:00 pm EDT.</p>
+      <p>${gb.note}</p>
+      <div class="grid cards">${(gb.items || []).map((item) => {
+        const pct = Math.min(100, Math.round(((item.kitsSold || 0) / gb.minKits) * 100));
+        return `<article class="card"><h3>${item.name}</h3><p>${item.size} · kit of 10 · ${money(item.price)}</p><div style="height:8px;background:#222;border-radius:99px"><div style="height:8px;width:${pct}%;background:#c8c8c8;border-radius:99px"></div></div><p class="hard">${item.kitsSold || 0} / ${gb.minKits} kits</p><button class="btn" type="button" data-gb="${item.sku}">Add kit</button></article>`;
+      }).join("")}</div>
+      <form id="gbOrder" class="stack" style="margin-top:22px">
+        <input name="telegram" placeholder="Telegram username" />
+        <label class="check"><input type="radio" name="paymentMethod" value="crypto" checked /> USDC · Solana or Ethereum</label>
+        <label class="check"><input type="radio" name="paymentMethod" value="venmo" /> Venmo @fibkingpeps</label>
+        <label class="check"><input type="radio" name="paymentMethod" value="cashapp" /> Cash App</label>
+        <button class="btn" type="submit">Place group-buy order</button>
+      </form>
+      <p id="gbNote" class="hard"></p>
+      <h2>Past windows</h2>
+      ${(gb.archive || []).map((a) => `<p>${a.date} · ${a.title} · ${a.status} · certificate ${a.coa}</p>`).join("")}
+    </section>`;
   }
 
   async function render() {
@@ -1297,6 +1368,11 @@
         const lot = p.split("/")[2];
         const data = await api("/api/certificates/" + encodeURIComponent(lot));
         app.innerHTML = certDetail();
+      } else if (p === "/wholesale") {
+        app.innerHTML = wholesalePage();
+      } else if (p === "/group-buy" || p === "/group-buys") {
+        state.groupBuy = await api("/api/group-buy");
+        app.innerHTML = groupBuyPage(state.groupBuy);
       } else if (p === "/about") {
         app.innerHTML = about();
       } else if (p === "/library") {
@@ -2231,3 +2307,39 @@
       app.innerHTML = `<section class="page wrap"><h1>Shell unavailable</h1><p class="lede">${err.message}</p></section>`;
     });
 })();
+
+document.addEventListener("submit", async (e) => {
+  if (e.target && e.target.id === "gbGate") {
+    e.preventDefault();
+    if (new FormData(e.target).get("password") === "HELIXGB") {
+      sessionStorage.setItem("hkl-gb", "1");
+      render();
+    }
+  }
+  if (e.target && e.target.id === "wholesaleForm") {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const res = await api("/api/wholesale", { method: "POST", body: Object.fromEntries(fd.entries()) });
+    const note = document.getElementById("wholesaleNote");
+    if (note) note.textContent = res.request ? "Request " + res.request.id + " saved. Email wholesale@helixkinglabs.com to finish it." : "Request failed.";
+  }
+  if (e.target && e.target.id === "gbOrder") {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const items = (state.gbCart || []).map((l) => ({ sku: l.sku, qty: l.qty }));
+    const res = await api("/api/group-buy/order", { method: "POST", body: { password: "HELIXGB", items, telegram: fd.get("telegram"), paymentMethod: fd.get("paymentMethod") } });
+    const note = document.getElementById("gbNote");
+    if (note) note.textContent = res.order ? res.order.id + " recorded. Shipping $20. A line holds until it hits 5 kits and payment is confirmed." : (res.error || "Order failed.");
+  }
+});
+document.addEventListener("click", (e) => {
+  const btn = e.target && e.target.closest && e.target.closest("[data-gb]");
+  if (!btn) return;
+  state.gbCart = state.gbCart || [];
+  const sku = btn.getAttribute("data-gb");
+  const line = state.gbCart.find((l) => l.sku === sku);
+  if (line) line.qty += 1;
+  else state.gbCart.push({ sku, qty: 1 });
+  const note = document.getElementById("gbNote");
+  if (note) note.textContent = state.gbCart.map((l) => l.sku + " x " + l.qty).join(", ");
+});
