@@ -465,10 +465,10 @@
   }
 
   const COA_LOTS = [
-    { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gic1-10.jpg?v=55" },
-    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried research material", cap: "Light blue", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg", image: "/img/pgl-gic1-20.jpg?v=55" },
-    { code: "ELR10", name: "PGL-EL1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-el1-10.jpg?v=55", alias: ["ELORA"] },
-    { code: "TR30", name: "PGL-GI1", size: "30 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gi1-30.jpg?v=55", alias: ["TRIZ30"] },
+    { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gic1-10.jpg?v=56" },
+    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried research material", cap: "Light blue", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg", image: "/img/pgl-gic1-20.jpg?v=56" },
+    { code: "ELR10", name: "PGL-EL1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-el1-10.jpg?v=56", alias: ["ELORA"] },
+    { code: "TR30", name: "PGL-GI1", size: "30 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gi1-30.jpg?v=56", alias: ["TRIZ30"] },
   ];
 
   function coaLots() {
@@ -533,10 +533,12 @@
           <div class="coa-photo">${l.image ? `<img src="${l.image}" alt="${l.name} ${l.size}">` : ""}</div>
           <div class="coa-card-meta">
             <b>${l.name}</b>
-            <span>${l.code} · ${l.size}</span>
+            <span>${l.size}</span>
             <span>${l.lot && l.lot !== "Pending" ? "Lot " + l.lot : "Batch pending"}</span>
+            <span>${l.lab || "Laboratory pending"}</span>
+            <span>${l.reportId ? "Report " + l.reportId : "Report ID pending"}</span>
             <div class="coa-pills">
-              <em class="${l.file ? "ok" : ""}">${l.file ? "Report on file" : "Report pending"}</em>
+              <em class="${l.file ? "ok" : ""}">${l.file ? "PDF on file" : "PDF when accepted"}</em>
               <em>${l.cap === "Spray" ? "Nasal spray" : l.cap + " cap"}</em>
             </div>
           </div>
@@ -564,7 +566,7 @@
       ? `<a class="btn" href="${lot.file}">Download report</a><p class="hard">Method: ${lot.method}. Search code ${lot.search}. The file is the laboratory report for this accession.</p><img src="${lot.file}" alt="Laboratory report for ${lot.name} ${lot.size}" />`
       : `<p class="coa-file">Report file not attached. Batch, laboratory, and report ID fill this page when the lot is accepted. The download appears here.</p>`;
     return `<section class="page wrap coa">
-      <p class="kicker"><a href="/certificates" data-link>Certificates</a> / ${lot.name} / ${lot.code}</p>
+      <p class="kicker"><a href="/certificates" data-link>Certificates</a> / ${lot.name}</p>
       <div class="coa-detail">
         <div class="coa-photo">${lot.image ? `<img src="${lot.image}" alt="${lot.name} ${lot.size}">` : ""}</div>
         <div>
@@ -608,7 +610,7 @@
         <li><a href="/tracking" data-link>Tracking</a> — lookup by tracking number from the ship email.</li>
       </ul>
       <h2>Catalog rules</h2>
-      <p>Research names on the card. Volume at 2 / 4 / 10+ units. One 10% on the cart: an affiliate code replaces HELIX10.</p>
+      <p>Research names on the card. One 10% on the cart: an affiliate code replaces HELIX10. They do not stack.</p>
       <h2>Lot alerts</h2>
       <p>Subscribe from the footer. The address is stored for lot alerts and the library link.</p>
     </section>`;
@@ -1449,6 +1451,7 @@
   }
 
   async function render() {
+    closeNav();
     if (!state.catalog) await loadBase();
     ticker();
     navActive();
