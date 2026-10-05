@@ -1178,10 +1178,19 @@
     });
   }
 
+  function socialFields() {
+    const form = document.getElementById("regForm");
+    const fd = form ? new FormData(form) : null;
+    return {
+      company: fd ? String(fd.get("company") || "") : "",
+      researchField: fd ? String(fd.get("researchField") || "") : "",
+    };
+  }
+
   async function signInGoogle(age, terms) {
     if (!state.auth.google || !state.auth.googleClientId) {
       if (!state.auth.demo) throw new Error("google_not_configured");
-      return api("/api/auth/google", { method: "POST", body: { age: !!age, terms: !!terms } });
+      return api("/api/auth/google", { method: "POST", body: { age: !!age, terms: !!terms, ...socialFields() } });
     }
     await loadScript("https://accounts.google.com/gsi/client", "hkl-gsi");
     const credential = await new Promise((resolve, reject) => {
@@ -1199,7 +1208,7 @@
     });
     return api("/api/auth/google", {
       method: "POST",
-      body: { credential, age: !!age, terms: !!terms },
+      body: { credential, age: !!age, terms: !!terms, ...socialFields() },
     });
   }
 
@@ -1225,6 +1234,7 @@
         age: !!age,
         terms: !!terms,
         fullName: res.user && res.user.name ? res.user.name : null,
+        ...socialFields(),
       },
     });
   }

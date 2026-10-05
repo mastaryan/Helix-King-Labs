@@ -1050,6 +1050,8 @@ async function api(req, res, url) {
         return send(res, 401, { error: err.message === "google_not_configured" ? "google_not_configured" : "google_token" });
       }
       try {
+        const researchField = String(body.researchField || "");
+        if (researchField && !RESEARCH_FIELDS.includes(researchField)) return send(res, 400, { error: "research_field" });
         const u = upsertSocialUser({
           email: identity.email,
           name: identity.name,
@@ -1057,6 +1059,8 @@ async function api(req, res, url) {
           sub: identity.sub,
           age: !!body.age,
           terms: !!body.terms,
+          company: String(body.company || "").slice(0, 80),
+          researchField,
         });
         setSession(res, u.id);
         return send(res, 200, { user: publicUser(u), provider: "google" });
@@ -1080,6 +1084,8 @@ async function api(req, res, url) {
         firstOrderUsed: false,
         age: true,
         terms: true,
+        company: String(body.company || "").slice(0, 80),
+        researchField: RESEARCH_FIELDS.includes(String(body.researchField || "")) ? String(body.researchField) : "Independent researcher",
         created: new Date().toISOString(),
       };
       store.users.push(u);
@@ -1109,6 +1115,8 @@ async function api(req, res, url) {
       ? [body.fullName.givenName, body.fullName.familyName].filter(Boolean).join(" ").slice(0, 80)
       : "";
     try {
+      const researchField = String(body.researchField || "");
+      if (researchField && !RESEARCH_FIELDS.includes(researchField)) return send(res, 400, { error: "research_field" });
       const u = upsertSocialUser({
         email: identity.email,
         name: given || identity.name,
@@ -1116,6 +1124,8 @@ async function api(req, res, url) {
         sub: identity.sub,
         age: !!body.age,
         terms: !!body.terms,
+        company: String(body.company || "").slice(0, 80),
+        researchField,
       });
       setSession(res, u.id);
       return send(res, 200, { user: publicUser(u), provider: "apple" });
