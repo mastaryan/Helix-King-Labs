@@ -447,7 +447,7 @@
 
   const COA_LOTS = [
     { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "RT10-incoming" },
-    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "RT20-incoming" },
+    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried powder", cap: "Light blue", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg" },
     { code: "ELORA", name: "PGL-EL1", size: "10 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "ELORA-incoming" },
     { code: "TRIZ30", name: "PGL-GI1", size: "30 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "TRIZ30-incoming" },
   ];
@@ -495,16 +495,16 @@
           <div class="coa-stats">
             <div><strong>${lots.length}</strong><span>Batches</span></div>
             <div><strong>${names.length}</strong><span>Compounds</span></div>
-            <div><strong>0</strong><span>Lab reports</span></div>
-            <div><strong>0</strong><span>Report pages</span></div>
-            <div><strong>—</strong><span>Passed</span></div>
+            <div><strong>${lots.filter((l) => l.file).length}</strong><span>Lab reports</span></div>
+            <div><strong>${lots.filter((l) => l.file).length}</strong><span>Report pages</span></div>
+            <div><strong>${lots.filter((l) => l.file).length}</strong><span>Reported</span></div>
           </div>
           <div class="coa-rows">
             ${shown.map((l) => `<a class="coa-row" href="/certificates/${encodeURIComponent(l.code)}" data-link>
               <div><b>${l.name}</b><span>${l.code} · ${l.size}</span></div>
-              <div>Lab pending</div>
+              <div>${l.lab || "Lab pending"}</div>
               <div>${l.status}</div>
-              <div>${l.cap} cap</div>
+              <div>${l.purity || l.cap + " cap"}</div>
             </a>`).join("")}
           </div>
           ${coaWarning()}
@@ -519,7 +519,13 @@
     const lot = lots.find((l) => l.code === code || l.lot === code);
     const siblings = lot ? lots.filter((l) => l.name === lot.name) : [];
     if (!lot) return `<section class="page wrap"><h1>Not found</h1><a href="/certificates" data-link>Certificates</a></section>`;
-    const tiles = ["Purity", "Net content", "Identity", "Endotoxin", "Appearance"].map((label) => `<article class="coa-tile"><span>${label}</span><strong>—</strong><em>Pending</em></article>`).join("");
+    const tiles = lot.file
+      ? `<article class="coa-tile"><span>Purity</span><strong>${lot.purity}</strong><em>HPLC-UV</em></article>
+         <article class="coa-tile"><span>Net content</span><strong>${lot.net}</strong><em>Reported</em></article>
+         <article class="coa-tile"><span>Identity</span><strong>${lot.identity}</strong><em>LC-MS</em></article>
+         <article class="coa-tile"><span>Fentanyl</span><strong>${lot.fentanyl}</strong><em>Screen</em></article>
+         <article class="coa-tile"><span>Appearance</span><strong>${lot.appearance}</strong><em>Visual</em></article>`
+      : ["Purity", "Net content", "Identity", "Endotoxin", "Appearance"].map((label) => `<article class="coa-tile"><span>${label}</span><strong>—</strong><em>Pending</em></article>`).join("");
     return `<section class="page wrap coa">
       <p class="kicker"><a href="/certificates" data-link>Library</a> / ${lot.name} / ${lot.code}</p>
       <h1>${lot.name}</h1>
@@ -532,12 +538,14 @@
         <div><span>Crimp</span><strong>${lot.crimp}</strong></div>
       </div>
       <div class="coa-lab">
-        <div><b>Laboratory</b><span>Pending assignment</span></div>
-        <div><b>Report ID</b><span>—</span></div>
-        <div><a href="/docs/report-pending.pdf">Download pending PDF</a></div>
+        <div><b>Laboratory</b><span>${lot.lab || "Pending assignment"}</span></div>
+        <div><b>Report ID</b><span>${lot.reportId || "—"}</span></div>
+        <div><b>Received</b><span>${lot.received || "—"}</span></div>
+        <div><b>Reported</b><span>${lot.reported || "—"}</span></div>
+        <div><a href="${lot.file || "/docs/report-pending.pdf"}">Download report</a></div>
       </div>
       <div class="coa-tiles">${tiles}</div>
-      <p class="hard">Full report and sheet images attach when this lot is accepted. The pending file is not a result.</p>
+      ${lot.file ? `<p class="hard">Method: ${lot.method}. Search code ${lot.search}. The file is the laboratory report for this accession. Public name on this page is the catalog name.</p><img src="${lot.file}" alt="Laboratory report for ${lot.name} ${lot.size}" style="max-width:100%;border:1px solid #222" />` : `<p class="hard">Full report and sheet images attach when this lot is accepted. The pending file is not a result.</p>`}
       ${coaWarning()}
     </section>`;
   }
