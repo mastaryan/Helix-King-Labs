@@ -443,36 +443,100 @@
     </section>`;
   }
 
+  const COA_LOTS = [
+    { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "RT10-incoming" },
+    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "RT20-incoming" },
+    { code: "ELORA", name: "PGL-EL1", size: "10 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "ELORA-incoming" },
+    { code: "TRIZ30", name: "PGL-GI1", size: "30 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "TRIZ30-incoming" },
+  ];
+
+  function coaLots() {
+    const extra = (state.catalog && state.catalog.families || [])
+      .filter((f) => f.shopVisible !== false)
+      .flatMap((f) => (f.variants || []).map((v) => ({
+        code: v.sku,
+        name: f.name,
+        size: v.size,
+        form: "Dried powder",
+        cap: "Black",
+        crimp: "Silver",
+        status: "Report pending",
+        lot: v.lot || v.sku,
+      })));
+    const seen = new Set(COA_LOTS.map((l) => l.code));
+    return COA_LOTS.concat(extra.filter((l) => !seen.has(l.code)));
+  }
+
+  function coaWarning() {
+    return `<div class="coa-warn">
+      <strong>For research use only. Not for human or animal consumption.</strong>
+      <p>Records on this page are for laboratory identification. They are not for dosing, injection, ingestion, inhalation, or any in-vivo use. Nothing here is medical advice, and nothing here is a drug, biologic, supplement, food, cosmetic, or device claim.</p>
+      <p>A certificate, when published, covers the sample tested for that lot. It is not a promise for another vial or the next lot. Verify a finished report with the laboratory named on the file, using the report ID. Results stay blank until that file is accepted.</p>
+    </div>`;
+  }
+
   function certIndex() {
-    const families = (state.catalog.families || []).filter((f) => f.shopVisible !== false);
-    const lots = families.reduce((n, f) => n + ((f.variants || []).length || 1), 0);
-    return `<section class="page wrap">
-      <div class="kicker">Lot record</div>
-      <h1>Certificates</h1>
-      <p class="lede">Every research material on the catalog. A lot stays here after it closes. Results publish when that lot is accepted.</p>
-      <div class="grid cards" style="margin:18px 0">
-        <article class="card"><h3>${families.length}</h3><p>Compounds</p></article>
-        <article class="card"><h3>${lots}</h3><p>Lots on file</p></article>
-        <article class="card"><h3>0</h3><p>Passed</p></article>
-        <article class="card"><h3>Pending</h3><p>Purity and net content</p></article>
+    const lots = coaLots();
+    const names = [...new Set(lots.map((l) => l.name))];
+    const q = new URLSearchParams(location.search).get("q") || "";
+    const shown = lots.filter((l) => !q || l.name === q || l.code === q);
+    return `<section class="page wrap coa">
+      <div class="coa-layout">
+        <aside class="coa-side">
+          <div class="kicker">Compounds</div>
+          <a class="${q ? "" : "on"}" href="/certificates" data-link>All <span>${lots.length}</span></a>
+          ${names.map((n) => `<a class="${q === n ? "on" : ""}" href="/certificates?q=${encodeURIComponent(n)}" data-link>${n} <span>${lots.filter((l) => l.name === n).length}</span></a>`).join("")}
+        </aside>
+        <div>
+          <div class="kicker">Lot record</div>
+          <h1>Certificates</h1>
+          <div class="coa-stats">
+            <div><strong>${lots.length}</strong><span>Batches</span></div>
+            <div><strong>${names.length}</strong><span>Compounds</span></div>
+            <div><strong>0</strong><span>Lab reports</span></div>
+            <div><strong>0</strong><span>Report pages</span></div>
+            <div><strong>—</strong><span>Passed</span></div>
+          </div>
+          <div class="coa-rows">
+            ${shown.map((l) => `<a class="coa-row" href="/certificates/${encodeURIComponent(l.code)}" data-link>
+              <div><b>${l.name}</b><span>${l.code} · ${l.size}</span></div>
+              <div>Lab pending</div>
+              <div>${l.status}</div>
+              <div>${l.cap} cap</div>
+            </a>`).join("")}
+          </div>
+          ${coaWarning()}
+        </div>
       </div>
-      <div class="grid cards">${families.map((f) => `<a class="card" href="/certificates/${encodeURIComponent(f.slug || f.id)}" data-link><h3>${f.name}</h3><p>Report pending</p></a>`).join("")}</div>
-      <p class="hard">A certificate covers one lot. It is not a purity promise for the next lot. Research use only. Not for human dosing, injection, or ingestion.</p>
     </section>`;
   }
 
   function certDetail() {
-    const slug = decodeURIComponent(pathOf().split("/")[2] || "");
-    const fam = (state.catalog.families || []).find((f) => (f.slug || f.id) === slug);
-    if (!fam) return `<section class="page wrap"><h1>Not found</h1><a href="/certificates" data-link>Certificates</a></section>`;
-    const variants = fam.variants || [];
-    return `<section class="page wrap">
-      <div class="kicker">Lot record</div>
-      <h1>${fam.name}</h1>
-      <p class="lede">Select a fill. Prior lots stay on this page.</p>
-      ${variants.map((v) => `<article class="card" style="margin-bottom:12px"><h3>${v.size} · ${v.sku}</h3><p>Lot ${v.lot || "pending"}</p><p>Purity — · Net content — · Identity —</p><p><a href="/docs/report-pending.pdf">Report pending PDF</a></p></article>`).join("") || "<p>Report pending.</p>"}
-      <p class="hard">Verify a finished report on the laboratory named on that PDF. Research use only.</p>
-      <p><a href="/certificates" data-link>All certificates</a></p>
+    const code = decodeURIComponent(pathOf().split("/")[2] || "");
+    const lots = coaLots();
+    const lot = lots.find((l) => l.code === code || l.lot === code);
+    const siblings = lot ? lots.filter((l) => l.name === lot.name) : [];
+    if (!lot) return `<section class="page wrap"><h1>Not found</h1><a href="/certificates" data-link>Certificates</a></section>`;
+    const tiles = ["Purity", "Net content", "Identity", "Endotoxin", "Appearance"].map((label) => `<article class="coa-tile"><span>${label}</span><strong>—</strong><em>Pending</em></article>`).join("");
+    return `<section class="page wrap coa">
+      <p class="kicker"><a href="/certificates" data-link>Library</a> / ${lot.name} / ${lot.code}</p>
+      <h1>${lot.name}</h1>
+      <p class="lede">Lot ${lot.lot}</p>
+      <div class="coa-switch">${siblings.map((l) => `<a class="${l.code === lot.code ? "on" : ""}" href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.code}</a>`).join("")}</div>
+      <div class="coa-facts">
+        <div><span>Labeled qty</span><strong>${lot.size}</strong></div>
+        <div><span>Form</span><strong>${lot.form}</strong></div>
+        <div><span>Cap</span><strong>${lot.cap}</strong></div>
+        <div><span>Crimp</span><strong>${lot.crimp}</strong></div>
+      </div>
+      <div class="coa-lab">
+        <div><b>Laboratory</b><span>Pending assignment</span></div>
+        <div><b>Report ID</b><span>—</span></div>
+        <div><a href="/docs/report-pending.pdf">Download pending PDF</a></div>
+      </div>
+      <div class="coa-tiles">${tiles}</div>
+      <p class="hard">Full report and sheet images attach when this lot is accepted. The pending file is not a result.</p>
+      ${coaWarning()}
     </section>`;
   }
 
