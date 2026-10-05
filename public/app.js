@@ -90,17 +90,33 @@
     return location.pathname.replace(/\/+$/, "") || "/";
   }
 
+  function closeNav() {
+    const nav = document.querySelector(".nav");
+    const btn = $("#navToggle");
+    if (nav) nav.classList.remove("open");
+    if (btn) btn.setAttribute("aria-expanded", "false");
+  }
+
   function go(href) {
+    closeNav();
     history.pushState({}, "", href);
     render();
     window.scrollTo(0, 0);
   }
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") dismissPopup();
+    if (e.key === "Escape") {
+      dismissPopup();
+      closeNav();
+    }
   });
 
   document.addEventListener("click", (e) => {
+    const nav = document.querySelector(".nav");
+    const btn = $("#navToggle");
+    if (nav && nav.classList.contains("open") && !nav.contains(e.target) && !(btn && btn.contains(e.target))) {
+      closeNav();
+    }
     const a = e.target.closest("[data-link]");
     if (!a) return;
     const href = a.getAttribute("href");
@@ -237,7 +253,7 @@
 
   function specRows(p, about) {
     const skip = new Set(["NA", "Not published on the storefront", ""]);
-    const rows = (p.specs || []).filter((row) => row && !skip.has(String(row[1] || "").trim()));
+    const rows = (p.specs || []).filter((row) => row && !skip.has(String(row[1] || "").trim()) && !/ops sku/i.test(String(row[0] || "")));
     if (!rows.some((row) => row[0] === "Use")) {
       rows.push(["Use", (about && about.use) || "Research use only. Not for diagnostic or therapeutic use."]);
     }
@@ -338,15 +354,17 @@
 
   function shop() {
     const cat = new URLSearchParams(location.search).get("cat");
-    const families = (state.catalog.families || []).filter((f) => f.shopVisible !== false && (!cat || f.category === cat));
+    const liveFamilies = (state.catalog.families || []).filter((f) => f.shopVisible !== false);
+    const families = liveFamilies.filter((f) => !cat || f.category === cat);
     const label = state.catalog.categories.find((c) => c.id === cat);
+    const cats = (state.catalog.categories || []).filter((c) => c.id !== "serums" && liveFamilies.some((f) => f.category === c.id));
     return `<section class="page wrap">
       <div class="kicker">Catalog</div>
       <h1>${label ? label.name : "Full catalog"}</h1>
       <p class="lede">Documented research peptides with lot and COA information.</p>
       <div class="badges" style="margin-bottom:22px">
         <a class="badge" href="/shop" data-link>All</a>
-        ${state.catalog.categories
+        ${cats
           .map((c) => `<a class="badge" href="/shop?cat=${c.id}" data-link>${c.name}</a>`)
           .join("")}
       </div>
@@ -369,6 +387,7 @@
         : p.useClass === "mixed"
         ? "Kit"
         : "Research material";
+    const relatedLive = (related || []).filter((item) => item.shopVisible !== false && item.useClass !== "cosmetic" && item.useClass !== "wellness");
     return `<section class="page wrap">
       <div class="product">
         <div class="stage"><img id="pdpImage" src="${p.image}" alt="${p.name} ${p.size}" /></div>
@@ -434,11 +453,11 @@
         </div>
       </div>
       ${
-        related.length
+        relatedLive.length
           ? `<div style="margin-top:56px">
               <div class="kicker">Related products</div>
               <h2>Also on the catalog</h2>
-              <div class="grid cards" style="margin-top:18px">${related.map(productCard).join("")}</div>
+              <div class="grid cards" style="margin-top:18px">${relatedLive.map(productCard).join("")}</div>
             </div>`
           : ""
       }
@@ -446,79 +465,94 @@
   }
 
   const COA_LOTS = [
-    { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "RT10-incoming" },
-    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried powder", cap: "Light blue", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg" },
-    { code: "ELORA", name: "PGL-EL1", size: "10 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "ELORA-incoming" },
-    { code: "TRIZ30", name: "PGL-GI1", size: "30 mg", form: "Dried powder", cap: "Black", crimp: "Silver", status: "Incoming", lot: "TRIZ30-incoming" },
+    { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gic1-10.jpg?v=55" },
+    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried research material", cap: "Light blue", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg", image: "/img/pgl-gic1-20.jpg?v=55" },
+    { code: "ELR10", name: "PGL-EL1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-el1-10.jpg?v=55", alias: ["ELORA"] },
+    { code: "TR30", name: "PGL-GI1", size: "30 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gi1-30.jpg?v=55", alias: ["TRIZ30"] },
   ];
 
   function coaLots() {
-    const extra = (state.catalog && state.catalog.families || [])
-      .filter((f) => f.shopVisible !== false)
-      .flatMap((f) => (f.variants || []).map((v) => ({
-        code: v.sku,
-        name: f.name,
-        size: v.size,
-        form: "Dried powder",
-        cap: "Black",
-        crimp: "Silver",
-        status: "Report pending",
-        lot: v.lot || v.sku,
-      })));
-    const seen = new Set(COA_LOTS.map((l) => l.code));
-    return COA_LOTS.concat(extra.filter((l) => !seen.has(l.code)));
+    const items = ((state.catalog && state.catalog.items) || []).filter((it) => it.shopVisible !== false);
+    const prior = {};
+    COA_LOTS.forEach((l) => { prior[l.code] = l; });
+    const fromItems = items.map((it) => {
+      const known = prior[it.sku] || {};
+      const nasal = /nasal/i.test(it.form || it.name || "");
+      return Object.assign({}, known, {
+        code: it.sku,
+        name: it.name,
+        size: it.size,
+        form: nasal ? "Metered nasal spray" : "Dried research material",
+        cap: nasal ? "Spray" : (known.cap || "Black"),
+        crimp: nasal ? "" : (known.crimp || "Silver"),
+        status: known.file ? known.status : "Report pending",
+        lot: it.lot || known.lot || "Pending",
+        image: it.image || known.image || "",
+        purity: known.purity || it.purity || "",
+      });
+    });
+    const seen = new Set(fromItems.map((l) => l.code));
+    return fromItems.concat(COA_LOTS.filter((l) => !seen.has(l.code)));
   }
 
   function coaWarning() {
     return `<div class="coa-warn">
       <strong>For research use only. Not for human or animal consumption.</strong>
       <p>Records on this page are for laboratory identification. They are not for dosing, injection, ingestion, inhalation, or any in-vivo use. Nothing here is medical advice, and nothing here is a drug, biologic, supplement, food, cosmetic, or device claim.</p>
-      <p>A certificate, when published, covers the sample tested for that lot. It is not a promise for another vial or the next lot. Verify a finished report with the laboratory named on the file, using the report ID. Results stay blank until that file is accepted.</p>
+      <p>A certificate, when published, covers the sample tested for that lot. It is not a promise for another vial or the next lot. Verify a finished report with the laboratory named on the file, using the report ID. Batch, laboratory, report ID, and the file stay blank until that lot is accepted.</p>
     </div>`;
   }
 
   function certIndex() {
     const lots = coaLots();
     const names = [...new Set(lots.map((l) => l.name))];
-    const q = new URLSearchParams(location.search).get("q") || "";
-    const shown = lots.filter((l) => !q || l.name === q || l.code === q);
+    const q = (new URLSearchParams(location.search).get("q") || "").trim();
+    const needle = q.toLowerCase();
+    const shown = lots.filter((l) => !needle || [l.name, l.code, l.lot, l.size, l.lab, l.reportId].join(" ").toLowerCase().includes(needle));
+    const reported = lots.filter((l) => l.file).length;
     return `<section class="page wrap coa">
-      <div class="coa-layout">
-        <aside class="coa-side">
-          <div class="kicker">Compounds</div>
-          <a class="${q ? "" : "on"}" href="/certificates" data-link>All <span>${lots.length}</span></a>
-          ${names.map((n) => `<a class="${q === n ? "on" : ""}" href="/certificates?q=${encodeURIComponent(n)}" data-link>${n} <span>${lots.filter((l) => l.name === n).length}</span></a>`).join("")}
-        </aside>
-        <div>
-          <div class="kicker">Lot record</div>
-          <h1>Certificates</h1>
-          <div class="coa-stats">
-            <div><strong>${lots.length}</strong><span>Batches</span></div>
-            <div><strong>${names.length}</strong><span>Compounds</span></div>
-            <div><strong>${lots.filter((l) => l.file).length}</strong><span>Lab reports</span></div>
-            <div><strong>${lots.filter((l) => l.file).length}</strong><span>Report pages</span></div>
-            <div><strong>${lots.filter((l) => l.file).length}</strong><span>Reported</span></div>
-          </div>
-          <div class="coa-rows">
-            ${shown.map((l) => `<a class="coa-row" href="/certificates/${encodeURIComponent(l.code)}" data-link>
-              <div><b>${l.name}</b><span>${l.code} · ${l.size}</span></div>
-              <div>${l.lab || "Lab pending"}</div>
-              <div>${l.status}</div>
-              <div>${l.purity || l.cap + " cap"}</div>
-            </a>`).join("")}
-          </div>
-          ${coaWarning()}
-        </div>
+      <div class="kicker">Lot record</div>
+      <h1>Certificates of analysis</h1>
+      <p class="lede">Each card is a batch. The report file, laboratory, and report ID appear when that lot is accepted.</p>
+      <div class="coa-stats">
+        <div><strong>${lots.length}</strong><span>Batches</span></div>
+        <div><strong>${names.length}</strong><span>Compounds</span></div>
+        <div><strong>${reported}</strong><span>Lab reports</span></div>
+        <div><strong>${reported}</strong><span>Report pages</span></div>
+        <div><strong>${lots.length ? Math.round((reported / lots.length) * 100) : 0}%</strong><span>On file</span></div>
       </div>
+      <form class="coa-search" id="certSearch">
+        <input name="q" placeholder="Search compound, lot, batch" aria-label="Search certificates" id="coaQ">
+      </form>
+      <div class="coa-chips">
+        <a class="${q ? "" : "on"}" href="/certificates" data-link>All</a>
+        ${names.map((n) => `<a class="${q === n ? "on" : ""}" href="/certificates?q=${encodeURIComponent(n)}" data-link>${n}</a>`).join("")}
+      </div>
+      <div class="coa-cards">
+        ${shown.map((l) => `<a class="coa-card" href="/certificates/${encodeURIComponent(l.code)}" data-link>
+          <div class="coa-photo">${l.image ? `<img src="${l.image}" alt="${l.name} ${l.size}">` : ""}</div>
+          <div class="coa-card-meta">
+            <b>${l.name}</b>
+            <span>${l.code} · ${l.size}</span>
+            <span>${l.lot && l.lot !== "Pending" ? "Lot " + l.lot : "Batch pending"}</span>
+            <div class="coa-pills">
+              <em class="${l.file ? "ok" : ""}">${l.file ? "Report on file" : "Report pending"}</em>
+              <em>${l.cap === "Spray" ? "Nasal spray" : l.cap + " cap"}</em>
+            </div>
+          </div>
+        </a>`).join("")}
+      </div>
+      ${shown.length ? "" : `<p class="lede">No batch matches that search.</p>`}
+      ${coaWarning()}
     </section>`;
   }
 
   function certDetail() {
     const code = decodeURIComponent(pathOf().split("/")[2] || "");
     const lots = coaLots();
-    const lot = lots.find((l) => l.code === code || l.lot === code);
+    const lot = lots.find((l) => l.code === code || l.lot === code || (l.alias || []).includes(code));
     const siblings = lot ? lots.filter((l) => l.name === lot.name) : [];
-    if (!lot) return `<section class="page wrap"><h1>Not found</h1><a href="/certificates" data-link>Certificates</a></section>`;
+    if (!lot) return `<section class="page wrap"><h1>Not found</h1><p class="lede">This address is not a certificate.</p><a href="/certificates" data-link>Certificates</a></section>`;
     const tiles = lot.file
       ? `<article class="coa-tile"><span>Purity</span><strong>${lot.purity}</strong><em>HPLC-UV</em></article>
          <article class="coa-tile"><span>Net content</span><strong>${lot.net}</strong><em>Reported</em></article>
@@ -526,26 +560,33 @@
          <article class="coa-tile"><span>Fentanyl</span><strong>${lot.fentanyl}</strong><em>Screen</em></article>
          <article class="coa-tile"><span>Appearance</span><strong>${lot.appearance}</strong><em>Visual</em></article>`
       : ["Purity", "Net content", "Identity", "Endotoxin", "Appearance"].map((label) => `<article class="coa-tile"><span>${label}</span><strong>—</strong><em>Pending</em></article>`).join("");
+    const fileBlock = lot.file
+      ? `<a class="btn" href="${lot.file}">Download report</a><p class="hard">Method: ${lot.method}. Search code ${lot.search}. The file is the laboratory report for this accession.</p><img src="${lot.file}" alt="Laboratory report for ${lot.name} ${lot.size}" />`
+      : `<p class="coa-file">Report file not attached. Batch, laboratory, and report ID fill this page when the lot is accepted. The download appears here.</p>`;
     return `<section class="page wrap coa">
-      <p class="kicker"><a href="/certificates" data-link>Library</a> / ${lot.name} / ${lot.code}</p>
-      <h1>${lot.name}</h1>
-      <p class="lede">Lot ${lot.lot}</p>
-      <div class="coa-switch">${siblings.map((l) => `<a class="${l.code === lot.code ? "on" : ""}" href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.code}</a>`).join("")}</div>
-      <div class="coa-facts">
-        <div><span>Labeled qty</span><strong>${lot.size}</strong></div>
-        <div><span>Form</span><strong>${lot.form}</strong></div>
-        <div><span>Cap</span><strong>${lot.cap}</strong></div>
-        <div><span>Crimp</span><strong>${lot.crimp}</strong></div>
-      </div>
-      <div class="coa-lab">
-        <div><b>Laboratory</b><span>${lot.lab || "Pending assignment"}</span></div>
-        <div><b>Report ID</b><span>${lot.reportId || "—"}</span></div>
-        <div><b>Received</b><span>${lot.received || "—"}</span></div>
-        <div><b>Reported</b><span>${lot.reported || "—"}</span></div>
-        <div><a href="${lot.file || "/docs/report-pending.pdf"}">Download report</a></div>
+      <p class="kicker"><a href="/certificates" data-link>Certificates</a> / ${lot.name} / ${lot.code}</p>
+      <div class="coa-detail">
+        <div class="coa-photo">${lot.image ? `<img src="${lot.image}" alt="${lot.name} ${lot.size}">` : ""}</div>
+        <div>
+          <h1>${lot.name}</h1>
+          <p class="lede">Lot ${lot.lot}</p>
+          <div class="coa-switch">${siblings.map((l) => `<a class="${l.code === lot.code ? "on" : ""}" href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.size}</a>`).join("")}</div>
+          <div class="coa-facts">
+            <div><span>Labeled qty</span><strong>${lot.size}</strong></div>
+            <div><span>Form</span><strong>${lot.form}</strong></div>
+            <div><span>Cap</span><strong>${lot.cap}</strong></div>
+            <div><span>Crimp</span><strong>${lot.crimp}</strong></div>
+          </div>
+          <div class="coa-lab">
+            <div><b>Laboratory</b><span>${lot.lab || "Pending assignment"}</span></div>
+            <div><b>Report ID</b><span>${lot.reportId || "—"}</span></div>
+            <div><b>Received</b><span>${lot.received || "—"}</span></div>
+            <div><b>Reported</b><span>${lot.reported || "—"}</span></div>
+          </div>
+          ${fileBlock}
+        </div>
       </div>
       <div class="coa-tiles">${tiles}</div>
-      ${lot.file ? `<p class="hard">Method: ${lot.method}. Search code ${lot.search}. The file is the laboratory report for this accession. Public name on this page is the catalog name.</p><img src="${lot.file}" alt="Laboratory report for ${lot.name} ${lot.size}" style="max-width:100%;border:1px solid #222" />` : `<p class="hard">Full report and sheet images attach when this lot is accepted. The pending file is not a result.</p>`}
       ${coaWarning()}
     </section>`;
   }
@@ -757,7 +798,6 @@
       <form class="tool-form" id="calcForm" onsubmit="return false">
         <label>Vial contents (mg)<input id="cMg" type="number" step="0.01" min="0" value="20" /></label>
         <label>Diluent volume (mL)<input id="cMl" type="number" step="0.01" min="0" value="2" /></label>
-        <label>Amount to draw (mg)<input id="cDose" type="number" step="0.01" min="0" value="2" /></label>
       </form>
       <div class="calc-out" id="calcOut"></div>
       <p>Concentration = mg ÷ mL. Prefer the tested milligram figure from the lot certificate when one exists.</p>
@@ -844,22 +884,15 @@
       const run = () => {
         const mg = Number($("#cMg") && $("#cMg").value);
         const ml = Number($("#cMl") && $("#cMl").value);
-        const dose = Number($("#cDose") && $("#cDose").value);
         if (!mg || !ml) {
           out.innerHTML = "<p>Enter vial milligrams and diluent milliliters.</p>";
           return;
         }
         const conc = mg / ml;
-        let draw = "";
-        if (dose > 0 && conc > 0) {
-          const mlDraw = dose / conc;
-          const units = mlDraw * 100;
-          draw = `<p>Draw</p><strong>${mlDraw.toFixed(2)} mL · ${units.toFixed(0)} units</strong><p>Units assume a U-100 syringe, 100 units per 1 mL.</p>`;
-        }
-        out.innerHTML = `<p>Material strength</p><strong>${conc.toFixed(2)} mg/mL</strong>${draw}
-          <p>Research arithmetic only. Nothing on this page is a use instruction.</p>`;
+        out.innerHTML = `<p>Material strength</p><strong>${conc.toFixed(2)} mg/mL</strong>
+          <p>Concentration = milligrams on the vial ÷ milliliters of diluent. Research arithmetic only. Nothing on this page is a use instruction.</p>`;
       };
-      ["cMg", "cMl", "cDose"].forEach((id) => {
+      ["cMg", "cMl"].forEach((id) => {
         const el = $("#" + id);
         if (el) el.addEventListener("input", run);
       });
@@ -1369,13 +1402,13 @@
         <li>The desk replies with how to gain access.</li>
         <li>Approved accounts open the group buy in progress.</li>
       </ol>
-      <p>Review is not automatic. A fee may apply. Shop volume can also be invited.</p>
-      <form id="wholesaleForm" class="stack">
-        <input name="name" required placeholder="Name" />
-        <input name="email" type="email" required placeholder="Email" />
-        <input name="organization" placeholder="Organization, if any" />
-        <input name="volume" placeholder="Approximate monthly kits" />
-        <textarea name="interest" placeholder="Materials of interest"></textarea>
+      <p>Review is not automatic. Approved accounts open the group buy in progress.</p>
+      <form id="wholesaleForm" class="stack form-grid">
+        <label>Name<input name="name" required placeholder="Name" /></label>
+        <label>Email<input name="email" type="email" required placeholder="Email" /></label>
+        <label>Organization, if any<input name="organization" placeholder="Organization" /></label>
+        <label>Approximate monthly kits<input name="volume" placeholder="Kits" /></label>
+        <label>Materials of interest<textarea name="interest" placeholder="Compounds and sizes"></textarea></label>
         <button class="btn" type="submit">Request access</button>
       </form>
       <p id="wholesaleNote" class="hard"></p>
@@ -1476,7 +1509,7 @@
         app.innerHTML = about();
       } else if (p === "/library") {
         if (!state.user || !state.user.isOps) {
-          app.innerHTML = `<section class="page wrap"><h1>Not found</h1><a href="/" data-link>Home</a></section>`;
+          app.innerHTML = `<section class="page wrap"><h1>Not found</h1><p class="lede">This address is not a catalog page.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
         } else {
           app.innerHTML = libraryView();
         }
@@ -1505,7 +1538,7 @@
         return;
       } else if (p === "/tools/label") {
         if (!state.user || !state.user.isOps) {
-          app.innerHTML = `<section class="page wrap"><h1>Not found</h1><a href="/" data-link>Home</a></section>`;
+          app.innerHTML = `<section class="page wrap"><h1>Not found</h1><p class="lede">This address is not a catalog page.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
         } else {
           app.innerHTML = labelTool();
         }
@@ -1570,7 +1603,7 @@
         }
       } else if (p === "/ops") {
         if (!state.user || !state.user.isOps) {
-          app.innerHTML = `<section class="page wrap"><h1>Not found</h1><a href="/" data-link>Home</a></section>`;
+          app.innerHTML = `<section class="page wrap"><h1>Not found</h1><p class="lede">This address is not a catalog page.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
         } else {
           const ops = await api("/api/ops/pricing");
           const board = await api("/api/ops/board").catch(() => ({ totals: {}, orders: [], affiliates: [] }));
@@ -1775,7 +1808,7 @@
         }
         app.innerHTML = cartView(quote);
       } else {
-        app.innerHTML = `<section class="page wrap"><h1>Not found</h1><a href="/" data-link>Home</a></section>`;
+        app.innerHTML = `<section class="page wrap"><h1>Not found</h1><p class="lede">This address is not a catalog page.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
       }
     } catch (err) {
       app.innerHTML = `<section class="page wrap"><h1>Unavailable</h1><p class="lede">${err.message}</p></section>`;
@@ -1909,9 +1942,11 @@
 
     const certSearch = $("#certSearch");
     if (certSearch) {
+      const qInput = certSearch.querySelector("input[name=q]");
+      if (qInput) qInput.value = new URLSearchParams(location.search).get("q") || "";
       certSearch.addEventListener("submit", (e) => {
         e.preventDefault();
-        const q = new FormData(certSearch).get("q");
+        const q = new FormData(certSearch).get("q") || "";
         go("/certificates?q=" + encodeURIComponent(q));
       });
     }
