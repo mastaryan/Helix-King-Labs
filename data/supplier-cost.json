@@ -1,0 +1,1240 @@
+{
+  "updated": "2026-10-04",
+  "currency": "USD",
+  "unit": "box of 10",
+  "rows": [
+    {
+      "code": "TR5",
+      "name": "Tirzepatide",
+      "spec": "5mg*10vials",
+      "boxUsd": 25.0,
+      "vialUsd": 2.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TR10",
+      "name": "Tirzepatide",
+      "spec": "10mg*10vials",
+      "boxUsd": 30.0,
+      "vialUsd": 3.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TR15",
+      "name": "Tirzepatide",
+      "spec": "15mg*10vials",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TR20",
+      "name": "Tirzepatide",
+      "spec": "20mg*10vials",
+      "boxUsd": 45.0,
+      "vialUsd": 4.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TR30",
+      "name": "Tirzepatide",
+      "spec": "30mg*10vials",
+      "boxUsd": 60.0,
+      "vialUsd": 6.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TR40",
+      "name": "Tirzepatide",
+      "spec": "40mg*10vials",
+      "boxUsd": 80.0,
+      "vialUsd": 8.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TR50",
+      "name": "Tirzepatide",
+      "spec": "50mg*10vials",
+      "boxUsd": 100.0,
+      "vialUsd": 10.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TR60",
+      "name": "Tirzepatide",
+      "spec": "60mg/10vials",
+      "boxUsd": 105.0,
+      "vialUsd": 10.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RT5",
+      "name": "Retatrutide",
+      "spec": "5mg*10vials",
+      "boxUsd": 30.0,
+      "vialUsd": 3.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RT10",
+      "name": "Retatrutide",
+      "spec": "10mg*10vials",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RT15",
+      "name": "Retatrutide",
+      "spec": "15mg*10vials",
+      "boxUsd": 55.0,
+      "vialUsd": 5.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RT20",
+      "name": "Retatrutide",
+      "spec": "20mg*10vials",
+      "boxUsd": 70.0,
+      "vialUsd": 7.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RT30",
+      "name": "Retatrutide",
+      "spec": "30mg*10vials",
+      "boxUsd": 95.0,
+      "vialUsd": 9.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RT40",
+      "name": "Retatrutide",
+      "spec": "40mg*10vials",
+      "boxUsd": 120.0,
+      "vialUsd": 12.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RT50",
+      "name": "Retatrutide",
+      "spec": "50mg*10vials",
+      "boxUsd": 155.0,
+      "vialUsd": 15.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RT60",
+      "name": "Retatrutide",
+      "spec": "60mg*10vials",
+      "boxUsd": 165.0,
+      "vialUsd": 16.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SM10",
+      "name": "Semaglutide",
+      "spec": "10mg*10vials",
+      "boxUsd": 29.0,
+      "vialUsd": 2.9,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SM15",
+      "name": "Semaglutide",
+      "spec": "15mg*10vials",
+      "boxUsd": 36.0,
+      "vialUsd": 3.6,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SM20",
+      "name": "Semaglutide",
+      "spec": "20mg*10vials",
+      "boxUsd": 45.0,
+      "vialUsd": 4.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SM30",
+      "name": "Semaglutide",
+      "spec": "30mg*10vials",
+      "boxUsd": 60.0,
+      "vialUsd": 6.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "BC5",
+      "name": "Semaglutide",
+      "spec": "5mg*10viaLs",
+      "boxUsd": 25.0,
+      "vialUsd": 2.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "BC10",
+      "name": "BPC 157",
+      "spec": "10mg*10viaLs",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "BC20",
+      "name": "BPC 157",
+      "spec": "20mg*10viaLs",
+      "boxUsd": 60.0,
+      "vialUsd": 6.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TB5",
+      "name": "TB500",
+      "spec": "5mg*10viaLs",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TB10",
+      "name": "TB500",
+      "spec": "10mg*10viaLs",
+      "boxUsd": 90.0,
+      "vialUsd": 9.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "BB10",
+      "name": "BPC5mg",
+      "spec": "10mg*10viaLs",
+      "boxUsd": 65.0,
+      "vialUsd": 6.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "BB20",
+      "name": "BPC10mg",
+      "spec": "20mg*10viaLs",
+      "boxUsd": 110.0,
+      "vialUsd": 11.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CU50",
+      "name": "GHK-CU",
+      "spec": "50mg*10viaLs",
+      "boxUsd": 19.0,
+      "vialUsd": 1.9,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CU100",
+      "name": "GHK-CU",
+      "spec": "100mg*10viaLs",
+      "boxUsd": 25.0,
+      "vialUsd": 2.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CUV50",
+      "name": "CU50+KPV5",
+      "spec": "50mg*10viaLs",
+      "boxUsd": 60.0,
+      "vialUsd": 6.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CUV100",
+      "name": "CU100+KPV10",
+      "spec": "100mg*10viaLs",
+      "boxUsd": 70.0,
+      "vialUsd": 7.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "ACU50",
+      "name": "AHK-CU",
+      "spec": "50mg*10viaLs",
+      "boxUsd": 39.0,
+      "vialUsd": 3.9,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "ACU100",
+      "name": "AHK-CU",
+      "spec": "100mg*10viaLs",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "NJ100",
+      "name": "NAD+",
+      "spec": "100mg*10viaLs",
+      "boxUsd": 25.0,
+      "vialUsd": 2.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "NJ500",
+      "name": "NAD+",
+      "spec": "500mg*10viaLs",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "NJ1000",
+      "name": "NAD+",
+      "spec": "1000mg*10viaLs",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "GTT600",
+      "name": "GLutathione",
+      "spec": "600mg*10viaLs",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "GT1500",
+      "name": "GLutathione",
+      "spec": "1500mg*10viaLs",
+      "boxUsd": 60.0,
+      "vialUsd": 6.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TSM5",
+      "name": "Tesamorelin",
+      "spec": "5mg*10vials",
+      "boxUsd": 60.0,
+      "vialUsd": 6.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TSM10",
+      "name": "Tesamorelin",
+      "spec": "10mg*10vials",
+      "boxUsd": 115.0,
+      "vialUsd": 11.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TSM20",
+      "name": "Tesamorelin",
+      "spec": "20mg*10vials",
+      "boxUsd": 200.0,
+      "vialUsd": 20.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "GLOW70",
+      "name": "TB10mg+BPC-157 10mg+GHK50",
+      "spec": "70mg*10viaLs",
+      "boxUsd": 125.0,
+      "vialUsd": 12.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "KLOW80",
+      "name": "KPV10mg\nBPC10mg\nTB10mg\nCU50",
+      "spec": "80mg*10viaLs",
+      "boxUsd": 140.0,
+      "vialUsd": 14.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "KPV5",
+      "name": "KPV",
+      "spec": "5mg*10viaLs",
+      "boxUsd": 30.0,
+      "vialUsd": 3.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "KPV10",
+      "name": "KPV",
+      "spec": "10mg*10viaLs",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "ML10",
+      "name": "MT-2 (Melanotan 2 Acetate)",
+      "spec": "10mg*10vials",
+      "boxUsd": 35.0,
+      "vialUsd": 3.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "MT1",
+      "name": "MT-1",
+      "spec": "10mg*10vials",
+      "boxUsd": 35.0,
+      "vialUsd": 3.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "P41",
+      "name": "PT-141",
+      "spec": "10mg*10vials",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "DS15",
+      "name": "DSIP",
+      "spec": "15mg*10vials",
+      "boxUsd": 98.0,
+      "vialUsd": 9.8,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "DS10",
+      "name": "DSIP",
+      "spec": "10mg*10vials",
+      "boxUsd": 80.0,
+      "vialUsd": 8.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "DS5",
+      "name": "DSIP",
+      "spec": "5mg*10vials",
+      "boxUsd": 30.0,
+      "vialUsd": 3.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "OT2",
+      "name": "Oxytocin Acetate",
+      "spec": "2 mg *10 vials",
+      "boxUsd": 20.0,
+      "vialUsd": 2.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "OT5",
+      "name": "Oxytocin Acetate",
+      "spec": "5 mg *10 vials",
+      "boxUsd": 30.0,
+      "vialUsd": 3.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "OT10",
+      "name": "Oxytocin Acetate",
+      "spec": "10mg *10 vials",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "ET10",
+      "name": "Epithalon",
+      "spec": "10mg*10vials",
+      "boxUsd": 30.0,
+      "vialUsd": 3.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "ET50",
+      "name": "Epithalon",
+      "spec": "50mg*10vials",
+      "boxUsd": 100.0,
+      "vialUsd": 10.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "AR50",
+      "name": "RA260",
+      "spec": "50mg*10vials",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "2S10",
+      "name": "SS-31",
+      "spec": "10mg*10vials",
+      "boxUsd": 55.0,
+      "vialUsd": 5.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "2S50",
+      "name": "SS-31",
+      "spec": "50mg*10vials",
+      "boxUsd": 200.0,
+      "vialUsd": 20.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CND5",
+      "name": "CJC-1295 Whitout DAC",
+      "spec": "5mg*10vials",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CND10",
+      "name": "CJC-1295 Whitout DAC",
+      "spec": "10mg*10vials",
+      "boxUsd": 80.0,
+      "vialUsd": 8.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CP10",
+      "name": "CJC-1295\u00a0 without DAC 5mg + IPA 5mg",
+      "spec": "10mg*10vials",
+      "boxUsd": 65.0,
+      "vialUsd": 6.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CD5",
+      "name": "CJC-1295 With DAC",
+      "spec": "5mg*10vials",
+      "boxUsd": 110.0,
+      "vialUsd": 11.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CD10",
+      "name": "CJC-1295 With DAC",
+      "spec": "10mg*10vials",
+      "boxUsd": 200.0,
+      "vialUsd": 20.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SMO5",
+      "name": "Sermorelin Acetate",
+      "spec": "5mg*10vials",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SMO10",
+      "name": "Sermorelin Acetate",
+      "spec": "10mg*10vials",
+      "boxUsd": 75.0,
+      "vialUsd": 7.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "G10K",
+      "name": "HCG",
+      "spec": "10000IU*10vials",
+      "boxUsd": 120.0,
+      "vialUsd": 12.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "G5K",
+      "name": "HCG",
+      "spec": "5000IU*10vials",
+      "boxUsd": 80.0,
+      "vialUsd": 8.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "5AD",
+      "name": "AOD9604",
+      "spec": "5mg*10vials",
+      "boxUsd": 70.0,
+      "vialUsd": 7.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "10AD",
+      "name": "AOD9604",
+      "spec": "10mg*10vials",
+      "boxUsd": 110.0,
+      "vialUsd": 11.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "IG01",
+      "name": "IGF-1LR3",
+      "spec": "0.1mg*10vials",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "IG1",
+      "name": "IGF-1LR3",
+      "spec": "1mg*10vials",
+      "boxUsd": 145.0,
+      "vialUsd": 14.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "IP5",
+      "name": "Ipamorelin",
+      "spec": "5mg*10vials",
+      "boxUsd": 30.0,
+      "vialUsd": 3.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "IP10",
+      "name": "Ipamorelin",
+      "spec": "10mg*10vials",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "KS5",
+      "name": "KissPeptin-10",
+      "spec": "5mg*10vials",
+      "boxUsd": 35.0,
+      "vialUsd": 3.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "KS10",
+      "name": "KissPeptin-10",
+      "spec": "10mg*10vials",
+      "boxUsd": 75.0,
+      "vialUsd": 7.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TY10",
+      "name": "Thymalin",
+      "spec": "10mg*10vials",
+      "boxUsd": 45.0,
+      "vialUsd": 4.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TA10",
+      "name": "Thymosin Alpha-1",
+      "spec": "10mg*10vials",
+      "boxUsd": 105.0,
+      "vialUsd": 10.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "MS10",
+      "name": "MOTS-c",
+      "spec": "10mg*10vials",
+      "boxUsd": 45.0,
+      "vialUsd": 4.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "MS20",
+      "name": "MOTS-c",
+      "spec": "20mg*10vials",
+      "boxUsd": 85.0,
+      "vialUsd": 8.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "MS30",
+      "name": "MOTS-c",
+      "spec": "30mg*11vials",
+      "boxUsd": 120.0,
+      "vialUsd": 12.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "MS40",
+      "name": "MOTS-c",
+      "spec": "40mg*10vials",
+      "boxUsd": 130.0,
+      "vialUsd": 13.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "5AM",
+      "name": "5-amino-1mq",
+      "spec": "5mg *10 vials",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "10AM",
+      "name": "5-amino-1mq",
+      "spec": "10mg *10 vials",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "50AM",
+      "name": "5-amino-1mq",
+      "spec": "50mg *10 vials",
+      "boxUsd": 80.0,
+      "vialUsd": 8.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "NP810",
+      "name": "SNAP-8",
+      "spec": "10mg*10vials",
+      "boxUsd": 30.0,
+      "vialUsd": 3.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RA10",
+      "name": "ARA290",
+      "spec": "10mg*10vials",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SK5",
+      "name": "Selank",
+      "spec": "5mg*10vials",
+      "boxUsd": 30.0,
+      "vialUsd": 3.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SK10",
+      "name": "Selank",
+      "spec": "10mg*10vials",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SK30",
+      "name": "Selank",
+      "spec": "30mg *10 vials",
+      "boxUsd": 110.0,
+      "vialUsd": 11.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "XA5",
+      "name": "Semax",
+      "spec": "5mg*10vials",
+      "boxUsd": 30.0,
+      "vialUsd": 3.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "XA10",
+      "name": "Semax",
+      "spec": "10mg*10vials",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "XA30",
+      "name": "Semax",
+      "spec": "30mg*10vials",
+      "boxUsd": 110.0,
+      "vialUsd": 11.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CGL5",
+      "name": "Cagrilintide",
+      "spec": "5mg*10vials",
+      "boxUsd": 75.0,
+      "vialUsd": 7.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "CGL10",
+      "name": "Cagrilintide",
+      "spec": "10mg*10vials",
+      "boxUsd": 120.0,
+      "vialUsd": 12.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "VP10",
+      "name": "VIP",
+      "spec": "10mg*10vials",
+      "boxUsd": 100.0,
+      "vialUsd": 10.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "ADA10",
+      "name": "ADAMAX",
+      "spec": "10mg*10vials",
+      "boxUsd": 170.0,
+      "vialUsd": 17.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "22-28",
+      "name": "PE 22-28",
+      "spec": "10mg*10vials",
+      "boxUsd": 90.0,
+      "vialUsd": 9.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "B12",
+      "name": "10ml\u5927\u74f6",
+      "spec": "10ml*10vials",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "LC120",
+      "name": "LiPO-C",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "LC216",
+      "name": "LiPO-CwithB12",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "LC396",
+      "name": "LiPO-CwithB12",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 60.0,
+      "vialUsd": 6.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "LC553",
+      "name": "SUPER SHREDL-Carnitine  400mg\nMIC BLEND  100mg\nATP  50mg\nAlbuterol  2mg\nB12 1mg\" 10ml x 553mg/ml/vial",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 100.0,
+      "vialUsd": 10.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "LC526",
+      "name": "Lipo-C (FatBLaster)",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 80.0,
+      "vialUsd": 8.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "LC600",
+      "name": "Lipo-C (FatBLaster)",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 60.0,
+      "vialUsd": 6.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "\u67e0\u6aac\u74f6",
+      "name": "Lemon Bottle",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 40.0,
+      "vialUsd": 4.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "LB50ML",
+      "name": "Lemon Bottle",
+      "spec": "50ml*10viaLs",
+      "boxUsd": 180.0,
+      "vialUsd": 18.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "HHB",
+      "name": "Lemon Bottle",
+      "spec": "10m*10viaLs",
+      "boxUsd": 80.0,
+      "vialUsd": 8.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SHB",
+      "name": "SuperHumanBlend",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 80.0,
+      "vialUsd": 8.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RP226",
+      "name": "RelaxatlonPM",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 80.0,
+      "vialUsd": 8.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "TG20",
+      "name": "Testagen",
+      "spec": "20mg *10vials",
+      "boxUsd": 100.0,
+      "vialUsd": 10.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "SUR10",
+      "name": "Survodutide",
+      "spec": "10mg*10vials",
+      "boxUsd": 180.0,
+      "vialUsd": 18.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "NAX30",
+      "name": "NA Semax amidate",
+      "spec": "30mg*10vials",
+      "boxUsd": 120.0,
+      "vialUsd": 12.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "F410",
+      "name": "FOXO4",
+      "spec": "10mg*10vials",
+      "boxUsd": 310.0,
+      "vialUsd": 31.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "LAX20",
+      "name": "Cartalax",
+      "spec": "20mg*10vials",
+      "boxUsd": 100.0,
+      "vialUsd": 10.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "AP5",
+      "name": "Adipotide",
+      "spec": "5mg *10vials",
+      "boxUsd": 135.0,
+      "vialUsd": 13.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "344",
+      "name": "FST344",
+      "spec": "10ml*10vials",
+      "boxUsd": 295.0,
+      "vialUsd": 29.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "HU10",
+      "name": "Humanin",
+      "spec": "10mg*10vials",
+      "boxUsd": 250.0,
+      "vialUsd": 25.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "ADA5",
+      "name": "Adamax-982",
+      "spec": "5mg*10vials",
+      "boxUsd": 70.0,
+      "vialUsd": 7.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "ADA5-M",
+      "name": "Adamax-1032",
+      "spec": "5mg *10vials",
+      "boxUsd": 105.0,
+      "vialUsd": 10.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "RC10",
+      "name": "Retatrutide 5mg+cagrilintide 5mg",
+      "spec": "10mg*10vials",
+      "boxUsd": 100.0,
+      "vialUsd": 10.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "XS10",
+      "name": "Semax 5mg+Selank 5mg",
+      "spec": "10mg*10vials",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "XS20",
+      "name": "Semax 10mg+Selank 10mg",
+      "spec": "20mg*10vials",
+      "boxUsd": 100.0,
+      "vialUsd": 10.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "PIN10",
+      "name": "Pinealon",
+      "spec": "10mg*10vials",
+      "boxUsd": 60.0,
+      "vialUsd": 6.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "375",
+      "name": "LL37",
+      "spec": "5mg*10vials",
+      "boxUsd": 80.0,
+      "vialUsd": 8.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "G25",
+      "name": "GHRP-2 Acctate",
+      "spec": "5mg*10vials",
+      "boxUsd": 35.0,
+      "vialUsd": 3.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "G210",
+      "name": "GHRP-2 Acctate",
+      "spec": "10mg*10vials",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "G65",
+      "name": "GHRP-6 Acctate",
+      "spec": "5mg*10vials",
+      "boxUsd": 35.0,
+      "vialUsd": 3.5,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "G610",
+      "name": "GHRP-6 Acctate",
+      "spec": "10mg*10vials",
+      "boxUsd": 50.0,
+      "vialUsd": 5.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "B12",
+      "name": "GHRP-6 Acctate",
+      "spec": "1mg\" 10ml",
+      "boxUsd": null,
+      "vialUsd": null,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "WA3",
+      "name": "\u65e0\u83cc\u6c34\u00a0bac.water",
+      "spec": "3ml*10viaLs",
+      "boxUsd": 10.0,
+      "vialUsd": 1.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "WA10",
+      "name": "\u65e0\u83cc\u6c34\u00a0bac.water",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 10.0,
+      "vialUsd": 1.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "AA3",
+      "name": "\u918b\u9178\u6c34Asetic Acid water 0.6%",
+      "spec": "3ml*10viaLs",
+      "boxUsd": 10.0,
+      "vialUsd": 1.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "AA10",
+      "name": "\u918b\u9178\u6c34Asetic Acid water 0.6%",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 10.0,
+      "vialUsd": 1.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "BA10",
+      "name": "\u6291\u83cc\u6c34Benzyl Alcoh 0.9%",
+      "spec": "10ml*10viaLs",
+      "boxUsd": 10.0,
+      "vialUsd": 1.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "BA3",
+      "name": "\u6291\u83cc\u6c34Benzyl Alcoh 0.9%",
+      "spec": "3ml*10viaLs",
+      "boxUsd": 10.0,
+      "vialUsd": 1.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    },
+    {
+      "code": "BA5",
+      "name": "\u6291\u83cc\u6c34Benzyl Alcoh 0.9%",
+      "spec": "5ml*10viaLs",
+      "boxUsd": 10.0,
+      "vialUsd": 1.0,
+      "source": "Peptide_Price_List_4_ms96",
+      "note": "Cost per 10-vial box. Not a sell price."
+    }
+  ]
+}

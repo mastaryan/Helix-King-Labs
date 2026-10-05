@@ -1008,7 +1008,7 @@
         </select>
         <label class="check"><input type="radio" name="paymentMethod" value="crypto" ${state.payMethod !== "venmo" ? "checked" : ""} /> Crypto via NOWPayments</label>
         <label class="check"><input type="radio" name="paymentMethod" value="venmo" ${state.payMethod === "venmo" ? "checked" : ""} /> Venmo @fibkingpeps</label>
-        <label class="check"><input type="radio" name="paymentMethod" value="cashapp" ${state.payMethod === "cashapp" ? "checked" : ""} /> Cash App — no surcharge</label>
+        <label class="check"><input type="radio" name="paymentMethod" value="cashapp" ${state.payMethod === "cashapp" ? "checked" : ""} /> Cash App $FibKingPep</label>
         <label class="check"><input type="checkbox" name="researchAck" required /> Chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</label>
         <button class="btn" type="submit">Place order</button>
       </form>
@@ -1361,19 +1361,19 @@
     return `<section class="page wrap">
       <div class="kicker">Wholesale · kits of 10</div>
       <h1>${gb.title}</h1>
-      <p class="lede">Window closes 11 Oct 2026, 10:00 pm EDT.</p>
+      <p class="lede">${gb.status === "closed" ? "This window is closed. The record stays here." : "Window closes 11 Oct 2026, 10:00 pm EDT."}</p>
       <p>${gb.note}</p>
       <div class="grid cards">${(gb.items || []).map((item) => {
         const pct = Math.min(100, Math.round(((item.kitsSold || 0) / gb.minKits) * 100));
-        return `<article class="card"><h3>${item.name}</h3><p>${item.size} · kit of 10 · ${money(item.price)}</p><div style="height:8px;background:#222;border-radius:99px"><div style="height:8px;width:${pct}%;background:#c8c8c8;border-radius:99px"></div></div><p class="hard">${item.kitsSold || 0} / ${gb.minKits} kits</p><button class="btn" type="button" data-gb="${item.sku}">Add kit</button></article>`;
+        return `<article class="card"><h3>${item.name}</h3><p>${item.size} · kit of 10 · ${money(item.price)}</p><div style="height:8px;background:#222;border-radius:99px"><div style="height:8px;width:${pct}%;background:#c8c8c8;border-radius:99px"></div></div><p class="hard">${item.kitsSold || 0} / ${gb.minKits} kits</p>${gb.status === "closed" ? "<span class=\"hard\">Closed</span>" : `<button class="btn" type="button" data-gb="${item.sku}">Add kit</button>`}</article>`;
       }).join("")}</div>
-      <form id="gbOrder" class="stack" style="margin-top:22px">
+      ${gb.status === "closed" ? "" : `<form id="gbOrder" class="stack" style="margin-top:22px">
         <input name="telegram" placeholder="Telegram username" />
         <label class="check"><input type="radio" name="paymentMethod" value="crypto" checked /> USDC · Solana or Ethereum</label>
         <label class="check"><input type="radio" name="paymentMethod" value="venmo" /> Venmo @fibkingpeps</label>
-        <label class="check"><input type="radio" name="paymentMethod" value="cashapp" /> Cash App</label>
+        <label class="check"><input type="radio" name="paymentMethod" value="cashapp" /> Cash App $FibKingPep</label>
         <button class="btn" type="submit">Place group-buy order</button>
-      </form>
+      </form>`}
       <p id="gbNote" class="hard"></p>
       <h2>Past windows</h2>
       ${(gb.archive || []).map((a) => `<p>${a.date} · ${a.title} · ${a.status} · certificate ${a.coa}</p>`).join("")}

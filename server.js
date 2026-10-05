@@ -1320,7 +1320,7 @@ async function api(req, res, url) {
     if (paymentMethod === "venmo" || paymentMethod === "cashapp") {
       order.payment = {
         provider: paymentMethod,
-        handle: paymentMethod === "venmo" ? "fibkingpeps" : "",
+        handle: paymentMethod === "venmo" ? "fibkingpeps" : "FibKingPep",
         status: "awaiting_confirmation",
         surcharge: 0,
         amount: quote.total,
@@ -1801,7 +1801,19 @@ async function api(req, res, url) {
   if (method === "GET" && route === "/api/group-buy") {
     const file = path.join(DATA, "group-buy.json");
     const raw = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : { items: [] };
-    return send(res, 200, raw);
+    const closed = raw.closes && Date.now() > new Date(raw.closes).getTime();
+    raw.status = closed ? "closed" : "open";
+    if (closed) {
+      raw.archive = raw.archive || [];
+      if (!raw.archive.some((a) => a.id === raw.id && a.status === "closed")) {
+        raw.archive = raw.archive.filter((a) => a.id !== raw.id);
+        raw.archive.unshift({ id: raw.id, date: String(raw.closes).slice(0, 10), title: raw.title, status: "closed", coa: "pending", items: raw.items });
+      }
+      fs.writeFileSync(file, JSON.stringify(raw, null, 2));
+    }
+    const pub = { ...raw };
+    delete pub.password;
+    return send(res, 200, pub);
   }
 
   if (method === "POST" && route === "/api/group-buy/order") {
@@ -1811,6 +1823,7 @@ async function api(req, res, url) {
     if (!user) return send(res, 401, { error: "account_required" });
     const file = path.join(DATA, "group-buy.json");
     const gb = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (gb.closes && Date.now() > new Date(gb.closes).getTime()) return send(res, 409, { error: "closed" });
     const lines = [];
     for (const item of body.items || []) {
       const sku = gb.items.find((x) => x.sku === item.sku);
