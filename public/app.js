@@ -1361,7 +1361,7 @@
     return `<section class="page wrap">
       <div class="kicker">Wholesale · kits of 10</div>
       <h1>${gb.title}</h1>
-      <p class="lede">${gb.status === "closed" ? "This window is closed. The record stays here." : "Window closes 11 Oct 2026, 10:00 pm EDT."}</p>
+      <p class="lede">${gb.status === "closed" ? "This window is closed. The record stays here." : "Window closes 8 Oct 2026, 10:00 pm EDT."}</p>
       <p>${gb.note}</p>
       <div class="grid cards">${(gb.items || []).map((item) => {
         const pct = Math.min(100, Math.round(((item.kitsSold || 0) / gb.minKits) * 100));
