@@ -8,6 +8,7 @@ const TABS = [
   ["list", "Email list"],
   ["inventory", "Inventory"],
   ["affiliates", "Affiliates"],
+  ["promos", "Promos"],
   ["audit", "Audit"],
   ["catalog", "Catalog editor"],
 ];
@@ -149,9 +150,35 @@ function inventory() {
 function affiliates() {
   const rows = state.desk.affiliates || [];
   if (!rows.length) return `<p class="muted">No desks open.</p>`;
-  return `<table><thead><tr><th>Code</th><th>Email</th><th>Status</th></tr></thead><tbody>
-  ${rows.map((a) => `<tr><td>${a.code || "—"}</td><td>${a.email || a.userId || "—"}</td><td>${a.status || "—"}</td></tr>`).join("")}
-  </tbody></table>`;
+  return `<table><thead><tr><th>Code</th><th>Email</th><th>Status</th><th>Earned</th><th>Paid</th><th>Owed</th><th></th></tr></thead><tbody>
+  ${rows.map((a) => {
+    const earned = Number(a.earned || 0), paid = Number(a.paid || 0);
+    return `<tr><td>${a.code || "—"}<div class="muted">/shop?ref=${a.code || ""}</div></td><td>${a.email || a.userId || "—"}</td><td>${a.status || "—"}</td><td>${money(earned)}</td><td>${money(paid)}</td><td><b>${money(earned - paid)}</b></td>
+    <td><button class="act" data-aff="${a.code}" data-op="toggle">${a.status === "live" ? "Suspend" : "Activate"}</button>
+    <button class="act" data-aff="${a.code}" data-op="payout">Payout</button></td></tr>`;
+  }).join("")}
+  </tbody></table>
+  <p class="muted">Payout floor is $50. Recording a payout marks it paid on the affiliate's dashboard.</p>`;
+}
+
+function promos() {
+  const rows = state.desk.coupons || [];
+  return `<h2>Coupon codes</h2>
+  <form id="couponForm" class="tool-form" style="margin-bottom:16px">
+    <input name="code" placeholder="CODE" maxlength="16" required style="text-transform:uppercase" />
+    <input name="pct" type="number" min="1" max="90" placeholder="% off" required />
+    <input name="minTotal" type="number" min="0" step="1" placeholder="Min order $" />
+    <input name="expires" type="date" />
+    <input name="note" placeholder="Note (optional)" maxlength="80" />
+    <label class="check"><input type="checkbox" name="active" checked /> Active</label>
+    <button class="btn" type="submit">Save code</button>
+    <div class="err" id="couponErr"></div>
+  </form>
+  ${rows.length ? `<table><thead><tr><th>Code</th><th>Off</th><th>Min</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>
+  ${rows.map((c) => `<tr><td>${c.code}</td><td>${c.pct}%</td><td>${money(c.minTotal || 0)}</td><td>${(c.expires || "").slice(0, 10) || "—"}</td><td>${c.active === false ? "off" : "on"}</td>
+  <td><button class="act" data-coupon="${c.code}" data-on="${c.active === false ? 1 : 0}">${c.active === false ? "Enable" : "Disable"}</button></td></tr>`).join("")}
+  </tbody></table>` : `<p class="muted">No codes yet. HELIX10 (first order over $99) is automatic.</p>`}
+  <p class="muted">One discount per order: an affiliate code beats a coupon, a coupon beats HELIX10.</p>`;
 }
 
 function audit() {
@@ -228,7 +255,7 @@ function draw() {
   nav();
   const titles = Object.fromEntries(TABS);
   $("#title").textContent = titles[state.tab];
-  const view = { overview, orders, accounts, list, inventory, affiliates, audit, catalog: () => `<p class="muted">Prices, lot edits, photos, certificates, and payment notes stay on the catalog editor.</p><p><a href="/ops/catalog">Open catalog editor</a></p>` }[state.tab];
+  const view = { overview, orders, accounts, list, inventory, affiliates, promos, audit, catalog: () => `<p class="muted">Prices, lot edits, photos, certificates, and payment notes stay on the catalog editor.</p><p><a href="/ops/catalog">Open catalog editor</a></p>` }[state.tab];
   $("#view").innerHTML = view();
   const sweep = document.getElementById("sweepNow");
   if (sweep) sweep.onclick = async () => {
@@ -237,7 +264,33 @@ function draw() {
     draw();
     alert((out.released || 0) + " stale orders released.");
   };
-  $("#view").onclick = (e) => {
+  $("#view").onclick = async (e) => {
+    const ab = e.target.closest("[data-aff]");
+    if (ab) {
+      const code = ab.dataset.aff, op = ab.dataset.op;
+      try {
+        if (op === "toggle") {
+          const row = (state.desk.affiliates || []).find((a) => a.code === code);
+          await api("/api/ops/affiliates", { method: "POST", body: { code, status: row && row.status === "live" ? "suspended" : "live" } });
+        } else if (op === "payout") {
+          const amt = prompt("Payout amount for " + code + " (USD):");
+          if (amt === null) return;
+          await api("/api/ops/affiliates/payout", { method: "POST", body: { code, amount: Number(amt) } });
+        }
+        await load(); draw();
+      } catch (err) { alert(err.error || "Could not update the affiliate."); }
+      return;
+    }
+    const cb2 = e.target.closest("[data-coupon]");
+    if (cb2) {
+      try {
+        const rows = state.desk.coupons || [];
+        const cur = rows.find((c) => c.code === cb2.dataset.coupon);
+        await api("/api/ops/coupons", { method: "POST", body: { code: cb2.dataset.coupon, pct: cur ? cur.pct : 10, active: cb2.dataset.on === "1" } });
+        await load(); draw();
+      } catch (err) { alert(err.error || "Could not update the code."); }
+      return;
+    }
     const f = e.target.closest("[data-f]");
     if (f) { state.filter = f.dataset.f; draw(); return; }
     const row = e.target.closest("[data-id]");
@@ -245,6 +298,22 @@ function draw() {
     state.order = (state.desk.orders || []).find((o) => o.id === row.dataset.id) || null;
     state.tab = "orders";
     draw();
+  };
+  const cf = document.getElementById("couponForm");
+  if (cf) cf.onsubmit = async (ev) => {
+    ev.preventDefault();
+    const fd = new FormData(cf);
+    try {
+      await api("/api/ops/coupons", { method: "POST", body: {
+        code: String(fd.get("code") || ""),
+        pct: Number(fd.get("pct")),
+        minTotal: Number(fd.get("minTotal") || 0),
+        expires: String(fd.get("expires") || ""),
+        note: String(fd.get("note") || ""),
+        active: fd.get("active") === "on",
+      }});
+      await load(); draw();
+    } catch (err) { document.getElementById("couponErr").textContent = err.error || "Could not save the code."; }
   };
   if (state.order) detail(state.order);
   else {
