@@ -2683,10 +2683,38 @@ function fetchNowPayment(paymentId) {
   });
 }
 
+let rechecking = false;
+async function recheckPendingCrypto() {
+  if (rechecking || !process.env.NOWPAYMENTS_API_KEY) return;
+  rechecking = true;
+  try {
+    const now = Date.now();
+    for (const order of store.orders || []) {
+      if (order.status !== "awaiting_settlement" || order.paymentMethod !== "crypto") continue;
+      const pid = order.payment && order.payment.paymentId;
+      if (!pid) continue;
+      const age = now - new Date(order.created || 0).getTime();
+      if (!Number.isFinite(age) || age > 25 * 60 * 60 * 1000) continue;
+      try {
+        const data = await fetchNowPayment(pid);
+        const status = String(data.payment_status || "");
+        const known = order.payment && order.payment.paymentStatus;
+        if (status && status !== known) applyPaymentStatus(order, status, data);
+      } catch (err) {
+        console.error("auto recheck", order.id, err.message);
+      }
+    }
+  } finally {
+    rechecking = false;
+  }
+}
+
 sweepStaleOrders();
 drainOutbox().catch(() => {});
 setInterval(() => sweepStaleOrders(), 60 * 60 * 1000);
 setInterval(() => drainOutbox().catch(() => {}), 5 * 60 * 1000);
+setInterval(() => recheckPendingCrypto().catch(() => {}), 3 * 60 * 1000);
+setTimeout(() => recheckPendingCrypto().catch(() => {}), 60 * 1000);
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Helix King Labs storefront shell → http://0.0.0.0:${PORT}`);
