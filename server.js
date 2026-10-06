@@ -732,11 +732,10 @@ function volumeRate() {
 function findProduct(key) {
   if (!key) return null;
   const k = String(key);
-  return (
-    products.items.find((x) => x.id === k || x.sku === k || x.slug === k) ||
-    products.items.find((x) => x.familySlug === k || x.family === k) ||
-    null
-  );
+  const exact = products.items.find((x) => x.id === k || x.sku === k || x.slug === k);
+  if (exact) return exact;
+  const famHits = products.items.filter((x) => x.familySlug === k || x.family === k);
+  return famHits.find((x) => shopVisibleOf(x)) || famHits[0] || null;
 }
 
 function familyOf(p) {

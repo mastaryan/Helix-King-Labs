@@ -831,7 +831,7 @@
       "category": "blends",
       "useClass": "research",
       "form": "Dried research material in glass vial",
-      "image": "/img/glow.jpg?v=60",
+      "image": "/img/glow.jpg?v=61",
       "hero": false,
       "blurb": "A three-component research blend in one vial: GHK-Cu 50 mg, BPC-157 10 mg, and TB-500 10 mg (70 mg total).",
       "panel": "12-point",
@@ -841,7 +841,7 @@
       "sizes": [
         "70 mg"
       ],
-      "cardImage": "/img/glow.jpg?v=60",
+      "cardImage": "/img/glow.jpg?v=61",
       "featured": true,
       "about": {
         "ref": "GLOW",
@@ -4512,7 +4512,7 @@
       "hero": false,
       "purity": "99.50%",
       "lot": "HK-2724",
-      "image": "/img/glow.jpg?v=60",
+      "image": "/img/glow.jpg?v=61",
       "price": 50,
       "stock": 0,
       "panel": "12-point",

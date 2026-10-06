@@ -424,22 +424,37 @@ input:focus, select:focus { border-color: var(--silver-2); }
 }
 #wholesaleForm, #gbGate, #gbOrder {
   display: grid;
-  gap: 14px;
+  gap: 16px;
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
+  margin-top: 22px;
 }
 #wholesaleForm label, #gbOrder label {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
-#wholesaleForm input, #wholesaleForm textarea, #gbGate input, #gbOrder input {
+#wholesaleForm input, #wholesaleForm textarea, #wholesaleForm select, #gbGate input, #gbOrder input {
   display: block;
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  box-sizing: border-box;
+  background: #0c0c0d;
+  color: var(--text);
+  border: 1px solid #2a2a2a;
+  padding: 12px 14px;
+  font: 15px/1.4 var(--sans, Inter, sans-serif);
+  letter-spacing: 0;
+  text-transform: none;
 }
+#wholesaleForm select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #c8c8c8 50%), linear-gradient(135deg, #c8c8c8 50%, transparent 50%); background-position: calc(100% - 18px) 18px, calc(100% - 12px) 18px; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; }
+#wholesaleForm textarea { min-height: 120px; resize: vertical; }
 
 .dose.out { text-decoration: line-through; opacity: 0.55; }
 .home-names { font-family: var(--mono); letter-spacing: 0.04em; }
@@ -620,8 +635,10 @@ input:focus, select:focus { border-color: var(--silver-2); }
 .coa-chips a.on, .coa-chips a:hover { color: var(--text); border-color: var(--silver); }
 .coa-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
 .coa-card { display: flex; flex-direction: column; border: 1px solid var(--line); background: var(--surface); text-decoration: none; color: inherit; }
-.coa-photo { aspect-ratio: 4/5; background: #070708; overflow: hidden; }
-.coa-photo img { width: 100%; height: 100%; object-fit: contain; }
+.coa-card .coa-photo { height: 132px; background: #070708; overflow: hidden; }
+.coa-card .coa-photo img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.coa-detail .coa-photo { width: 160px; height: 200px; background: #070708; overflow: hidden; margin-bottom: 12px; }
+.coa-detail .coa-photo img { width: 100%; height: 100%; object-fit: contain; }
 .coa-card-meta, .coa-detail { padding: 14px; display: grid; gap: 6px; }
 .coa-card-meta b { font-size: 16px; }
 .coa-card-meta span, .coa-pills em { color: var(--muted); font-size: 12px; font-style: normal; }

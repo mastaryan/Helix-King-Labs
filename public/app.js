@@ -305,7 +305,7 @@
     const copy = state.copy.homepage;
     return `
     <section class="hero">
-      <img class="bg" src="/img/pgl-gic1-10.jpg?v=58" alt="" />
+      <img class="bg" src="/img/pgl-gic1-10.jpg" alt="" />
       <div class="veil"></div>
       <div class="hero-copy">
         <div class="kicker">Helix King Labs</div>
@@ -415,7 +415,6 @@
           <div class="buy-split">
             <div>
               <div class="kicker">Single vial</div>
-              <p class="hard">1–9, capped by stock.</p>
               <div class="qty">
                 <button type="button" id="qtyMinus">−</button>
                 <input id="qty" type="number" min="1" max="9" value="1" style="width:72px;min-width:72px;text-align:center" />
@@ -425,7 +424,6 @@
             </div>
             ${onHand(p) >= 15 && p.kitPrice ? `<div>
               <div class="kicker">Kit of 10</div>
-              <p class="hard">${money(p.kitPrice)}</p>
               <div class="qty">
                 <button type="button" id="kitMinus">−</button>
                 <input id="kitQty" type="number" min="1" max="${Math.floor(onHand(p) / 10)}" value="1" style="width:72px;min-width:72px;text-align:center" />
@@ -467,10 +465,10 @@
   }
 
   const COA_LOTS = [
-    { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gic1-10.jpg?v=58" },
-    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried research material", cap: "Light blue", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg", image: "/img/pgl-gic1-20.jpg?v=58" },
-    { code: "ELR10", name: "PGL-EL1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-el1-10.jpg?v=58", alias: ["ELORA"] },
-    { code: "TR30", name: "PGL-GI1", size: "30 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gi1-30.jpg?v=59", alias: ["TRIZ30"] },
+    { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gic1-10.jpg?v=57" },
+    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried research material", cap: "Light blue", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg", image: "/img/pgl-gic1-20.jpg?v=57" },
+    { code: "ELR10", name: "PGL-EL1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-el1-10.jpg?v=57", alias: ["ELORA"] },
+    { code: "TR30", name: "PGL-GI1", size: "30 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gi1-30.jpg?v=57", alias: ["TRIZ30"] },
   ];
 
   function coaLots() {
@@ -525,7 +523,7 @@
       if (!n) return `<div class="coa-acc"><span class="coa-sum">${f.name}<em>0</em></span></div>`;
       return `<details class="coa-acc" ${f.name === activeName ? "open" : ""}>
         <summary><a href="/certificates?compound=${encodeURIComponent(f.name)}" data-link>${f.name}</a><em>${n}</em></summary>
-        <div>${rows.map((l) => `<a class="${l.code === activeName ? "on" : ""}" href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.size} · ${l.lot}</a>`).join("")}</div>
+        <div>${rows.map((l) => `<a href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.size} · ${l.lot}</a>`).join("")}</div>
       </details>`;
     }).join("");
   }
@@ -550,7 +548,6 @@
       <p class="crumb"><a href="/" data-link>Home</a> / Certificates${compound ? ` / ${compound}` : ""}</p>
       <div class="kicker">Lot record</div>
       <h1>Certificates of analysis</h1>
-      ${lead.image ? `<div class="coa-photo coa-crumb-photo"><img src="${lead.image}" alt="${lead.name || "Lot"} ${lead.size || ""}"></div>` : ""}
       <p class="lede">A lot appears here after it has been stocked and its laboratory file is on this site. Sold-out lots stay. A strength that has never been stocked does not.</p>
       <div class="coa-stats">
         <div><strong>${lots.length}</strong><span>Published lots</span></div>
@@ -1454,22 +1451,18 @@
 
 
   function wholesalePage() {
-    return `<section class="page wrap prose">
+    return `<section class="page wrap">
       <div class="kicker">Wholesale desk</div>
       <h1>Request access</h1>
-      <ol>
-        <li>Fill out the form below</li>
-        <li>We will respond within 2 business days of your request</li>
-        <li>Send the request</li>
-      </ol>
-      <form id="wholesaleForm" class="stack form-grid">
-        <label>Name<input name="name" required placeholder="Name" /></label>
-        <label>Email<input name="email" type="email" required placeholder="Email" /></label>
+      <p class="lede">Kits of 10. Reply within two business days.</p>
+      <form id="wholesaleForm">
+        <label>Name<input name="name" required autocomplete="name" /></label>
+        <label>Email<input name="email" type="email" required autocomplete="email" /></label>
         <label>Organization<select name="organization" required>
           ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option>${f}</option>`).join("")}
         </select></label>
-        <label>Approximate monthly kits<input name="volume" required placeholder="Kits" /></label>
-        <label>Materials of interest<textarea name="interest" required placeholder="Compounds and sizes"></textarea></label>
+        <label>Approximate monthly kits<input name="volume" required inputmode="numeric" /></label>
+        <label>Materials of interest<textarea name="interest" required rows="4"></textarea></label>
         <button class="btn" type="submit">Send the request</button>
       </form>
       <p id="wholesaleNote" class="hard"></p>
