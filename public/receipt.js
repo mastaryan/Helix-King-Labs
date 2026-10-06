@@ -27,7 +27,10 @@ function receiptView(o) {
   const stepDone = (n) => (n === 0 ? true : n === 1 ? st === "settled" || st === "shipped" : st === "shipped");
   const steps = ["Placed", "Paid", "Shipped"];
   const timeline = voided
-    ? `<p class="hard">This order was cancelled. Stock was released and nothing was charged beyond what you sent.</p>`
+    ? `<div class="paybox"><h3>Did you miss something?</h3>
+      <p>This order was released before payment was confirmed, so the items went back on the shelf. Nothing was charged beyond what you sent.</p>
+      <p><button class="btn" type="button" id="restoreCart">Restore my cart</button></p>
+      <p class="muted" id="restoreMsg"></p></div>`
     : `<ol class="steps">${steps.map((label, i) => `<li class="${stepDone(i) ? "done" : ""}">${label}</li>`).join("")}</ol>`;
   let payBox = "";
   if (unpaid && o.paymentMethod === "crypto" && pay.payAddress) {
@@ -105,6 +108,15 @@ function bindReceipt(o) {
       await HKL.api("/api/orders/" + encodeURIComponent(id) + "/address", { method: "POST", body });
       reload();
     } catch (err) { document.getElementById("addrErr").textContent = err.message || "Could not save the address."; }
+  };
+  const rb = document.getElementById("restoreCart");
+  if (rb) rb.onclick = async () => {
+    const msg = document.getElementById("restoreMsg");
+    try {
+      const out = await HKL.api("/api/orders/" + encodeURIComponent(id) + "/restore", { method: "POST", body: {} });
+      HKL.restoreCart(out.lines);
+      location.href = "/cart";
+    } catch (err) { if (msg) msg.textContent = err.message || "Could not restore the cart."; }
   };
   const cb = document.getElementById("cancelOrder");
   if (cb) cb.onclick = async () => {
