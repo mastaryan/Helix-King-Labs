@@ -239,6 +239,8 @@ const PENDING_FAMILIES = new Set([
   "l-carnitine",
   "sleepy-cbd",
   "cbd",
+  "selank-ns",
+  "semax-ns",
 ]);
 const SHOP_HIDDEN_FAMILIES = new Set([
   "bac-water",
@@ -252,6 +254,8 @@ const SHOP_HIDDEN_FAMILIES = new Set([
   "l-carnitine",
   "sleepy-cbd",
   "cbd",
+  "selank-ns",
+  "semax-ns",
 ]);
 const INCOMING_INDEX = path.join(DATA, "coas", "incoming-index.json");
 const INCOMING_DIR = path.join(DATA, "coas", "incoming");
@@ -290,7 +294,8 @@ function restoreStock(order) {
   for (const line of (order.quote && order.quote.lines) || []) {
     const p = findProduct(line.sku);
     if (!p) continue;
-    p.stock = Number(p.stock || 0) + Number(line.qty || 0);
+    const give = line.kind === "kit" ? Number(line.qty || 0) * 10 : Number(line.qty || 0);
+    p.stock = Number(p.stock || 0) + give;
     p.available = Math.max(0, p.stock - Number(p.reserved || 0));
     p.stockStatus = stockStatus(p.available, p.stockThreshold || STOCK_THRESHOLD);
   }
@@ -648,7 +653,7 @@ function upsertSocialUser({ email, name, provider, sub, age, terms, company, res
       age: true,
       terms: true,
       company: company || "",
-      researchField: researchField || "Independent researcher",
+      researchField: researchField || "Independent Researcher",
       researchAck: true,
       created: new Date().toISOString(),
     };
@@ -768,9 +773,12 @@ function quoteCart(items, user, opts) {
     if (!shopVisibleOf(p)) continue;
     const available = p.available != null ? Number(p.available) : Number(p.stock || 0);
     const kit = line.kind === 'kit';
-    const qty = Math.max(1, Math.min(kit ? 20 : 9, Number(line.qty) || 1));
+    const kitMax = available >= 15 ? Math.floor(available / 10) : 0;
+    if (kit && kitMax < 1) continue;
+    const qty = Math.max(1, Math.min(kit ? kitMax : Math.min(9, available), Number(line.qty) || 1));
     const unit = Number(kit ? p.kitPrice : p.price);
     if (!Number.isFinite(unit)) continue;
+    const vials = kit ? qty * 10 : qty;
     units += qty;
     subtotal += unit * qty;
     lines.push({
@@ -782,11 +790,12 @@ function quoteCart(items, user, opts) {
       kind: kit ? 'kit' : 'single',
       lot: p.lot,
       qty,
-      unit: p.price,
-      line: p.price * qty,
+      vials,
+      unit,
+      line: Math.round(unit * qty * 100) / 100,
       available,
       stockStatus: stockStatus(available, p.stockThreshold || STOCK_THRESHOLD),
-      oversold: qty > available,
+      oversold: vials > available,
     });
   }
   const vol = volumeRate(units);
@@ -1115,7 +1124,7 @@ async function api(req, res, url) {
         age: true,
         terms: true,
         company: String(body.company || "").slice(0, 80),
-        researchField: RESEARCH_FIELDS.includes(String(body.researchField || "")) ? String(body.researchField) : "Independent researcher",
+        researchField: RESEARCH_FIELDS.includes(String(body.researchField || "")) ? String(body.researchField) : "Independent Researcher",
         created: new Date().toISOString(),
       };
       store.users.push(u);
@@ -1337,7 +1346,9 @@ async function api(req, res, url) {
     applyInventoryCsv();
     const quote = quoteCart(body.items, user, { affiliateCode: body.affiliateCode, paymentMethod });
     if (!quote.lines.length) return send(res, 400, { error: "empty" });
-    const blocked = quote.lines.filter((l) => l.available <= 0 || l.qty > l.available);
+    const need = {};
+    for (const l of quote.lines) need[l.sku] = (need[l.sku] || 0) + (l.kind === "kit" ? l.qty * 10 : l.qty);
+    const blocked = quote.lines.filter((l) => l.available <= 0 || need[l.sku] > l.available || (l.kind === "kit" && l.available < 15));
     if (blocked.length) {
       return send(res, 409, {
         error: "insufficient_stock",
@@ -1350,7 +1361,7 @@ async function api(req, res, url) {
       userId: user.id,
       email: user.email,
       company: company || "",
-      researchField: researchField || "Independent researcher",
+      researchField: researchField || "Independent Researcher",
       researchAck: true,
       quote,
       affiliateCode: quote.affiliateCode,
@@ -1890,6 +1901,11 @@ async function api(req, res, url) {
       const sku = gb.items.find((x) => x.sku === item.sku);
       const qty = Math.max(0, Math.floor(Number(item.qty) || 0));
       if (!sku || !qty) continue;
+      const shopSku = String(sku.sku || "").replace(/-KIT$/i, "");
+      const stockItem = findProduct(shopSku);
+      const onHand = stockItem ? Number(stockItem.available != null ? stockItem.available : stockItem.stock || 0) : 0;
+      const kitMax = onHand >= 15 ? Math.floor(onHand / 10) : 0;
+      if (qty > kitMax) return send(res, 409, { error: "insufficient_stock", sku: shopSku, requested: qty, availableKits: kitMax });
       lines.push({ sku: sku.sku, name: sku.name, size: sku.size, qty, unit: "kit", vials: qty * 10, price: sku.price, line: Math.round(sku.price * qty * 100) / 100 });
     }
     if (!lines.length) return send(res, 400, { error: "empty" });
@@ -1915,7 +1931,15 @@ async function api(req, res, url) {
     for (const line of lines) {
       const row = gb.items.find((x) => x.sku === line.sku);
       row.kitsSold = (row.kitsSold || 0) + line.qty;
+      const shopSku = String(line.sku || "").replace(/-KIT$/i, "");
+      const stockItem = findProduct(shopSku);
+      if (stockItem) {
+        stockItem.stock = Math.max(0, Number(stockItem.stock || 0) - line.qty * 10);
+        stockItem.available = Math.max(0, stockItem.stock - Number(stockItem.reserved || 0));
+        stockItem.stockStatus = stockStatus(stockItem.available, stockItem.stockThreshold || STOCK_THRESHOLD);
+      }
     }
+    writeInventoryCsv();
     const stored = { ...order, quote: { lines, total: order.total, shipping: 25, surcharge: 0 }, company: "", researchField: user.researchField || "" };
     if (order.paymentMethod === "crypto") stored.payment = await createNowPayment(stored, body.network);
     else stored.payment = { provider: order.paymentMethod, handle: order.paymentMethod === "venmo" ? "fibkingpeps" : "FibKingPep", status: "awaiting_confirmation", amount: order.total, note: order.id };
@@ -1981,7 +2005,7 @@ function sortForIpn(value) {
 }
 
 const RESEARCH_FIELDS = [
-  "Independent researcher",
+  "Independent Researcher",
   "Molecular Biology",
   "Biochemistry",
   "Peptide Chemistry",

@@ -76,7 +76,7 @@
       "category": "documented",
       "useClass": "research",
       "form": "Dried research material in glass vial",
-      "image": "/img/pgl-gic1-10.jpg?v=58",
+      "image": "/img/pgl-gic1-10.jpg?v=60",
       "hero": true,
       "blurb": "A coded multi-receptor research peptide in the PGL series, supplied as a single compound. Listed by research name only. Third-party testing ",
       "panel": "12-point",
@@ -92,7 +92,7 @@
         "20 mg",
         "30 mg"
       ],
-      "cardImage": "/img/pgl-gic1-10.jpg?v=58",
+      "cardImage": "/img/pgl-gic1-10.jpg?v=60",
       "featured": true,
       "about": {
         "ref": "PGL-GIC1",
@@ -795,7 +795,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/bpc-tb-5-5.jpg?v=58",
       "hero": false,
-      "blurb": "A 1:1 blend of BPC-157 and TB-500 in one vial. Components stay on the label. Supplied as dried research material, not a mixed solution. Thir",
+      "blurb": "A 1:1 blend of BPC-157 and TB-500 in one vial.",
       "panel": "12-point",
       "variantIds": [
         "BB10",
@@ -831,9 +831,9 @@
       "category": "blends",
       "useClass": "research",
       "form": "Dried research material in glass vial",
-      "image": "/img/glow.jpg?v=58",
+      "image": "/img/glow.jpg?v=60",
       "hero": false,
-      "blurb": "A three-component research blend in one vial: GHK-Cu 50 mg, BPC-157 10 mg, and TB-500 10 mg (70 mg total). Components stay on the label. Thi",
+      "blurb": "A three-component research blend in one vial: GHK-Cu 50 mg, BPC-157 10 mg, and TB-500 10 mg (70 mg total).",
       "panel": "12-point",
       "variantIds": [
         "GLOW"
@@ -841,7 +841,7 @@
       "sizes": [
         "70 mg"
       ],
-      "cardImage": "/img/glow.jpg?v=58",
+      "cardImage": "/img/glow.jpg?v=60",
       "featured": true,
       "about": {
         "ref": "GLOW",
@@ -870,7 +870,7 @@
       "form": "Dried research material in glass vial",
       "image": "/img/klow.jpg?v=59",
       "hero": false,
-      "blurb": "A four-component research blend in one vial: GHK-Cu 50 mg, BPC-157 10 mg, TB-500 10 mg, and KPV 10 mg (80 mg total). Components stay on the ",
+      "blurb": "A four-component research blend in one vial: GHK-Cu 50 mg, BPC-157 10 mg, TB-500 10 mg, and KPV 10 mg (80 mg total).",
       "panel": "12-point",
       "variantIds": [
         "KLOW"
@@ -1079,7 +1079,7 @@
         "body": "A synthetic heptapeptide analog of tuftsin, supplied as a metered nasal spray for laboratory research. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
-      "shopVisible": true,
+      "shopVisible": false,
       "sources": [
         {
           "label": "Published research",
@@ -1120,7 +1120,7 @@
         "body": "A synthetic heptapeptide analog of an ACTH fragment, supplied as a metered nasal spray for laboratory research. Third-party testing attaches to the lot when the lot is accepted."
       },
       "releaseState": "live",
-      "shopVisible": true
+      "shopVisible": false
     },
     {
       "id": "t25-tallow",
@@ -1391,7 +1391,7 @@
       "hero": true,
       "purity": "99.41%",
       "lot": "HK-2701",
-      "image": "/img/pgl-gic1-10.jpg?v=58",
+      "image": "/img/pgl-gic1-10.jpg?v=60",
       "price": 35,
       "stock": 0,
       "panel": "12-point",
@@ -4512,7 +4512,7 @@
       "hero": false,
       "purity": "99.50%",
       "lot": "HK-2724",
-      "image": "/img/glow.jpg?v=58",
+      "image": "/img/glow.jpg?v=60",
       "price": 50,
       "stock": 0,
       "panel": "12-point",
@@ -5049,7 +5049,7 @@
       "unavailableReason": null,
       "available": 0,
       "stockStatus": "out",
-      "shopVisible": true,
+      "shopVisible": false,
       "stockThreshold": 5,
       "kitPrice": 150
     },
@@ -5117,7 +5117,7 @@
       "unavailableReason": null,
       "available": 0,
       "stockStatus": "out",
-      "shopVisible": true,
+      "shopVisible": false,
       "stockThreshold": 5,
       "kitPrice": 150
     },

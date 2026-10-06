@@ -423,16 +423,16 @@
               </div>
               ${!state.user ? `<a class="btn" href="/account" data-link>Sign in to add</a>` : `<button class="btn" id="addBtn" ${isPending(p) || onHand(p) <= 0 ? "disabled" : ""}>${isPending(p) ? "Waiting for testing to complete" : onHand(p) <= 0 ? "Out of stock" : "Add single · " + money(p.price)}</button>`}
             </div>
-            <div>
+            ${onHand(p) >= 15 && p.kitPrice ? `<div>
               <div class="kicker">Kit of 10</div>
-              <p class="hard">${p.kitPrice ? money(p.kitPrice) + " · " : ""}max ${Math.min(99, Math.floor(onHand(p) / 10))} kits from ${onHand(p)} vials.</p>
+              <p class="hard">${money(p.kitPrice)}</p>
               <div class="qty">
                 <button type="button" id="kitMinus">−</button>
-                <input id="kitQty" type="number" min="1" max="${Math.max(1, Math.min(99, Math.floor(onHand(p) / 10)))}" value="1" style="width:72px;min-width:72px;text-align:center" />
+                <input id="kitQty" type="number" min="1" max="${Math.floor(onHand(p) / 10)}" value="1" style="width:72px;min-width:72px;text-align:center" />
                 <button type="button" id="kitPlus">+</button>
               </div>
-              ${!state.user ? "" : `<button class="btn ghost" id="addKit" type="button" ${Math.floor(onHand(p) / 10) < 1 ? "disabled" : ""}>${Math.floor(onHand(p) / 10) < 1 ? "Not enough for a kit" : "Add kit · " + money(p.kitPrice || p.price * 10)}</button>`}
-            </div>
+              ${!state.user ? "" : `<button class="btn ghost" id="addKit" type="button">Add kit · ${money(p.kitPrice)}</button>`}
+            </div>` : ""}
           </div>
           ${state.user && onHand(p) <= 0 ? `<p class="hard">Sold out.</p>` : ""}
           ${
@@ -515,6 +515,21 @@
     return coaLots().filter((l) => l.file && l.everStocked);
   }
 
+
+  function certMenu(activeName) {
+    const lots = publishedLots();
+    const families = ((state.catalog && state.catalog.families) || []).filter((f) => f.shopVisible !== false);
+    return families.map((f) => {
+      const rows = lots.filter((l) => l.name === f.name || l.code === f.id);
+      const n = rows.length;
+      if (!n) return `<div class="coa-acc"><span class="coa-sum">${f.name}<em>0</em></span></div>`;
+      return `<details class="coa-acc" ${f.name === activeName ? "open" : ""}>
+        <summary><a href="/certificates?compound=${encodeURIComponent(f.name)}" data-link>${f.name}</a><em>${n}</em></summary>
+        <div>${rows.map((l) => `<a class="${l.code === activeName ? "on" : ""}" href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.size} · ${l.lot}</a>`).join("")}</div>
+      </details>`;
+    }).join("");
+  }
+
   function certIndex() {
     const lots = publishedLots();
     const names = [...new Set(lots.map((l) => l.name))];
@@ -530,9 +545,12 @@
     const passed = lots.length;
     const groups = names.map((n) => ({ name: n, lots: lots.filter((l) => l.name === n) }));
     const openName = compound || (shown[0] && shown[0].name) || "";
+    const lead = shown[0] || lots[0] || {};
     return `<section class="page wrap coa">
+      <p class="crumb"><a href="/" data-link>Home</a> / Certificates${compound ? ` / ${compound}` : ""}</p>
       <div class="kicker">Lot record</div>
       <h1>Certificates of analysis</h1>
+      ${lead.image ? `<div class="coa-photo coa-crumb-photo"><img src="${lead.image}" alt="${lead.name || "Lot"} ${lead.size || ""}"></div>` : ""}
       <p class="lede">A lot appears here after it has been stocked and its laboratory file is on this site. Sold-out lots stay. A strength that has never been stocked does not.</p>
       <div class="coa-stats">
         <div><strong>${lots.length}</strong><span>Published lots</span></div>
@@ -546,13 +564,7 @@
       <div class="coa-layout">
         <aside class="coa-side">
           <div class="kicker">Compounds</div>
-          ${groups.map((g) => `<details class="coa-acc" ${g.name === openName ? "open" : ""}>
-            <summary><a href="/certificates?compound=${encodeURIComponent(g.name)}" data-link>${g.name}</a><em>${g.lots.length}</em></summary>
-            <div>
-              ${g.lots.map((l) => `<a class="${l.code === (shown[0] && !q && compound ? "" : "") ? "" : ""}" href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.size} · ${l.lot}</a>`).join("")}
-            </div>
-          </details>`).join("")}
-          ${groups.length ? "" : `<p class="hard">No published lot yet.</p>`}
+          ${certMenu(openName)}
         </aside>
         <div>
           <div class="coa-cards">
@@ -595,13 +607,7 @@
       <div class="coa-layout">
         <aside class="coa-side">
           <div class="kicker">Compounds</div>
-          ${[...new Set(lots.map((l) => l.name))].map((n) => {
-            const rows = lots.filter((l) => l.name === n);
-            return `<details class="coa-acc" ${n === lot.name ? "open" : ""}>
-              <summary><a href="/certificates?compound=${encodeURIComponent(n)}" data-link>${n}</a><em>${rows.length}</em></summary>
-              <div>${rows.map((l) => `<a class="${l.code === lot.code ? "on" : ""}" href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.size} · ${l.lot}</a>`).join("")}</div>
-            </details>`;
-          }).join("")}
+          ${certMenu(lot.name)}
         </aside>
         <div class="coa-detail">
           <div class="coa-photo">${lot.image ? `<img src="${lot.image}" alt="${lot.name} ${lot.size}">` : ""}</div>
@@ -964,7 +970,7 @@
           <input name="email" type="email" value="${u.email}" required />
           <input name="company" value="${u.company || ""}" placeholder="Company name" />
           <select name="researchField">
-            ${["Independent researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${u.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
+            ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${u.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
           </select>
           <input name="phone" value="${u.phone || ""}" placeholder="Phone, optional" />
           <input name="line1" value="${addr.line1 || ""}" placeholder="Ship-to address" />
@@ -990,7 +996,7 @@
             <input name="password" type="password" placeholder="Password (8+)" required minlength="8" />
             <input name="company" type="text" placeholder="Company name" />
             <select name="researchField" required aria-label="Research field">
-              <option selected>Independent researcher</option>
+              <option selected>Independent Researcher</option>
               <option>Molecular Biology</option>
               <option>Biochemistry</option>
               <option>Peptide Chemistry</option>
@@ -1093,7 +1099,7 @@
       <form id="payForm" class="tool-form">
         <input name="company" type="text" value="${(state.user && state.user.company) || ""}" placeholder="Company name" />
         <select name="researchField" required aria-label="Research field">
-          ${["Independent researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
+          ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
         </select>
         <label class="check"><input type="radio" name="paymentMethod" value="crypto" ${state.payMethod !== "venmo" && state.payMethod !== "cashapp" ? "checked" : ""} /> USDC on this page</label>
         <label class="check"><input type="radio" name="network" value="ethereum" checked /> Ethereum</label>
@@ -1425,7 +1431,8 @@
       };
     }
     const kitQty = $("#kitQty");
-    const kitMax = Math.min(99, Math.floor(available / 10));
+    const singles = state.cart.filter((l) => l.id === picked.id && l.kind !== "kit").reduce((a, l) => a + Number(l.qty || 0), 0);
+    const kitMax = available >= 15 ? Math.floor((available - singles) / 10) : 0;
     if ($("#kitMinus") && kitQty) $("#kitMinus").onclick = () => { kitQty.value = Math.max(1, Number(kitQty.value || 1) - 1); };
     if ($("#kitPlus") && kitQty) $("#kitPlus").onclick = () => { kitQty.value = Math.min(kitMax || 1, Number(kitQty.value || 1) + 1); };
     if ($("#addKit")) {
@@ -1436,6 +1443,7 @@
         const q = Math.max(1, Number(kitQty && kitQty.value) || 1);
         const line = state.cart.find((l) => l.id === id && l.kind === 'kit');
         const next = Math.min(kitMax, line ? line.qty + q : q);
+        if (next < 1) return toast("Not enough vials for a kit of 10.");
         if (line) line.qty = next;
         else state.cart.push({ id, qty: next, kind: 'kit' });
         saveCart();
@@ -1458,7 +1466,7 @@
         <label>Name<input name="name" required placeholder="Name" /></label>
         <label>Email<input name="email" type="email" required placeholder="Email" /></label>
         <label>Organization<select name="organization" required>
-          ${["Independent researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option>${f}</option>`).join("")}
+          ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option>${f}</option>`).join("")}
         </select></label>
         <label>Approximate monthly kits<input name="volume" required placeholder="Kits" /></label>
         <label>Materials of interest<textarea name="interest" required placeholder="Compounds and sizes"></textarea></label>
