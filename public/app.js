@@ -1095,6 +1095,13 @@
       }
       <p class="lede">One 10% on the cart. HELIX10 applies on a first order over $99. An affiliate code replaces it. Free shipping over $199 after discounts.</p>
       <form id="payForm" class="tool-form">
+        <input name="shipName" type="text" required value="${(state.user && state.user.name) || ""}" placeholder="Ship-to name" />
+        <input name="phone" type="text" value="${(state.user && state.user.phone) || ""}" placeholder="Phone" />
+        <input name="line1" type="text" required value="${(state.user && state.user.address && state.user.address.line1) || ""}" placeholder="Street" />
+        <input name="line2" type="text" value="${(state.user && state.user.address && state.user.address.line2) || ""}" placeholder="Suite, optional" />
+        <input name="city" type="text" required value="${(state.user && state.user.address && state.user.address.city) || ""}" placeholder="City" />
+        <input name="region" type="text" required value="${(state.user && state.user.address && state.user.address.region) || ""}" placeholder="State" />
+        <input name="postal" type="text" required value="${(state.user && state.user.address && state.user.address.postal) || ""}" placeholder="Postal code" />
         <input name="company" type="text" value="${(state.user && state.user.company) || ""}" placeholder="Company name" />
         <select name="researchField" required aria-label="Research field">
           ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
@@ -1667,7 +1674,7 @@
             })
             .catch(() => {});
         }
-      } else if (p === "/ops") {
+      } else if (p === "/ops/catalog") {
         if (!state.user || !state.user.isOps) {
           app.innerHTML = `<section class="page wrap"><h1>Not found</h1><p class="lede">This address is not a catalog page.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
         } else {
@@ -2473,6 +2480,9 @@
               researchAck: !!fd.get("researchAck"),
               paymentMethod: fd.get("paymentMethod"),
               network: fd.get("network"),
+              shipName: fd.get("shipName"),
+              phone: fd.get("phone"),
+              ship: { line1: fd.get("line1"), line2: fd.get("line2"), city: fd.get("city"), region: fd.get("region"), postal: fd.get("postal"), country: "US" },
             },
           });
           const order = out.order || {};

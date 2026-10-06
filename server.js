@@ -14,11 +14,28 @@ const { URL } = require("node:url");
 const authx = require("./auth-extra");
 const createOpsCatalog = require("./ops-catalog");
 const QRCode = require("qrcode");
+const mailer = require("./mail");
 
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, "public");
-const DATA = path.join(ROOT, "data");
-const STORE = path.join(ROOT, "data", "store.json");
+const BUNDLED = path.join(ROOT, "data");
+const DATA = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : BUNDLED;
+fs.mkdirSync(DATA, { recursive: true });
+function seedDataDir() {
+  if (path.resolve(DATA) === path.resolve(BUNDLED)) return;
+  const names = ["products.json", "certificates.json", "copy-deck.json", "catalog-pricing.csv", "inventory.csv", "reviews.json", "channels.json", "group-buy.json", "supplier-cost.json"];
+  for (const name of names) {
+    const dest = path.join(DATA, name);
+    const src = path.join(BUNDLED, name);
+    if (!fs.existsSync(dest) && fs.existsSync(src)) fs.copyFileSync(src, dest);
+  }
+  const inc = path.join(DATA, "coas");
+  if (!fs.existsSync(inc) && fs.existsSync(path.join(BUNDLED, "coas"))) {
+    fs.cpSync(path.join(BUNDLED, "coas"), inc, { recursive: true });
+  }
+}
+seedDataDir();
+const STORE = path.join(DATA, "store.json");
 const PORT = Number(process.env.PORT || 20011);
 const SESSION_HOURS = 14 * 24;
 const SECRET = process.env.HKL_SECRET || crypto.randomBytes(32).toString("hex");
@@ -294,7 +311,7 @@ function restoreStock(order) {
   for (const line of (order.quote && order.quote.lines) || []) {
     const p = findProduct(line.sku);
     if (!p) continue;
-    const give = line.kind === "kit" ? Number(line.qty || 0) * 10 : Number(line.qty || 0);
+    const give = line.kind === "kit" || line.unit === "kit" ? Number(line.qty || 0) * 10 : Number(line.qty || 0);
     p.stock = Number(p.stock || 0) + give;
     p.available = Math.max(0, p.stock - Number(p.reserved || 0));
     p.stockStatus = stockStatus(p.available, p.stockThreshold || STOCK_THRESHOLD);
@@ -342,7 +359,9 @@ function loadOutbox() {
 }
 
 function saveOutbox(o) {
+  fs.mkdirSync(DATA, { recursive: true });
   fs.writeFileSync(OUTBOX, JSON.stringify(o, null, 2));
+  try { writeBackup("outbox", o); } catch (err) { console.error("outbox backup", err.message); }
 }
 
 function writeSubscribersCsv() {
@@ -394,8 +413,22 @@ function loadStore() {
   }
 }
 
+function backupStamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}-${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}`;
+}
+function writeBackup(kind, value) {
+  const dir = path.join(DATA, "backups");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, kind + "-" + backupStamp() + ".json"), JSON.stringify(value));
+  const files = fs.readdirSync(dir).filter((f) => f.startsWith(kind + "-")).sort();
+  while (files.length > 48) fs.unlinkSync(path.join(dir, files.shift()));
+}
 function saveStore(s) {
+  fs.mkdirSync(DATA, { recursive: true });
   fs.writeFileSync(STORE, JSON.stringify(s, null, 2));
+  try { writeBackup("store", s); } catch (err) { console.error("store backup", err.message); }
 }
 
 let store = loadStore();
@@ -1355,13 +1388,34 @@ async function api(req, res, url) {
       });
     }
     const channels = publicChannels();
+    const src = body.ship && typeof body.ship === "object" ? body.ship : (user.address || {});
+    const ship = {
+      name: String(body.shipName || user.name || "").slice(0, 80),
+      phone: String(body.phone || user.phone || "").replace(/[^0-9+() .-]/g, "").slice(0, 24),
+      line1: String(src.line1 || "").slice(0, 80),
+      line2: String(src.line2 || "").slice(0, 80),
+      city: String(src.city || "").slice(0, 40),
+      region: String(src.region || "").slice(0, 40),
+      postal: String(src.postal || "").slice(0, 16),
+      country: String(src.country || "US").slice(0, 8),
+    };
+    if (!ship.line1 || !ship.city || !ship.region || !ship.postal) {
+      return send(res, 400, { error: "ship_to", message: "Ship-to needs a street, city, state, and postal code." });
+    }
+    user.address = { line1: ship.line1, line2: ship.line2, city: ship.city, region: ship.region, postal: ship.postal };
+    if (ship.phone) user.phone = ship.phone;
+    if (ship.name) user.name = ship.name;
     const order = {
       id: "HK-" + token().slice(0, 8).toUpperCase(),
+      channel: "shop",
       userId: user.id,
       email: user.email,
+      name: ship.name,
+      phone: ship.phone,
       company: company || "",
       researchField: researchField || "Independent Researcher",
       researchAck: true,
+      ship,
       quote,
       affiliateCode: quote.affiliateCode,
       affiliatePayout: quote.affiliatePayout,
@@ -1370,8 +1424,11 @@ async function api(req, res, url) {
       fulfillment: "hold",
       settlement: paymentMethod,
       tracking: null,
+      carrier: "",
+      internalNote: "",
       note: channels.publicNote,
       created: new Date().toISOString(),
+      events: [{ at: new Date().toISOString(), kind: "placed", by: user.email }],
     };
     if (paymentMethod === "venmo" || paymentMethod === "cashapp") {
       order.payment = {
@@ -1401,6 +1458,7 @@ async function api(req, res, url) {
     if (quote.discountKind === "first_order") user.firstOrderUsed = true;
     store.orders.push(order);
     saveStore(store);
+    queueMail(orderMail(order, "placed"));
     return send(res, 200, { order });
   }
 
@@ -1489,24 +1547,37 @@ async function api(req, res, url) {
     }
     const order = (store.orders || []).find((o) => o.id === body.id);
     if (!order) return send(res, 404, { error: "not_found" });
-    const next = String(body.status || "").toLowerCase();
+    const next = String(body.status || order.status || "").toLowerCase();
     const allowed = new Set(["awaiting_settlement", "settled", "shipped", "voided"]);
     if (!allowed.has(next)) return send(res, 400, { error: "status" });
-    if (next === "shipped" && order.status !== "settled" && order.status !== "shipped") {
+    if (next === "shipped" && order.status !== "settled" && order.status !== "shipped" && next !== order.status) {
       return send(res, 400, { error: "settle_first" });
     }
     if (next === "voided" && order.status !== "voided") restoreStock(order);
+    const prev = order.status;
     order.status = next;
     if (typeof body.tracking === "string") {
-      order.tracking = body.tracking.replace(/[^A-Za-z0-9]/g, "").slice(0, 40) || null;
+      order.tracking = body.tracking.replace(/[^A-Za-z0-9 -]/g, "").slice(0, 40) || null;
+    }
+    if (typeof body.carrier === "string") order.carrier = body.carrier.slice(0, 40);
+    if (typeof body.internalNote === "string") order.internalNote = body.internalNote.slice(0, 500);
+    if (body.ship && typeof body.ship === "object") {
+      order.ship = order.ship || {};
+      for (const k of ["name", "phone", "line1", "line2", "city", "region", "postal", "country"]) {
+        if (typeof body.ship[k] === "string") order.ship[k] = body.ship[k].slice(0, 80);
+      }
     }
     if (next === "shipped" && !order.shippedAt) order.shippedAt = new Date().toISOString();
     if (next === "settled" && !order.settledAt) order.settledAt = new Date().toISOString();
-    if (next === "settled") order.fulfillment = "ready";
+    if (next === "voided" && !order.voidedAt) order.voidedAt = new Date().toISOString();
+    if (next === "settled") order.fulfillment = order.fulfillment === "shipped" ? "shipped" : "ready";
     if (next === "shipped") order.fulfillment = "shipped";
     if (next === "voided") order.fulfillment = "void";
+    order.events = order.events || [];
+    order.events.push({ at: new Date().toISOString(), kind: prev === next ? "note" : next, by: user.email });
     audit(user, "order", order.id + " " + next);
     saveStore(store);
+    if (prev !== next && (next === "settled" || next === "shipped")) queueMail(orderMail(order, next));
     return send(res, 200, { ok: true, order });
   }
 
@@ -1727,6 +1798,37 @@ async function api(req, res, url) {
     return send(res, 200, deskPayload());
   }
 
+  if (method === "GET" && route === "/api/ops/backup") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    res.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Content-Disposition": "attachment; filename=\"store.json\"",
+      "Cache-Control": "private, no-store",
+    });
+    return res.end(fs.readFileSync(STORE));
+  }
+
+  if (method === "POST" && route === "/api/ops/sweep") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    const released = sweepStaleOrders();
+    return send(res, 200, { ok: true, released });
+  }
+
+  if (method === "POST" && route === "/api/ops/orders/recheck") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const order = (store.orders || []).find((o) => o.id === body.id);
+    if (!order) return send(res, 404, { error: "not_found" });
+    const paymentId = order.payment && order.payment.paymentId;
+    if (!paymentId) return send(res, 400, { error: "no_payment" });
+    if (!process.env.NOWPAYMENTS_API_KEY) return send(res, 503, { error: "key_missing" });
+    let data;
+    try { data = await fetchNowPayment(paymentId); } catch { return send(res, 502, { error: "recheck_failed" }); }
+    const result = applyPaymentStatus(order, String(data.payment_status || ""), data);
+    return send(res, 200, { ok: true, status: result.status, paymentStatus: data.payment_status || "" });
+  }
+
   if (method === "GET" && route === "/api/ops/export") {
     if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
     const kind = url.searchParams.get("kind") || "orders";
@@ -1939,7 +2041,7 @@ async function api(req, res, url) {
       }
     }
     writeInventoryCsv();
-    const stored = { ...order, quote: { lines, total: order.total, shipping: 25, surcharge: 0 }, company: "", researchField: user.researchField || "" };
+    const stored = { ...order, stockDecremented: true, quote: { lines, total: order.total, shipping: 25, surcharge: 0 }, company: "", researchField: user.researchField || "" };
     if (order.paymentMethod === "crypto") stored.payment = await createNowPayment(stored, body.network);
     else stored.payment = { provider: order.paymentMethod, handle: order.paymentMethod === "venmo" ? "fibkingpeps" : "FibKingPep", status: "awaiting_confirmation", amount: order.total, note: order.id };
     if (order.paymentMethod === "crypto" && stored.payment && ["payment_failed", "key_missing", "invoice_pending"].includes(stored.payment.status)) {
@@ -1949,6 +2051,7 @@ async function api(req, res, url) {
     fs.writeFileSync(file, JSON.stringify(gb, null, 2));
     store.orders.push(stored);
     saveStore(store);
+    queueMail(orderMail(stored, "placed"));
     return send(res, 200, { order: stored });
   }
 
@@ -1970,22 +2073,8 @@ async function api(req, res, url) {
     const orderId = String(body.order_id || "");
     const order = (store.orders || []).find((o) => o.id === orderId);
     if (!order) return send(res, 200, { ok: true, matched: false });
-    const status = String(body.payment_status || "");
-    order.payment = Object.assign({}, order.payment, {
-      provider: "nowpayments",
-      paymentId: body.payment_id || null,
-      paymentStatus: status,
-      payCurrency: body.pay_currency || null,
-      actuallyPaid: body.actually_paid || null,
-    });
-    if (order.status === "voided") return send(res, 200, { ok: true, skipped: "voided" });
-    if (status === "finished" || status === "confirmed") {
-      order.status = "settled";
-      order.fulfillment = "hold";
-      order.settledAt = new Date().toISOString();
-    }
-    saveStore(store);
-    return send(res, 200, { ok: true });
+    const result = applyPaymentStatus(order, String(body.payment_status || ""), body);
+    return send(res, 200, { ok: true, status: result.status, skipped: result.skipped || null });
   }
 
   if (await opsCatalogHandle(req, res, url, user)) return;
@@ -2115,23 +2204,54 @@ function deskPayload() {
       low: inventory.filter((r) => r.low).length,
       accounts: (store.users || []).length,
       list: (store.captures || []).length,
+      stale: (store.orders || []).filter((o) => o.status === "awaiting_settlement" && staleAge(o)).length,
     },
     orders: orders.map((o) => ({
       id: o.id,
+      channel: o.channel || "shop",
       email: o.email,
+      name: o.name || (o.ship && o.ship.name) || "",
+      phone: o.phone || (o.ship && o.ship.phone) || "",
       company: o.company || "",
       researchField: o.researchField || "",
       researchAck: !!o.researchAck,
+      telegram: o.telegram || "",
+      ship: o.ship || null,
       paymentMethod: o.paymentMethod || o.settlement || "",
+      payment: o.payment || null,
       paymentStatus: (o.payment && o.payment.status) || "",
       status: o.status,
       fulfillment: o.fulfillment || "hold",
       total: o.quote && o.quote.total,
+      merchandise: o.quote && o.quote.merchandise,
+      shipping: o.quote && o.quote.shipping,
+      surcharge: o.quote && o.quote.surcharge,
+      coupon: o.quote && o.quote.coupon,
+      couponOff: o.quote && o.quote.couponOff,
+      affiliateCode: o.affiliateCode || "",
+      affiliatePayout: o.affiliatePayout || 0,
       tracking: o.tracking || "",
-      created: o.created,
-      lines: ((o.quote && o.quote.lines) || []).map((l) => l.name + " " + l.size + " ×" + l.qty),
+      carrier: o.carrier || "",
+      internalNote: o.internalNote || "",
       dispute: o.dispute || "",
+      created: o.created,
+      settledAt: o.settledAt || "",
+      shippedAt: o.shippedAt || "",
+      voidedAt: o.voidedAt || "",
+      events: o.events || [],
+      lines: ((o.quote && o.quote.lines) || []).map((l) => ({
+        sku: l.sku || "",
+        name: l.name || "",
+        size: l.size || "",
+        qty: l.qty,
+        kind: l.kind || "vial",
+        lot: l.lot || "",
+        unit: l.unit,
+        line: l.line,
+      })),
     })),
+    captures: (store.captures || []).slice().reverse(),
+    opsEmails: [...OPS_EMAILS],
     inventory,
     customers: (store.users || []).map((u) => ({
       email: u.email,
@@ -2205,6 +2325,7 @@ function knownPaths() {
     "/account",
     "/cart",
     "/ops",
+    "/ops/catalog",
     "/library",
   ]);
   for (const f of shopFamilies()) paths.add("/product/" + (f.slug || f.id));
@@ -2220,6 +2341,15 @@ function pageModel(pathname) {
       canonical: origin + "/",
       h1: "Premium research peptides.",
       body: "<p>Research-use materials only. Not for human or animal consumption.</p>",
+      schema: {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: (copyDeck.faq || []).map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      },
     };
   }
   if (pathname === "/shop") {
@@ -2254,18 +2384,19 @@ function pageModel(pathname) {
       url: origin + "/product/" + (fam.slug || fam.id),
     }));
     const sizes = items.map((it) => `${escHtml(it.size)} · $${escHtml(it.price)}`).join("</li><li>");
+    const desc = String(fam.blurb || fam.name + " research material.").replace(/\s+/g, " ").trim();
     return {
       title: fam.name + " | Helix King Labs",
-      description: fam.name + " research material. Research use only. Not for human dosing, injection, or ingestion.",
+      description: desc.slice(0, 160),
       canonical: origin + "/product/" + (fam.slug || fam.id),
       h1: fam.name,
-      body: `<p>All products listed on this site are for research purposes only.</p><ul><li>${sizes}</li></ul>`,
+      body: `<p>${escHtml(desc)}</p><p>All products listed on this site are for research purposes only.</p><ul><li>${sizes}</li></ul>`,
       schema: {
         "@context": "https://schema.org",
         "@type": "Product",
         name: fam.name,
         brand: { "@type": "Brand", name: "Helix King Labs" },
-        description: fam.name + " research material. Research use only.",
+        description: desc,
         offers: offers,
       },
     };
@@ -2378,7 +2509,8 @@ function serveStatic(req, res, urlPath) {
     return res.end();
   }
   const status = knownPaths().has(pathname) || pathname.startsWith("/account") || pathname === "/magic" ? 200 : 404;
-  const index = path.join(PUBLIC, "index.html");
+  const opsDesk = pathname === "/ops";
+  const index = path.join(PUBLIC, opsDesk ? "ops.html" : "index.html");
   fs.readFile(index, (e2, buf) => {
     if (e2) {
       res.writeHead(404);
@@ -2386,7 +2518,7 @@ function serveStatic(req, res, urlPath) {
       return;
     }
     res.writeHead(status, htmlHeaders(status));
-    res.end(injectDocument(buf, pathname, status));
+    res.end(opsDesk ? buf : injectDocument(buf, pathname, status));
   });
 }
 
@@ -2413,6 +2545,140 @@ const server = http.createServer(async (req, res) => {
     if (!res.headersSent) send(res, 500, { error: "server" });
   }
 });
+
+function orderMail(order, kind) {
+  const q = order.quote || {};
+  const pay = order.payment || {};
+  const total = "$" + Number(q.total || 0).toFixed(2);
+  const lines = ((q.lines || []).map((l) => `${l.name || ""} ${l.size || ""} × ${l.qty}`).join("\n")) || "See the desk for lines.";
+  let payText = "Payment instructions are on the order.";
+  if (pay.payAddress) payText = `Pay ${pay.payAmount} ${pay.payCurrency} on ${pay.network || "the stated network"} to ${pay.payAddress}. Do not send a different coin or network.`;
+  else if (order.paymentMethod === "venmo") payText = `Venmo @fibkingpeps ${total}. Put ${order.id} in the note.`;
+  else if (order.paymentMethod === "cashapp") payText = `Cash App $FibKingPep ${total}. Put ${order.id} in the note.`;
+  const subjects = {
+    placed: `Order ${order.id} — Helix King Labs`,
+    settled: `Payment received ${order.id} — Helix King Labs`,
+    shipped: `Shipped ${order.id} — Helix King Labs`,
+    voided: `Order ${order.id} released — Helix King Labs`,
+  };
+  const text = {
+    placed: `Order ${order.id} is recorded.\nTotal ${total}\n\n${lines}\n\n${payText}\n\nNothing ships until payment is confirmed. Research use only.`,
+    settled: `Payment received for ${order.id}. The order is being prepared. Nothing has shipped yet.`,
+    shipped: `${order.id} is booked${order.carrier ? " with " + order.carrier : ""}. Tracking ${order.tracking || "posts on the next note"}.`,
+    voided: `${order.id} was released because payment was not confirmed in time. The hold on stock is cleared. Place the order again if you still want it.`,
+  };
+  return {
+    to: order.email,
+    subject: subjects[kind] || `Helix King Labs ${order.id}`,
+    text: text[kind] || text.placed,
+    kind,
+    orderId: order.id,
+    created: new Date().toISOString(),
+    status: "queued",
+    attempts: 0,
+  };
+}
+function queueMail(msg) {
+  if (!msg || !msg.to) return;
+  const box = loadOutbox();
+  box.messages.push(msg);
+  saveOutbox(box);
+  drainOutbox().catch(() => {});
+}
+async function drainOutbox() {
+  if (!mailer.configured()) return;
+  const box = loadOutbox();
+  let changed = false;
+  for (const msg of box.messages || []) {
+    if (msg.status === "sent") continue;
+    if (msg.status === "failed" && Number(msg.attempts || 0) >= 3) continue;
+    try {
+      await mailer.sendMail(msg);
+      msg.status = "sent";
+      msg.sentAt = new Date().toISOString();
+    } catch (err) {
+      msg.status = "failed";
+      msg.attempts = Number(msg.attempts || 0) + 1;
+      msg.error = String(err.message || err).slice(0, 160);
+    }
+    changed = true;
+  }
+  if (changed) saveOutbox(box);
+}
+function staleAge(order) {
+  const age = Date.now() - new Date(order.created || 0).getTime();
+  const cutoff = order.paymentMethod === "crypto" ? 24 * 60 * 60 * 1000 : 72 * 60 * 60 * 1000;
+  return Number.isFinite(age) && age >= cutoff;
+}
+function sweepStaleOrders() {
+  let released = 0;
+  for (const order of store.orders || []) {
+    if (order.status !== "awaiting_settlement" || !staleAge(order)) continue;
+    restoreStock(order);
+    order.stockDecremented = false;
+    order.status = "voided";
+    order.fulfillment = "void";
+    order.voidedAt = new Date().toISOString();
+    order.events = order.events || [];
+    order.events.push({ at: new Date().toISOString(), kind: "voided", by: "sweep" });
+    audit({ email: "sweep" }, "order", order.id + " stale void");
+    queueMail(orderMail(order, "voided"));
+    released += 1;
+  }
+  if (released) saveStore(store);
+  return released;
+}
+function applyPaymentStatus(order, status, body) {
+  body = body || {};
+  order.payment = Object.assign({}, order.payment, {
+    provider: "nowpayments",
+    paymentId: body.payment_id || (order.payment && order.payment.paymentId) || null,
+    paymentStatus: status,
+    status: status || (order.payment && order.payment.status) || "",
+    payCurrency: body.pay_currency || (order.payment && order.payment.payCurrency) || null,
+    actuallyPaid: body.actually_paid != null ? body.actually_paid : order.payment && order.payment.actuallyPaid,
+  });
+  if (order.status === "voided") return { ok: true, skipped: "voided", status: order.status };
+  const paid = status === "finished" || status === "confirmed";
+  if (paid && order.status !== "settled" && order.status !== "shipped") {
+    order.status = "settled";
+    order.fulfillment = "ready";
+    order.settledAt = new Date().toISOString();
+    order.events = order.events || [];
+    order.events.push({ at: new Date().toISOString(), kind: "settled", by: "nowpayments" });
+    queueMail(orderMail(order, "settled"));
+  }
+  saveStore(store);
+  return { ok: true, status: order.status };
+}
+function fetchNowPayment(paymentId) {
+  const key = process.env.NOWPAYMENTS_API_KEY;
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: "api.nowpayments.io",
+        path: "/v1/payment/" + encodeURIComponent(paymentId),
+        method: "GET",
+        headers: { "x-api-key": key },
+      },
+      (res) => {
+        let raw = "";
+        res.on("data", (c) => (raw += c));
+        res.on("end", () => {
+          try { resolve(JSON.parse(raw)); } catch (err) { reject(err); }
+        });
+      }
+    );
+    req.setTimeout(8000, () => { req.destroy(); reject(new Error("timeout")); });
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+sweepStaleOrders();
+drainOutbox().catch(() => {});
+setInterval(() => sweepStaleOrders(), 60 * 60 * 1000);
+setInterval(() => drainOutbox().catch(() => {}), 5 * 60 * 1000);
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Helix King Labs storefront shell → http://0.0.0.0:${PORT}`);
