@@ -467,7 +467,7 @@
 
   const COA_LOTS = [
     { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gic1-10.jpg?v=57" },
-    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried research material", cap: "Light blue", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg", image: "/img/pgl-gic1-20.jpg?v=57" },
+    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg", image: "/img/pgl-gic1-20.jpg?v=57" },
     { code: "ELR10", name: "PGL-EL1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-el1-10.jpg?v=57", alias: ["ELORA"] },
     { code: "TR30", name: "PGL-GI1", size: "30 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gi1-30.jpg?v=57", alias: ["TRIZ30"] },
   ];
