@@ -420,6 +420,7 @@
                 <input id="qty" type="number" min="1" max="9" value="1" style="width:72px;min-width:72px;text-align:center" />
                 <button type="button" id="qtyPlus">+</button>
               </div>
+              <p class="line-total" id="lineTotal"></p>
               ${!state.user ? `<a class="btn" href="/account" data-link>Sign in to add</a>` : `<button class="btn" id="addBtn" ${isPending(p) || onHand(p) <= 0 ? "disabled" : ""}>${isPending(p) ? "Waiting for testing to complete" : onHand(p) <= 0 ? "Out of stock" : "Add single · " + money(p.price)}</button>`}
             </div>
             ${onHand(p) >= 15 && p.kitPrice ? `<div>
@@ -1382,14 +1383,24 @@
     const available = picked.available != null ? Number(picked.available) : Number(picked.stock || 0);
     const qty = $("#qty");
     const cap = Math.max(1, Math.min(20, available || 1));
+    const paintTotal = () => {
+      const el = $("#lineTotal");
+      if (!el || !qty) return;
+      const q = Math.max(1, Number(qty.value) || 1);
+      el.textContent = picked.price == null ? "" : q + " × " + money(picked.price) + " = " + money(q * picked.price);
+    };
+    paintTotal();
+    if (qty) qty.addEventListener("input", paintTotal);
     if ($("#qtyMinus")) {
       $("#qtyMinus").onclick = () => {
         qty.value = Math.max(1, Number(qty.value) - 1);
+        paintTotal();
       };
     }
     if ($("#qtyPlus")) {
       $("#qtyPlus").onclick = () => {
         qty.value = Math.min(cap, Number(qty.value) + 1);
+        paintTotal();
       };
     }
     document.querySelectorAll("#pdpDoses .dose").forEach((a) => {

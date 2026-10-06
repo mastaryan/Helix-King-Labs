@@ -456,6 +456,7 @@ input:focus, select:focus { border-color: var(--silver-2); }
 #wholesaleForm select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #c8c8c8 50%), linear-gradient(135deg, #c8c8c8 50%, transparent 50%); background-position: calc(100% - 18px) 18px, calc(100% - 12px) 18px; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; }
 #wholesaleForm textarea { min-height: 120px; resize: vertical; }
 
+.line-total { margin: 10px 0 0; font-variant-numeric: tabular-nums; color: var(--silver-2); font-size: 14px; }
 .dose.out { text-decoration: line-through; opacity: 0.55; }
 .home-names { font-family: var(--mono); letter-spacing: 0.04em; }
 .social-row { display: flex; gap: 18px; margin-top: 22px; }
@@ -660,8 +661,8 @@ input:focus, select:focus { border-color: var(--silver-2); }
 .buy-split > div { border: 1px solid var(--line); padding: 14px; }
 .coa-search { max-width: none; }
 .coa-search input { width: 100%; min-height: 48px; font-size: 16px; padding: 12px 14px; }
-.coa-layout { display: grid; grid-template-columns: 1fr 240px; gap: 22px; align-items: start; }
-.coa-side { order: 2; }
+.coa-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 22px; align-items: start; }
+.coa-side { order: 0; }
 .coa-crumb-photo { max-width: 220px; margin: 12px 0 18px; }
 .coa-sum { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--muted); }
 .coa-side { border: 1px solid var(--line); padding: 12px; }

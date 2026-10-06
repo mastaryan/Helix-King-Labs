@@ -76,7 +76,7 @@
       "category": "documented",
       "useClass": "research",
       "form": "Dried research material in glass vial",
-      "image": "/img/pgl-gic1-10.jpg?v=60",
+      "image": "/img/pgl-gic1-10.jpg?v=62",
       "hero": true,
       "blurb": "A coded multi-receptor research peptide in the PGL series, supplied as a single compound. Listed by research name only. Third-party testing ",
       "panel": "12-point",
@@ -92,7 +92,7 @@
         "20 mg",
         "30 mg"
       ],
-      "cardImage": "/img/pgl-gic1-10.jpg?v=60",
+      "cardImage": "/img/pgl-gic1-10.jpg?v=62",
       "featured": true,
       "about": {
         "ref": "PGL-GIC1",
@@ -831,7 +831,7 @@
       "category": "blends",
       "useClass": "research",
       "form": "Dried research material in glass vial",
-      "image": "/img/glow.jpg?v=61",
+      "image": "/img/glow.jpg?v=62",
       "hero": false,
       "blurb": "A three-component research blend in one vial: GHK-Cu 50 mg, BPC-157 10 mg, and TB-500 10 mg (70 mg total).",
       "panel": "12-point",
@@ -841,7 +841,7 @@
       "sizes": [
         "70 mg"
       ],
-      "cardImage": "/img/glow.jpg?v=61",
+      "cardImage": "/img/glow.jpg?v=62",
       "featured": true,
       "about": {
         "ref": "GLOW",
@@ -1391,7 +1391,7 @@
       "hero": true,
       "purity": "99.41%",
       "lot": "HK-2701",
-      "image": "/img/pgl-gic1-10.jpg?v=60",
+      "image": "/img/pgl-gic1-10.jpg?v=62",
       "price": 35,
       "stock": 0,
       "panel": "12-point",
@@ -4512,7 +4512,7 @@
       "hero": false,
       "purity": "99.50%",
       "lot": "HK-2724",
-      "image": "/img/glow.jpg?v=61",
+      "image": "/img/glow.jpg?v=62",
       "price": 50,
       "stock": 0,
       "panel": "12-point",
