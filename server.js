@@ -929,6 +929,13 @@ function purchasedSkus(userId) {
   return skus;
 }
 
+function publicOrder(o) {
+  if (!o) return o;
+  const { internalNote, ...rest } = o;
+  rest.events = (o.events || []).map((e) => ({ at: e.at, kind: e.kind }));
+  return rest;
+}
+
 async function api(req, res, url) {
   const ip = req.socket.remoteAddress || "0";
   const user = sessionUser(req);
@@ -1737,8 +1744,66 @@ async function api(req, res, url) {
 
   if (method === "GET" && route === "/api/orders") {
     if (!user) return send(res, 401, { error: "account_required" });
-    const mine = store.orders.filter((o) => o.userId === user.id);
+    const mine = store.orders.filter((o) => o.userId === user.id).map(publicOrder);
     return send(res, 200, { orders: mine });
+  }
+
+  if (method === "POST" && route.startsWith("/api/orders/")) {
+    if (!user) return send(res, 401, { error: "account_required" });
+    const parts = route.split("/");
+    const id = decodeURIComponent(parts[3] || "");
+    const action = parts[4] || "";
+    const order = store.orders.find((o) => o.id === id && o.userId === user.id);
+    if (!order) return send(res, 404, { error: "not_found" });
+    let body;
+    try {
+      body = await readBody(req);
+    } catch {
+      return send(res, 400, { error: "bad_request" });
+    }
+    if (action === "address") {
+      if (order.status !== "awaiting_settlement") {
+        return send(res, 409, { error: "locked", message: "The address can only change before payment is confirmed." });
+      }
+      const ship = {
+        name: String(body.name || "").slice(0, 80),
+        phone: String(body.phone || "").replace(/[^0-9+() .-]/g, "").slice(0, 24),
+        line1: String(body.line1 || "").slice(0, 80),
+        line2: String(body.line2 || "").slice(0, 80),
+        city: String(body.city || "").slice(0, 40),
+        region: String(body.region || "").slice(0, 40),
+        postal: String(body.postal || "").slice(0, 16),
+        country: String(body.country || "US").slice(0, 8),
+      };
+      if (!ship.line1 || !ship.city || !ship.region || !ship.postal) {
+        return send(res, 400, { error: "ship_to", message: "Street, city, state, and postal code are required." });
+      }
+      order.ship = ship;
+      if (ship.name) order.name = ship.name;
+      if (ship.phone) order.phone = ship.phone;
+      order.events = order.events || [];
+      order.events.push({ at: new Date().toISOString(), kind: "address", by: user.email });
+      audit(user, "order", order.id + " address");
+      saveStore(store);
+      return send(res, 200, { ok: true, order: publicOrder(order) });
+    }
+    if (action === "cancel") {
+      if (order.status !== "awaiting_settlement") {
+        return send(res, 409, { error: "locked", message: "Only unpaid orders can be cancelled." });
+      }
+      restoreStock(order);
+      order.stockDecremented = false;
+      order.status = "voided";
+      order.fulfillment = "void";
+      order.voidedAt = new Date().toISOString();
+      order.events = order.events || [];
+      order.events.push({ at: new Date().toISOString(), kind: "voided", by: user.email });
+      audit(user, "order", order.id + " customer void");
+      saveStore(store);
+      queueMail(orderMail(order, "voided"));
+      return send(res, 200, { ok: true, order: publicOrder(order) });
+    }
+    return send(res, 404, { error: "not_found" });
   }
 
   if (method === "GET" && route === "/api/reviews") {
