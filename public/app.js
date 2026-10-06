@@ -70,6 +70,7 @@
     setTimeout(() => el.remove(), 3200);
   }
 
+  window.HKL = Object.assign(window.HKL || {}, { money, api });
   async function api(path, opts = {}) {
     const res = await fetch(path, {
       credentials: "same-origin",
@@ -1654,9 +1655,8 @@
         const id = decodeURIComponent(p.split("/")[3] || "");
         const d = await api("/api/orders");
         const order = (d.orders || []).find((o) => o.id === id);
-        app.innerHTML = order
-          ? `<section class="page wrap prose"><div class="kicker">Receipt</div><h1>${order.id}</h1><p>${(order.created || "").slice(0, 10)} · ${order.paymentMethod || "payment"} · ${order.status} · ${order.fulfillment || "hold"}</p><p>${(order.quote.lines || []).map((l) => l.name + " " + l.size + " × " + l.qty).join("<br>")}</p><p>Total ${money(order.quote.total)}</p><p>${order.tracking ? "Tracking " + order.tracking : "Tracking posts when the label is booked."}</p><p><a href="/account" data-link>Account</a></p></section>`
-          : `<section class="page wrap"><h1>Not found</h1><a href="/account" data-link>Account</a></section>`;
+        app.innerHTML = order ? receiptView(order) : `<section class="page wrap"><h1>Not found</h1><a href="/account" data-link>Account</a></section>`;
+        if (order) bindReceipt(order);
       } else if (p === "/account") {
         app.innerHTML = account();
         if (state.user) {
@@ -1669,7 +1669,7 @@
                 return;
               }
               box.innerHTML = `<h2>Orders</h2>` + d.orders.map((o) =>
-                `<p class="hard"><a href="/account/receipt/${o.id}" data-link>${o.id}</a> · ${(o.created || "").slice(0, 10)} · ${money(o.quote && o.quote.total)} · ${o.paymentMethod || "payment"} · ${o.status} · ${o.fulfillment || "hold"}${o.tracking ? " · " + o.tracking : ""}</p>`
+                `<p class="hard"><a href="/account/receipt/${o.id}" data-link>${o.id}</a> · ${(o.created || "").slice(0, 10)} · ${money(o.quote && o.quote.total)} · ${orderStatusLabel(o.status)}${o.tracking ? " · " + o.tracking : ""}</p>`
               ).join("");
             })
             .catch(() => {});
