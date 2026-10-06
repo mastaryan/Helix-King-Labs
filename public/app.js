@@ -1096,7 +1096,7 @@
         <div class="grand"><span>Total</span><span>${money(quote.total)}</span></div>
       </div>
       <label class="aff-field">Affiliate code
-        <input id="affCode" type="text" maxlength="16" value="${state.aff || ""}" placeholder="Leave blank for HELIX10 over $99" />
+        <input id="affCode" type="text" maxlength="16" value="${state.aff || ""}" placeholder="Affiliate or coupon code (blank for HELIX10 over $99)" />
       </label>
       ${
         quote.shipping > 0
