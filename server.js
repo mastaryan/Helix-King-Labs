@@ -12,6 +12,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const { URL } = require("node:url");
 const authx = require("./auth-extra");
+const createOpsCatalog = require("./ops-catalog");
 const QRCode = require("qrcode");
 
 const ROOT = __dirname;
@@ -164,6 +165,23 @@ function applyInventoryCsv() {
     item.available = Math.max(0, (item.stock || 0) - item.reserved);
     item.stockThreshold = Number(row.threshold) || STOCK_THRESHOLD;
     item.stockStatus = stockStatus(item.available, item.stockThreshold);
+    const prior = String(row.ever_stocked || "") === "1" || item.everStocked === true;
+    item.everStocked = prior || (Number.isFinite(on) && on > 0);
+  }
+  attachCertificates();
+}
+
+const CERT_FILES = {
+  RT20: "/docs/rt20-freedom-2607310981.jpg",
+};
+
+function attachCertificates() {
+  for (const item of products.items) {
+    const rel = String(item.certificateFile || CERT_FILES[item.sku] || "").split("?")[0];
+    const onDisk = rel && fs.existsSync(path.join(PUBLIC, rel.replace(/^\//, "")));
+    item.certificateFile = onDisk ? rel : (item.certificateFile || "");
+    if (!onDisk && !item.certificateFile) item.certificateFile = "";
+    item.certificatePublic = !!(onDisk && item.everStocked);
   }
 }
 
@@ -179,6 +197,7 @@ function writeInventoryCsv() {
     "available",
     "threshold",
     "status",
+    "ever_stocked",
     "notes",
   ];
   const lines = [header.join(",")];
@@ -202,6 +221,7 @@ function writeInventoryCsv() {
         available,
         threshold,
         status,
+        it.everStocked || on > 0 ? "1" : "0",
         "Edit on_hand. Status recalculates on save / order.",
       ].join(",")
     );
@@ -305,6 +325,7 @@ function applyPendingTesting() {
 
 applyPricingCsv();
 applyInventoryCsv();
+const opsCatalogHandle = createOpsCatalog({ products, store, saveStore, send, readBody, isOpsUser, findProduct, writeInventoryCsv, writePricingCsv, attachCertificates, audit, PUBLIC, DATA, QRCode, sessionOf });
 applyPendingTesting();
 
 function loadOutbox() {
@@ -400,10 +421,14 @@ function cookieOf(req) {
   return map;
 }
 
-function sessionUser(req) {
+function sessionOf(req) {
   const sid = cookieOf(req).hkl_sid;
   if (!sid) return null;
-  const sess = store.sessions.find((s) => s.id === sid && s.exp > Date.now());
+  return store.sessions.find((s) => s.id === sid && s.exp > Date.now()) || null;
+}
+
+function sessionUser(req) {
+  const sess = sessionOf(req);
   if (!sess) return null;
   return store.users.find((u) => u.id === sess.userId) || null;
 }
@@ -829,6 +854,9 @@ function sanitizeProduct(p, authed) {
   out.releaseState = pending ? "pending_testing" : p.releaseState || "live";
   out.unavailableReason = pending ? "Waiting for testing to complete." : p.unavailableReason || null;
   out.shopVisible = shopVisibleOf(p);
+  out.everStocked = !!p.everStocked;
+  out.certificateFile = p.certificatePublic ? p.certificateFile : "";
+  out.certificatePublic = !!p.certificatePublic;
   return out;
 }
 
@@ -1715,7 +1743,9 @@ async function api(req, res, url) {
       item.cost = Number.isFinite(n) ? n : item.cost;
     }
     if (body.certificate === "accepted" || body.certificate === "pending") item.certificateStatus = body.certificate;
+    if (Number(item.stock || 0) > 0) item.everStocked = true;
     item.available = Math.max(0, Number(item.stock || 0) - Number(item.reserved || 0));
+    attachCertificates();
     item.stockStatus = stockStatus(item.available, item.stockThreshold || STOCK_THRESHOLD);
     writeInventoryCsv();
     writePricingCsv();
@@ -1932,6 +1962,8 @@ async function api(req, res, url) {
     saveStore(store);
     return send(res, 200, { ok: true });
   }
+
+  if (await opsCatalogHandle(req, res, url, user)) return;
 
   return send(res, 404, { error: "not_found" });
 }

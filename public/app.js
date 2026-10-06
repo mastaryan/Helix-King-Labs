@@ -412,26 +412,28 @@
             ${stockBadge(p)}
           </div>
           ${priceBlock(p)}
-          ${p.kitPrice ? `<p class="hard">10-vial kit ${money(p.kitPrice)}. Single cap is 9.</p>` : ''}
-          <div class="qty">
-            <button type="button" id="qtyMinus">−</button>
-            <input id="qty" type="number" min="1" max="9" value="1" style="width:72px;min-width:72px;text-align:center" />
-            <button type="button" id="qtyPlus">+</button>
+          <div class="buy-split">
+            <div>
+              <div class="kicker">Single vial</div>
+              <p class="hard">1–9, capped by stock.</p>
+              <div class="qty">
+                <button type="button" id="qtyMinus">−</button>
+                <input id="qty" type="number" min="1" max="9" value="1" style="width:72px;min-width:72px;text-align:center" />
+                <button type="button" id="qtyPlus">+</button>
+              </div>
+              ${!state.user ? `<a class="btn" href="/account" data-link>Sign in to add</a>` : `<button class="btn" id="addBtn" ${isPending(p) || onHand(p) <= 0 ? "disabled" : ""}>${isPending(p) ? "Waiting for testing to complete" : onHand(p) <= 0 ? "Out of stock" : "Add single · " + money(p.price)}</button>`}
+            </div>
+            <div>
+              <div class="kicker">Kit of 10</div>
+              <p class="hard">${p.kitPrice ? money(p.kitPrice) + " · " : ""}max ${Math.min(99, Math.floor(onHand(p) / 10))} kits from ${onHand(p)} vials.</p>
+              <div class="qty">
+                <button type="button" id="kitMinus">−</button>
+                <input id="kitQty" type="number" min="1" max="${Math.max(1, Math.min(99, Math.floor(onHand(p) / 10)))}" value="1" style="width:72px;min-width:72px;text-align:center" />
+                <button type="button" id="kitPlus">+</button>
+              </div>
+              ${!state.user ? "" : `<button class="btn ghost" id="addKit" type="button" ${Math.floor(onHand(p) / 10) < 1 ? "disabled" : ""}>${Math.floor(onHand(p) / 10) < 1 ? "Not enough for a kit" : "Add kit · " + money(p.kitPrice || p.price * 10)}</button>`}
+            </div>
           </div>
-          ${
-            !state.user
-              ? `<a class="btn" href="/account" data-link>Sign in to add</a>`
-              : `<button class="btn" id="addBtn" ${
-                  isPending(p) || onHand(p) <= 0 ? "disabled" : ""
-                }>${
-                  isPending(p)
-                    ? "Waiting for testing to complete"
-                    : onHand(p) <= 0
-                    ? "Out of stock"
-                    : "Add " + p.name + " · " + p.size
-                }</button>
-                ${p.kitPrice ? `<button class="btn ghost" id="addKit" type="button">Add kit of 10 · ${money(p.kitPrice)}</button>` : ''}`
-          }
           ${state.user && onHand(p) <= 0 ? `<p class="hard">Sold out.</p>` : ""}
           ${
             state.user
@@ -465,10 +467,10 @@
   }
 
   const COA_LOTS = [
-    { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gic1-10.jpg?v=56" },
-    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried research material", cap: "Light blue", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg", image: "/img/pgl-gic1-20.jpg?v=56" },
-    { code: "ELR10", name: "PGL-EL1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-el1-10.jpg?v=56", alias: ["ELORA"] },
-    { code: "TR30", name: "PGL-GI1", size: "30 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gi1-30.jpg?v=56", alias: ["TRIZ30"] },
+    { code: "RT10", name: "PGL-GIC1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gic1-10.jpg?v=57" },
+    { code: "RT20", name: "PGL-GIC1", size: "20 mg", form: "Dried research material", cap: "Light blue", crimp: "Silver", status: "Reported", lot: "2607310981", lab: "Freedom Diagnostics", reportId: "2607310981", search: "AMIN2607310981", received: "2026-07-31", reported: "2026-08-05", purity: "99.89%", net: "19.67 mg", identity: "Confirmed", appearance: "White dried powder", fentanyl: "None detected", method: "HPLC-UV with LC-MS", file: "/docs/rt20-freedom-2607310981.jpg", image: "/img/pgl-gic1-20.jpg?v=57" },
+    { code: "ELR10", name: "PGL-EL1", size: "10 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-el1-10.jpg?v=57", alias: ["ELORA"] },
+    { code: "TR30", name: "PGL-GI1", size: "30 mg", form: "Dried research material", cap: "Black", crimp: "Silver", status: "Incoming", lot: "Pending", image: "/img/pgl-gi1-30.jpg?v=57", alias: ["TRIZ30"] },
   ];
 
   function coaLots() {
@@ -492,7 +494,13 @@
       });
     });
     const seen = new Set(fromItems.map((l) => l.code));
-    return fromItems.concat(COA_LOTS.filter((l) => !seen.has(l.code)));
+    return fromItems.concat(COA_LOTS.filter((l) => !seen.has(l.code))).map((l) => {
+      const item = items.find((it) => it.sku === l.code);
+      const ever = item ? (item.everStocked === true || Number(item.stock || 0) > 0 || Number(item.available || 0) > 0) : false;
+      const file = (item && item.certificateFile) || l.file || "";
+      const coa = (item && item.coa) || {};
+      return Object.assign({}, l, { everStocked: ever, file: file || "", lab: coa.lab || l.lab || "", reportId: coa.reportId || l.reportId || "", received: coa.received || l.received || "", reported: coa.reported || l.reported || "", purity: coa.purity || l.purity || "", net: coa.net || l.net || "", identity: coa.identity || l.identity || "", fentanyl: coa.fentanyl || l.fentanyl || "", appearance: coa.appearance || l.appearance || "" });
+    });
   }
 
   function coaWarning() {
@@ -503,89 +511,121 @@
     </div>`;
   }
 
+  function publishedLots() {
+    return coaLots().filter((l) => l.file && l.everStocked);
+  }
+
   function certIndex() {
-    const lots = coaLots();
+    const lots = publishedLots();
     const names = [...new Set(lots.map((l) => l.name))];
-    const q = (new URLSearchParams(location.search).get("q") || "").trim();
+    const params = new URLSearchParams(location.search);
+    const q = (params.get("q") || "").trim();
+    const compound = (params.get("compound") || "").trim();
     const needle = q.toLowerCase();
-    const shown = lots.filter((l) => !needle || [l.name, l.code, l.lot, l.size, l.lab, l.reportId].join(" ").toLowerCase().includes(needle));
-    const reported = lots.filter((l) => l.file).length;
+    const shown = lots.filter((l) => {
+      if (compound && l.name !== compound) return false;
+      if (!needle) return true;
+      return [l.name, l.code, l.lot, l.size, l.lab, l.reportId].join(" ").toLowerCase().includes(needle);
+    });
+    const passed = lots.length;
+    const groups = names.map((n) => ({ name: n, lots: lots.filter((l) => l.name === n) }));
+    const openName = compound || (shown[0] && shown[0].name) || "";
     return `<section class="page wrap coa">
       <div class="kicker">Lot record</div>
       <h1>Certificates of analysis</h1>
-      <p class="lede">Each card is a batch. The report file, laboratory, and report ID appear when that lot is accepted.</p>
+      <p class="lede">A lot appears here after it has been stocked and its laboratory file is on this site. Sold-out lots stay. A strength that has never been stocked does not.</p>
       <div class="coa-stats">
-        <div><strong>${lots.length}</strong><span>Batches</span></div>
+        <div><strong>${lots.length}</strong><span>Published lots</span></div>
         <div><strong>${names.length}</strong><span>Compounds</span></div>
-        <div><strong>${reported}</strong><span>Lab reports</span></div>
-        <div><strong>${reported}</strong><span>Report pages</span></div>
-        <div><strong>${lots.length ? Math.round((reported / lots.length) * 100) : 0}%</strong><span>On file</span></div>
+        <div><strong>${passed}</strong><span>Passed</span></div>
+        <div><strong>${lots.length ? "100%" : "—"}</strong><span>Passed of published</span></div>
       </div>
       <form class="coa-search" id="certSearch">
-        <input name="q" placeholder="Search compound, lot, batch" aria-label="Search certificates" id="coaQ">
+        <input name="q" placeholder="Search compound, lot, batch, report ID" aria-label="Search certificates" id="coaQ" value="${q}">
       </form>
-      <div class="coa-chips">
-        <a class="${q ? "" : "on"}" href="/certificates" data-link>All</a>
-        ${names.map((n) => `<a class="${q === n ? "on" : ""}" href="/certificates?q=${encodeURIComponent(n)}" data-link>${n}</a>`).join("")}
-      </div>
-      <div class="coa-cards">
-        ${shown.map((l) => `<a class="coa-card" href="/certificates/${encodeURIComponent(l.code)}" data-link>
-          <div class="coa-photo">${l.image ? `<img src="${l.image}" alt="${l.name} ${l.size}">` : ""}</div>
-          <div class="coa-card-meta">
-            <b>${l.name}</b>
-            <span>${l.size}</span>
-            <span>${l.lot && l.lot !== "Pending" ? "Lot " + l.lot : "Batch pending"}</span>
-            <span>${l.lab || "Laboratory pending"}</span>
-            <span>${l.reportId ? "Report " + l.reportId : "Report ID pending"}</span>
-            <div class="coa-pills">
-              <em class="${l.file ? "ok" : ""}">${l.file ? "PDF on file" : "PDF when accepted"}</em>
-              <em>${l.cap === "Spray" ? "Nasal spray" : l.cap + " cap"}</em>
+      <div class="coa-layout">
+        <aside class="coa-side">
+          <div class="kicker">Compounds</div>
+          ${groups.map((g) => `<details class="coa-acc" ${g.name === openName ? "open" : ""}>
+            <summary><a href="/certificates?compound=${encodeURIComponent(g.name)}" data-link>${g.name}</a><em>${g.lots.length}</em></summary>
+            <div>
+              ${g.lots.map((l) => `<a class="${l.code === (shown[0] && !q && compound ? "" : "") ? "" : ""}" href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.size} · ${l.lot}</a>`).join("")}
             </div>
+          </details>`).join("")}
+          ${groups.length ? "" : `<p class="hard">No published lot yet.</p>`}
+        </aside>
+        <div>
+          <div class="coa-cards">
+            ${shown.map((l) => `<a class="coa-card" href="/certificates/${encodeURIComponent(l.code)}" data-link>
+              <div class="coa-photo">${l.image ? `<img src="${l.image}" alt="${l.name} ${l.size}">` : ""}</div>
+              <div class="coa-card-meta">
+                <b>${l.name}</b>
+                <span>${l.size}</span>
+                <span>${l.lot && l.lot !== "Pending" ? "Lot " + l.lot : "Batch pending"}</span>
+                <span>${l.lab || "Laboratory pending"}</span>
+                <span>${l.reportId ? "Report " + l.reportId : "Report ID pending"}</span>
+                <div class="coa-pills">
+                  <em class="ok">Pass</em>
+                  <em>${l.cap === "Spray" ? "Nasal spray" : (l.cap || "Black") + " cap"}</em>
+                </div>
+              </div>
+            </a>`).join("")}
           </div>
-        </a>`).join("")}
+          ${shown.length ? "" : `<p class="lede">No published lot matches that search.</p>`}
+        </div>
       </div>
-      ${shown.length ? "" : `<p class="lede">No batch matches that search.</p>`}
       ${coaWarning()}
     </section>`;
   }
 
   function certDetail() {
     const code = decodeURIComponent(pathOf().split("/")[2] || "");
-    const lots = coaLots();
+    const lots = publishedLots();
     const lot = lots.find((l) => l.code === code || l.lot === code || (l.alias || []).includes(code));
-    const siblings = lot ? lots.filter((l) => l.name === lot.name) : [];
-    if (!lot) return `<section class="page wrap"><h1>Not found</h1><p class="lede">This address is not a certificate.</p><a href="/certificates" data-link>Certificates</a></section>`;
-    const tiles = lot.file
-      ? `<article class="coa-tile"><span>Purity</span><strong>${lot.purity}</strong><em>HPLC-UV</em></article>
-         <article class="coa-tile"><span>Net content</span><strong>${lot.net}</strong><em>Reported</em></article>
-         <article class="coa-tile"><span>Identity</span><strong>${lot.identity}</strong><em>LC-MS</em></article>
-         <article class="coa-tile"><span>Fentanyl</span><strong>${lot.fentanyl}</strong><em>Screen</em></article>
-         <article class="coa-tile"><span>Appearance</span><strong>${lot.appearance}</strong><em>Visual</em></article>`
-      : ["Purity", "Net content", "Identity", "Endotoxin", "Appearance"].map((label) => `<article class="coa-tile"><span>${label}</span><strong>—</strong><em>Pending</em></article>`).join("");
-    const fileBlock = lot.file
-      ? `<a class="btn" href="${lot.file}">Download report</a><p class="hard">Method: ${lot.method}. Search code ${lot.search}. The file is the laboratory report for this accession.</p><img src="${lot.file}" alt="Laboratory report for ${lot.name} ${lot.size}" />`
-      : `<p class="coa-file">Report file not attached. Batch, laboratory, and report ID fill this page when the lot is accepted. The download appears here.</p>`;
+    if (!lot) return `<section class="page wrap"><h1>Not found</h1><p class="lede">This lot is not on the public certificate index. A file publishes after the strength has been stocked and the report is accepted.</p><a href="/certificates" data-link>Certificates</a></section>`;
+    const siblings = lots.filter((l) => l.name === lot.name);
+    const tiles = `<article class="coa-tile"><span>Purity</span><strong>${lot.purity || "—"}</strong><em>Pass</em></article>
+         <article class="coa-tile"><span>Net content</span><strong>${lot.net || "—"}</strong><em>Reported</em></article>
+         <article class="coa-tile"><span>Identity</span><strong>${lot.identity || "—"}</strong><em>Pass</em></article>
+         <article class="coa-tile"><span>Fentanyl</span><strong>${lot.fentanyl || "—"}</strong><em>Screen</em></article>
+         <article class="coa-tile"><span>Appearance</span><strong>${lot.appearance || "—"}</strong><em>Visual</em></article>`;
+    const fileBlock = `<a class="btn" href="${lot.file}">Download report</a> <span class="coa-pass">Pass</span>`;
     return `<section class="page wrap coa">
-      <p class="kicker"><a href="/certificates" data-link>Certificates</a> / ${lot.name}</p>
-      <div class="coa-detail">
-        <div class="coa-photo">${lot.image ? `<img src="${lot.image}" alt="${lot.name} ${lot.size}">` : ""}</div>
-        <div>
-          <h1>${lot.name}</h1>
-          <p class="lede">Lot ${lot.lot}</p>
-          <div class="coa-switch">${siblings.map((l) => `<a class="${l.code === lot.code ? "on" : ""}" href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.size}</a>`).join("")}</div>
-          <div class="coa-facts">
-            <div><span>Labeled qty</span><strong>${lot.size}</strong></div>
-            <div><span>Form</span><strong>${lot.form}</strong></div>
-            <div><span>Cap</span><strong>${lot.cap}</strong></div>
-            <div><span>Crimp</span><strong>${lot.crimp}</strong></div>
+      <p class="crumb"><a href="/certificates" data-link>Certificates</a> / <a href="/certificates?compound=${encodeURIComponent(lot.name)}" data-link>${lot.name}</a> / ${lot.lot}</p>
+      <div class="coa-layout">
+        <aside class="coa-side">
+          <div class="kicker">Compounds</div>
+          ${[...new Set(lots.map((l) => l.name))].map((n) => {
+            const rows = lots.filter((l) => l.name === n);
+            return `<details class="coa-acc" ${n === lot.name ? "open" : ""}>
+              <summary><a href="/certificates?compound=${encodeURIComponent(n)}" data-link>${n}</a><em>${rows.length}</em></summary>
+              <div>${rows.map((l) => `<a class="${l.code === lot.code ? "on" : ""}" href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.size} · ${l.lot}</a>`).join("")}</div>
+            </details>`;
+          }).join("")}
+        </aside>
+        <div class="coa-detail">
+          <div class="coa-photo">${lot.image ? `<img src="${lot.image}" alt="${lot.name} ${lot.size}">` : ""}</div>
+          <div>
+            <h1>${lot.name}</h1>
+            <p class="lede">Lot ${lot.lot}</p>
+            <div class="coa-switch">
+              ${siblings.map((s) => `<a class="${s.code === lot.code ? "on" : ""}" href="/certificates/${encodeURIComponent(s.code)}" data-link>${s.size}</a>`).join("")}
+            </div>
+            <div class="coa-facts">
+              <div><span>Labeled qty</span><strong>${lot.size}</strong></div>
+              <div><span>Form</span><strong>${lot.form}</strong></div>
+              <div><span>Cap</span><strong>${lot.cap || "—"}</strong></div>
+              <div><span>Crimp</span><strong>${lot.crimp || "—"}</strong></div>
+            </div>
+            <div class="coa-lab">
+              <div><span>Laboratory</span><strong>${lot.lab || "—"}</strong></div>
+              <div><span>Report ID</span><strong>${lot.reportId || "—"}</strong></div>
+              <div><span>Received</span><strong>${lot.received || "—"}</strong></div>
+              <div><span>Reported</span><strong>${lot.reported || "—"}</strong></div>
+            </div>
+            ${fileBlock}
+            <img class="coa-report" src="${lot.file}" alt="Laboratory report for ${lot.name} ${lot.size}" />
           </div>
-          <div class="coa-lab">
-            <div><b>Laboratory</b><span>${lot.lab || "Pending assignment"}</span></div>
-            <div><b>Report ID</b><span>${lot.reportId || "—"}</span></div>
-            <div><b>Received</b><span>${lot.received || "—"}</span></div>
-            <div><b>Reported</b><span>${lot.reported || "—"}</span></div>
-          </div>
-          ${fileBlock}
         </div>
       </div>
       <div class="coa-tiles">${tiles}</div>
@@ -800,6 +840,7 @@
       <form class="tool-form" id="calcForm" onsubmit="return false">
         <label>Vial contents (mg)<input id="cMg" type="number" step="0.01" min="0" value="20" /></label>
         <label>Diluent volume (mL)<input id="cMl" type="number" step="0.01" min="0" value="2" /></label>
+        <label>Amount to measure (mg)<input id="cAmt" type="number" step="0.01" min="0" value="1" /></label>
       </form>
       <div class="calc-out" id="calcOut"></div>
       <p>Concentration = mg ÷ mL. Prefer the tested milligram figure from the lot certificate when one exists.</p>
@@ -886,15 +927,18 @@
       const run = () => {
         const mg = Number($("#cMg") && $("#cMg").value);
         const ml = Number($("#cMl") && $("#cMl").value);
+        const amt = Number($("#cAmt") && $("#cAmt").value);
         if (!mg || !ml) {
-          out.innerHTML = "<p>Enter vial milligrams and diluent milliliters.</p>";
+          out.innerHTML = "<p>Enter vial milligrams, diluent milliliters, and the amount to measure.</p>";
           return;
         }
         const conc = mg / ml;
+        const draw = amt > 0 ? amt / conc : 0;
         out.innerHTML = `<p>Material strength</p><strong>${conc.toFixed(2)} mg/mL</strong>
+          ${amt > 0 ? `<p>Volume for ${amt} mg</p><strong>${draw.toFixed(3)} mL</strong>` : ""}
           <p>Concentration = milligrams on the vial ÷ milliliters of diluent. Research arithmetic only. Nothing on this page is a use instruction.</p>`;
       };
-      ["cMg", "cMl"].forEach((id) => {
+      ["cMg", "cMl", "cAmt"].forEach((id) => {
         const el = $("#" + id);
         if (el) el.addEventListener("input", run);
       });
@@ -1380,13 +1424,20 @@
         showAdded(picked);
       };
     }
+    const kitQty = $("#kitQty");
+    const kitMax = Math.min(99, Math.floor(available / 10));
+    if ($("#kitMinus") && kitQty) $("#kitMinus").onclick = () => { kitQty.value = Math.max(1, Number(kitQty.value || 1) - 1); };
+    if ($("#kitPlus") && kitQty) $("#kitPlus").onclick = () => { kitQty.value = Math.min(kitMax || 1, Number(kitQty.value || 1) + 1); };
     if ($("#addKit")) {
       $("#addKit").onclick = () => {
         if (!state.user) return showNeedAccount();
+        if (kitMax < 1) return toast("Not enough vials for a kit of 10.");
         const id = picked.id;
+        const q = Math.max(1, Number(kitQty && kitQty.value) || 1);
         const line = state.cart.find((l) => l.id === id && l.kind === 'kit');
-        if (line) line.qty += 1;
-        else state.cart.push({ id, qty: 1, kind: 'kit' });
+        const next = Math.min(kitMax, line ? line.qty + q : q);
+        if (line) line.qty = next;
+        else state.cart.push({ id, qty: next, kind: 'kit' });
         saveCart();
         showAdded(picked);
       };
@@ -1397,21 +1448,21 @@
   function wholesalePage() {
     return `<section class="page wrap prose">
       <div class="kicker">Wholesale desk</div>
-      <h1>Request access.</h1>
-      <p class="lede">Retail stays on the shop. Wholesale kits sit behind the password. Access is approved by hand.</p>
+      <h1>Request access</h1>
       <ol>
-        <li>Send the request. It is queued for wholesale@helixkinglabs.com.</li>
-        <li>The desk replies with how to gain access.</li>
-        <li>Approved accounts open the group buy in progress.</li>
+        <li>Fill out the form below</li>
+        <li>We will respond within 2 business days of your request</li>
+        <li>Send the request</li>
       </ol>
-      <p>Review is not automatic. Approved accounts open the group buy in progress.</p>
       <form id="wholesaleForm" class="stack form-grid">
         <label>Name<input name="name" required placeholder="Name" /></label>
         <label>Email<input name="email" type="email" required placeholder="Email" /></label>
-        <label>Organization, if any<input name="organization" placeholder="Organization" /></label>
-        <label>Approximate monthly kits<input name="volume" placeholder="Kits" /></label>
-        <label>Materials of interest<textarea name="interest" placeholder="Compounds and sizes"></textarea></label>
-        <button class="btn" type="submit">Request access</button>
+        <label>Organization<select name="organization" required>
+          ${["Independent researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option>${f}</option>`).join("")}
+        </select></label>
+        <label>Approximate monthly kits<input name="volume" required placeholder="Kits" /></label>
+        <label>Materials of interest<textarea name="interest" required placeholder="Compounds and sizes"></textarea></label>
+        <button class="btn" type="submit">Send the request</button>
       </form>
       <p id="wholesaleNote" class="hard"></p>
     </section>`;
@@ -1616,6 +1667,7 @@
             <h1>Orders, lots, and payment hold.</h1>
             <p class="lede">Customers do not see this page. ${t.orders || 0} orders · ${money(t.merchandise || 0)} merch · ${t.accounts || 0} accounts · ${t.list || 0} on the list. Nothing ships until you mark the order settled.</p>
             <p class="desk-links"><a href="/api/ops/export?kind=orders">Export orders</a> · <a href="/api/ops/export?kind=inventory">Export inventory</a> · <a href="/tools/label" data-link>Label maker</a></p>
+            <div id="deskCatalog"></div>
             <h2>Orders</h2>
             <p class="lede">Settled means you confirmed Venmo or crypto finished. Shipped is refused until then. Void restores stock.</p>
             ${
@@ -1672,6 +1724,8 @@
             <div id="incomingList" style="margin-top:40px"></div>
             <div id="subList" style="margin-top:40px"></div>
           </section>`;
+          window.HKL = Object.assign(window.HKL || {}, { api });
+          if (window.HKL_DESK) window.HKL_DESK.mountDesk();
           api("/api/ops/channels").then((ch) => {
             const box = $("#channelDesk");
             if (!box) return;
