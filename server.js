@@ -421,9 +421,17 @@ function backupStamp() {
 function writeBackup(kind, value) {
   const dir = path.join(DATA, "backups");
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, kind + "-" + backupStamp() + ".json"), JSON.stringify(value));
   const files = fs.readdirSync(dir).filter((f) => f.startsWith(kind + "-")).sort();
-  while (files.length > 48) fs.unlinkSync(path.join(dir, files.shift()));
+  const newest = files.length ? files[files.length - 1] : null;
+  if (newest) {
+    try {
+      const ageMs = Date.now() - fs.statSync(path.join(dir, newest)).mtimeMs;
+      if (ageMs < 5 * 60 * 1000) return;
+    } catch {}
+  }
+  fs.writeFileSync(path.join(dir, kind + "-" + backupStamp() + ".json"), JSON.stringify(value));
+  const after = fs.readdirSync(dir).filter((f) => f.startsWith(kind + "-")).sort();
+  while (after.length > 48) fs.unlinkSync(path.join(dir, after.shift()));
 }
 function saveStore(s) {
   fs.mkdirSync(DATA, { recursive: true });
@@ -1550,7 +1558,7 @@ async function api(req, res, url) {
     const next = String(body.status || order.status || "").toLowerCase();
     const allowed = new Set(["awaiting_settlement", "settled", "shipped", "voided"]);
     if (!allowed.has(next)) return send(res, 400, { error: "status" });
-    if (next === "shipped" && order.status !== "settled" && order.status !== "shipped" && next !== order.status) {
+    if (next === "shipped" && order.status !== "settled" && order.status !== "shipped") {
       return send(res, 400, { error: "settle_first" });
     }
     if (next === "voided" && order.status !== "voided") restoreStock(order);
@@ -1577,7 +1585,7 @@ async function api(req, res, url) {
     order.events.push({ at: new Date().toISOString(), kind: prev === next ? "note" : next, by: user.email });
     audit(user, "order", order.id + " " + next);
     saveStore(store);
-    if (prev !== next && (next === "settled" || next === "shipped")) queueMail(orderMail(order, next));
+    if (prev !== next && (next === "settled" || next === "shipped" || next === "voided")) queueMail(orderMail(order, next));
     return send(res, 200, { ok: true, order });
   }
 
