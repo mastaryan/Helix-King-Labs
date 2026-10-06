@@ -61,6 +61,17 @@
     localStorage.setItem(cartStorageKey(), JSON.stringify(state.cart));
     paintCartCount();
   }
+  function restoreCart(lines) {
+    for (const l of lines || []) {
+      const qty = Math.max(1, Math.floor(Number(l.qty || 0)));
+      if (!l.id || !Number.isFinite(qty)) continue;
+      const kind = l.kind === "kit" ? "kit" : "single";
+      const ex = state.cart.find((x) => x.id === l.id && (x.kind || "single") === kind);
+      if (ex) ex.qty = Math.min(99, ex.qty + qty);
+      else state.cart.push({ id: l.id, qty: Math.min(99, qty), kind });
+    }
+    saveCart();
+  }
 
   function toast(msg) {
     const el = document.createElement("div");
@@ -70,7 +81,7 @@
     setTimeout(() => el.remove(), 3200);
   }
 
-  window.HKL = Object.assign(window.HKL || {}, { money, api });
+  window.HKL = Object.assign(window.HKL || {}, { money, api, restoreCart });
   async function api(path, opts = {}) {
     const res = await fetch(path, {
       credentials: "same-origin",
