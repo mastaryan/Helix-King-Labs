@@ -796,6 +796,19 @@ function cleanAffiliateCode(raw) {
   if (code === "HELIX10") return null;
   return code;
 }
+function liveAffiliate(code) {
+  const c = String(code || "").trim().toUpperCase();
+  if (!c) return null;
+  return (store.affiliates || []).find((a) => a.code === c && a.status === "live") || null;
+}
+function liveCoupon(code) {
+  const c = String(code || "").trim().toUpperCase();
+  if (!c) return null;
+  const found = (store.coupons || []).find((x) => x.code === c && x.active !== false);
+  if (!found) return null;
+  if (found.expires && new Date(found.expires).getTime() < Date.now()) return null;
+  return found;
+}
 
 function quoteCart(items, user, opts) {
   const price = products.pricing || {};
@@ -842,13 +855,19 @@ function quoteCart(items, user, opts) {
   const volumeOff = Math.round(subtotal * vol * 100) / 100;
   const afterVolume = Math.round((subtotal - volumeOff) * 100) / 100;
   const affiliateCode = cleanAffiliateCode(opts && opts.affiliateCode);
+  const aff = liveAffiliate(affiliateCode);
+  const cpn = !aff ? liveCoupon(affiliateCode) : null;
   let coupon = null;
   let couponOff = 0;
   let discountKind = null;
-  if (affiliateCode) {
+  if (aff) {
     coupon = affiliateCode;
     couponOff = Math.round(afterVolume * affRate * 100) / 100;
     discountKind = "affiliate";
+  } else if (cpn && afterVolume >= Number(cpn.minTotal || 0)) {
+    coupon = cpn.code;
+    couponOff = Math.round(afterVolume * (Number(cpn.pct) / 100) * 100) / 100;
+    discountKind = "coupon";
   } else if (user && !user.firstOrderUsed && afterVolume > 99) {
     coupon = price.firstOrderCoupon || "HELIX10";
     couponOff = Math.round(afterVolume * firstRate * 100) / 100;
@@ -1919,6 +1938,61 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true, status: result.status, paymentStatus: data.payment_status || "" });
   }
 
+  if (method === "POST" && route === "/api/ops/coupons") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const code = String(body.code || "").trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 16);
+    if (code.length < 3 || code === "HELIX10") return send(res, 400, { error: "code" });
+    const pct = Math.max(1, Math.min(90, Number(body.pct) || 0));
+    if (!pct) return send(res, 400, { error: "pct" });
+    store.coupons = store.coupons || [];
+    const cur = store.coupons.find((x) => x.code === code);
+    const rec = {
+      code,
+      pct,
+      minTotal: Math.max(0, Number(body.minTotal) || 0),
+      expires: body.expires ? new Date(body.expires).toISOString() : null,
+      active: body.active === false ? false : true,
+      note: String(body.note || "").slice(0, 80),
+      created: (cur && cur.created) || new Date().toISOString(),
+    };
+    if (cur) Object.assign(cur, rec); else store.coupons.push(rec);
+    audit(user, "coupon", code + " " + pct + "%");
+    saveStore(store);
+    return send(res, 200, { ok: true, coupons: store.coupons });
+  }
+
+  if (method === "POST" && route === "/api/ops/affiliates") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const code = String(body.code || "").trim().toUpperCase();
+    const aff = (store.affiliates || []).find((a) => a.code === code);
+    if (!aff) return send(res, 404, { error: "not_found" });
+    const status = String(body.status || "");
+    if (status !== "live" && status !== "suspended") return send(res, 400, { error: "status" });
+    aff.status = status;
+    audit(user, "affiliate", code + " " + status);
+    saveStore(store);
+    return send(res, 200, { ok: true });
+  }
+
+  if (method === "POST" && route === "/api/ops/affiliates/payout") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const code = String(body.code || "").trim().toUpperCase();
+    const aff = (store.affiliates || []).find((a) => a.code === code);
+    if (!aff) return send(res, 404, { error: "not_found" });
+    const amount = Math.round(Number(body.amount) * 100) / 100;
+    if (!Number.isFinite(amount) || amount <= 0) return send(res, 400, { error: "amount" });
+    aff.paid = Math.round((Number(aff.paid || 0) + amount) * 100) / 100;
+    audit(user, "affiliate", code + " paid $" + amount.toFixed(2));
+    saveStore(store);
+    return send(res, 200, { ok: true, paid: aff.paid });
+  }
+
   if (method === "GET" && route === "/api/ops/export") {
     if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
     const kind = url.searchParams.get("kind") || "orders";
@@ -2351,7 +2425,16 @@ function deskPayload() {
       orders: (store.orders || []).filter((o) => o.userId === u.id).length,
     })),
     disputes: store.disputes || [],
-    affiliates: store.affiliates || [],
+    affiliates: (store.affiliates || []).map((a) => ({
+      code: a.code || "",
+      email: a.email || "",
+      userId: a.userId || "",
+      status: a.status || "",
+      paid: Number(a.paid || 0),
+      created: a.created || "",
+      earned: Math.round(referredOrders(a.code).reduce((sum, o) => sum + Number(o.affiliatePayout || 0), 0) * 100) / 100,
+    })),
+    coupons: store.coupons || [],
     audit: (store.audit || []).slice(0, 12),
   };
 }
