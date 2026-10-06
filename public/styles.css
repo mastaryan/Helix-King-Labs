@@ -679,3 +679,13 @@ input:focus, select:focus { border-color: var(--silver-2); }
   .buy-split, .coa-layout { grid-template-columns: 1fr; }
   .coa-search input { min-height: 52px; }
 }
+
+/* Order receipt */
+.steps { list-style: none; display: flex; gap: 8px; padding: 0; margin: 20px 0; }
+.steps li { flex: 1; text-align: center; padding: 10px 6px; border: 1px solid #2a2a2e; border-radius: 8px; color: #8a8a90; font-size: 14px; }
+.steps li.done { border-color: #4caf7d; color: #4caf7d; }
+.paybox { border: 1px solid #2a2a2e; border-radius: 10px; padding: 16px; margin: 16px 0; }
+.paybox h3 { margin: 0 0 8px; }
+.codeaddr { font-family: monospace; word-break: break-all; background: #101012; padding: 10px 12px; border-radius: 8px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 20px 0; }
+@media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } .steps { flex-direction: column; } }
