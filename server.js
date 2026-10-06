@@ -325,8 +325,8 @@ function applyPendingTesting() {
 
 applyPricingCsv();
 applyInventoryCsv();
-const opsCatalogHandle = createOpsCatalog({ products, store, saveStore, send, readBody, isOpsUser, findProduct, writeInventoryCsv, writePricingCsv, attachCertificates, audit, PUBLIC, DATA, QRCode, sessionOf });
 applyPendingTesting();
+let opsCatalogHandle;
 
 function loadOutbox() {
   try {
@@ -394,6 +394,8 @@ function saveStore(s) {
 }
 
 let store = loadStore();
+
+opsCatalogHandle = createOpsCatalog({ products, store, saveStore, send, readBody, isOpsUser, findProduct, writeInventoryCsv, writePricingCsv, attachCertificates, audit, PUBLIC, DATA, QRCode, sessionOf });
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
   const derived = crypto.scryptSync(password, salt, 32).toString("hex");

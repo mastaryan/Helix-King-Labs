@@ -5,6 +5,7 @@
   "description": "Helix King Labs storefront shell — gate, proof homepage, lot-tied certificates, account-gated catalog.",
   "main": "server.js",
   "scripts": {
+    "build": "echo build",
     "start": "node server.js",
     "dev": "node server.js"
   },
