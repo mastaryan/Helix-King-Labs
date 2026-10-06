@@ -1787,6 +1787,23 @@ async function api(req, res, url) {
       saveStore(store);
       return send(res, 200, { ok: true, order: publicOrder(order) });
     }
+    if (action === "restore") {
+      if (order.status !== "voided") {
+        return send(res, 409, { error: "locked", message: "Only cancelled orders can be restored." });
+      }
+      const lines = [];
+      for (const l of ((order.quote && order.quote.lines) || [])) {
+        const qty = Math.max(1, Math.floor(Number(l.qty || 0)));
+        let id = l.id || "";
+        if (!id && l.sku) {
+          const prod = findProduct(l.sku);
+          if (prod) id = prod.id;
+        }
+        if (!id) continue;
+        lines.push({ id, qty, kind: l.kind === "kit" || l.unit === "kit" ? "kit" : "single" });
+      }
+      return send(res, 200, { ok: true, lines });
+    }
     if (action === "cancel") {
       if (order.status !== "awaiting_settlement") {
         return send(res, 409, { error: "locked", message: "Only unpaid orders can be cancelled." });
@@ -2632,13 +2649,13 @@ function orderMail(order, kind) {
     placed: `Order ${order.id} — Helix King Labs`,
     settled: `Payment received ${order.id} — Helix King Labs`,
     shipped: `Shipped ${order.id} — Helix King Labs`,
-    voided: `Order ${order.id} released — Helix King Labs`,
+    voided: `Did you miss something? ${order.id} — Helix King Labs`,
   };
   const text = {
     placed: `Order ${order.id} is recorded.\nTotal ${total}\n\n${lines}\n\n${payText}\n\nNothing ships until payment is confirmed. Research use only.`,
     settled: `Payment received for ${order.id}. The order is being prepared. Nothing has shipped yet.`,
     shipped: `${order.id} is booked${order.carrier ? " with " + order.carrier : ""}. Tracking ${order.tracking || "posts on the next note"}.`,
-    voided: `${order.id} was released because payment was not confirmed in time. The hold on stock is cleared. Place the order again if you still want it.`,
+    voided: `Did you miss something? Your order ${order.id} was released before payment was confirmed, so the items are back on the shelf.\n\nRestore your cart in one tap:\n${(PUBLIC_ORIGIN || "https://helixkinglabs.com") + "/account/receipt/" + order.id}\n\nNothing ships until payment is confirmed. Research use only.`,
   };
   return {
     to: order.email,
@@ -2680,7 +2697,7 @@ async function drainOutbox() {
 }
 function staleAge(order) {
   const age = Date.now() - new Date(order.created || 0).getTime();
-  const cutoff = order.paymentMethod === "crypto" ? 24 * 60 * 60 * 1000 : 72 * 60 * 60 * 1000;
+  const cutoff = order.paymentMethod === "crypto" ? 60 * 60 * 1000 : 4 * 60 * 60 * 1000;
   return Number.isFinite(age) && age >= cutoff;
 }
 function sweepStaleOrders() {
