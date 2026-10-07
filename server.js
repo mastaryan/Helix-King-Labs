@@ -33,12 +33,50 @@ function seedDataDir() {
   if (!fs.existsSync(inc) && fs.existsSync(path.join(BUNDLED, "coas"))) {
     fs.cpSync(path.join(BUNDLED, "coas"), inc, { recursive: true });
   }
+  // One-time safe migration: if the external dir has no store yet, import the
+  // live database from the bundled dir instead of starting empty.
+  const destStore = path.join(DATA, "store.json");
+  const srcStore = path.join(BUNDLED, "store.json");
+  if (!fs.existsSync(destStore) && fs.existsSync(srcStore)) {
+    fs.copyFileSync(srcStore, destStore);
+    console.log("Migrated store.json to DATA_DIR");
+  }
 }
 seedDataDir();
 const STORE = path.join(DATA, "store.json");
 const PORT = Number(process.env.PORT || 20011);
 const SESSION_HOURS = 14 * 24;
 const SECRET = process.env.HKL_SECRET || crypto.randomBytes(32).toString("hex");
+
+// Tax ID encryption at rest (AES-256-GCM). Key from HKL_TAX_KEY (32-byte hex)
+// or derived from HKL_SECRET. Plaintext tax IDs are never stored.
+function taxKey() {
+  const hex = process.env.HKL_TAX_KEY;
+  if (hex && /^[0-9a-fA-F]{64}$/.test(hex.trim())) return Buffer.from(hex.trim(), "hex");
+  if (process.env.HKL_SECRET) return crypto.scryptSync(process.env.HKL_SECRET, "helix-tax-v1", 32);
+  return null;
+}
+function encTaxId(plain) {
+  const key = taxKey();
+  if (!key || !plain) return null;
+  const iv = crypto.randomBytes(12);
+  const c = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const ct = Buffer.concat([c.update(String(plain), "utf8"), c.final()]);
+  return [iv.toString("hex"), ct.toString("hex"), c.getAuthTag().toString("hex")].join(":");
+}
+function decTaxId(enc) {
+  try {
+    const key = taxKey();
+    if (!key || !enc) return null;
+    const parts = String(enc).split(":");
+    if (parts.length !== 3) return null;
+    const d = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(parts[0], "hex"));
+    d.setAuthTag(Buffer.from(parts[2], "hex"));
+    return Buffer.concat([d.update(Buffer.from(parts[1], "hex")), d.final()]).toString("utf8");
+  } catch {
+    return null;
+  }
+}
 const PUBLIC_ORIGIN = String(process.env.HKL_PUBLIC_ORIGIN || "").replace(/\/$/, "");
 const GOOGLE_CLIENT_ID = String(
   process.env.GOOGLE_CLIENT_ID ||
@@ -1824,6 +1862,10 @@ async function api(req, res, url) {
     }
     if (!body.agree) return send(res, 400, { error: "agree" });
     if (!body.certify) return send(res, 400, { error: "certify" });
+    const taxIdDigits = String(body.taxId || "").replace(/[^0-9]/g, "").slice(0, 9);
+    if (taxIdDigits.length !== 9) return send(res, 400, { error: "tax_id" });
+    const taxIdEnc = encTaxId(taxIdDigits);
+    if (!taxIdEnc) return send(res, 500, { error: "tax_unavailable" });
     const tax = {
       legalName: String(body.legalName || "").trim().slice(0, 80),
       businessName: String(body.businessName || "").trim().slice(0, 80),
@@ -1832,13 +1874,13 @@ async function api(req, res, url) {
       state: String(body.state || "").trim().slice(0, 40),
       zip: String(body.zip || "").trim().slice(0, 12),
       taxIdType: String(body.taxIdType || "").toLowerCase() === "ein" ? "ein" : "ssn",
-      taxId: String(body.taxId || "").replace(/[^0-9]/g, "").slice(0, 9),
+      taxIdEnc,
+      taxIdLast4: taxIdDigits.slice(-4),
       certifiedAt: new Date().toISOString(),
     };
     if (!tax.legalName || !tax.address || !tax.city || !tax.state || !tax.zip) {
       return send(res, 400, { error: "tax_address" });
     }
-    if (tax.taxId.length !== 9) return send(res, 400, { error: "tax_id" });
     store.affiliates = store.affiliates || [];
     let aff = affiliateOf(user.id);
     if (!aff && user.email) {
@@ -2574,7 +2616,7 @@ function deskPayload() {
       paid: Number(a.paid || 0),
       created: a.created || "",
       earned: Math.round(referredOrders(a.code).reduce((sum, o) => sum + Number(o.affiliatePayout || 0), 0) * 100) / 100,
-      tax: a.tax || null,
+      tax: a.tax ? { ...a.tax, taxId: decTaxId(a.tax.taxIdEnc) || "unavailable", taxIdEnc: undefined } : null,
       payoutMethod: a.payoutMethod || null,
       payoutDetail: a.payoutDetail || null,
     })),
