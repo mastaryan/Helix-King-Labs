@@ -2507,6 +2507,7 @@
       };
     }
 
+    if (window.HKL_PLACES) window.HKL_PLACES();
     const payForm = $("#payForm");
     if (payForm) {
       payForm.addEventListener("change", (e) => {
