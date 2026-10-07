@@ -880,8 +880,9 @@ function quoteCart(items, user, opts) {
   const surchargeRate = 0;
   const surcharge = Math.round(merchandise * surchargeRate * 100) / 100;
   const total = Math.round((merchandise + surcharge + shipping) * 100) / 100;
+  const selfOrder = !!(aff && user && aff.userId && user.id && aff.userId === user.id);
   const affiliatePayout =
-    discountKind === "affiliate" ? Math.round(merchandise * affRate * 100) / 100 : 0;
+    discountKind === "affiliate" && !selfOrder ? Math.round(merchandise * affRate * 100) / 100 : 0;
   return {
     lines,
     units,
@@ -1723,6 +1724,9 @@ async function api(req, res, url) {
     const earned = rows.reduce((a, r) => a + Number(r.payout || 0), 0);
     const paid = Number(aff.paid || 0);
     const pendingRequest = (store.payoutRequests || []).find((r) => r.code === aff.code && r.status === "pending") || null;
+    const pendingTotal = (store.payoutRequests || [])
+      .filter((r) => r.code === aff.code && r.status === "pending")
+      .reduce((sum, r) => sum + Number(r.amount || 0), 0);
     return send(res, 200, {
       locked: false,
       affiliate: aff,
@@ -1730,7 +1734,7 @@ async function api(req, res, url) {
       orders: rows,
       earned: Math.round(earned * 100) / 100,
       paid,
-      available: Math.round((earned - paid) * 100) / 100,
+      available: Math.round((earned - paid - pendingTotal) * 100) / 100,
       payoutFloor: 50,
       pendingRequest,
     });
@@ -1740,6 +1744,12 @@ async function api(req, res, url) {
     if (!user) return send(res, 401, { error: "account_required" });
     const aff = affiliateOf(user.id);
     if (!aff || aff.status !== "live") return send(res, 403, { error: "not_affiliate" });
+    let body;
+    try { body = await readBody(req); } catch { body = {}; }
+    const payMethod = String((body && body.method) || "").toLowerCase();
+    if (payMethod !== "crypto" && payMethod !== "cashapp") return send(res, 400, { error: "method" });
+    const detail = String((body && body.detail) || "").trim().slice(0, 120);
+    if (detail.length < 3) return send(res, 400, { error: "detail" });
     const earned = referredOrders(aff.code).reduce((sum, o) => sum + Number(o.affiliatePayout || 0), 0);
     const pending = (store.payoutRequests || [])
       .filter((r) => r.code === aff.code && r.status === "pending")
@@ -1747,18 +1757,20 @@ async function api(req, res, url) {
     const available = Math.round((earned - Number(aff.paid || 0) - pending) * 100) / 100;
     if (available < 50) return send(res, 400, { error: "floor" });
     store.payoutRequests = store.payoutRequests || [];
-    const req = {
+    const pr = {
       id: "PR" + Date.now().toString(36).toUpperCase(),
       code: aff.code,
       email: aff.email || user.email || "",
       amount: available,
+      method: payMethod,
+      detail,
       requested: new Date().toISOString(),
       status: "pending",
     };
-    store.payoutRequests.push(req);
+    store.payoutRequests.push(pr);
     audit(user, "affiliate", aff.code + " requested payout $" + available.toFixed(2));
     saveStore(store);
-    return send(res, 200, { ok: true, request: req });
+    return send(res, 200, { ok: true, request: pr });
   }
 
   if (method === "POST" && route === "/api/affiliate/apply") {
