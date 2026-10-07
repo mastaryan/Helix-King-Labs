@@ -384,6 +384,13 @@
     </section>`;
   }
 
+  function coaBadges(p) {
+    const lot = (typeof publishedLots === "function" ? publishedLots() : []).find((l) => l.lot === p.lot);
+    const url = lot ? `/certificates/${encodeURIComponent(lot.code || lot.lot)}` : null;
+    const chip = (label) => url ? `<a class="badge" href="${url}" data-link>${label}</a>` : `<span class="badge">${label}</span>`;
+    return `<div class="badges" style="margin-top:14px">${chip("Lot " + p.lot)}${chip(p.purity)}${chip("COA")}${stockBadge(p)}</div>`;
+  }
+
   function productView(p, lots, related, variants, extra = {}) {
     const current = lots.find((l) => l.lot === p.lot) || lots[0];
     const vars = variants && variants.length ? variants : variantsOf(p);
@@ -417,12 +424,7 @@
               })
               .join("")}
           </div>
-          <div class="badges" style="margin-top:14px">
-            <span class="badge">Lot ${p.lot}</span>
-            <span class="badge">${p.purity}</span>
-            <span class="badge">${p.panel}</span>
-            ${stockBadge(p)}
-          </div>
+          ${coaBadges(p)}
           ${priceBlock(p)}
           <div class="buy-split">
             <div>
@@ -442,6 +444,7 @@
                 <input id="kitQty" type="number" min="1" max="${Math.floor(onHand(p) / 10)}" value="1" style="width:72px;min-width:72px;text-align:center" />
                 <button type="button" id="kitPlus">+</button>
               </div>
+              <p class="line-total" id="kitTotal"></p>
               ${!state.user ? "" : `<button class="btn ghost" id="addKit" type="button">Add kit · ${money(p.kitPrice)}</button>`}
             </div>` : ""}
           </div>
@@ -458,11 +461,6 @@
               .join("")}
           </table>
           <p class="hard">All products listed on this site are for research purposes only. Not for human dosing, injection, or ingestion.</p>
-          <div class="cert-box">
-            <h3>Lot file</h3>
-            <p>Certificate not published. The file attaches when this lot is accepted. The vial QR opens this page, not a third-party laboratory.</p>
-            <p style="margin-top:10px"><a href="/certificates" data-link>Certificates</a> · <a href="/testing" data-link>Testing methods</a></p>
-          </div>
         </div>
       </div>
       ${
@@ -534,7 +532,7 @@
       const rows = lots.filter((l) => l.name === f.name || l.code === f.id);
       const n = rows.length;
       if (!n) return `<div class="coa-acc"><span class="coa-sum">${f.name}<em>0</em></span></div>`;
-      return `<details class="coa-acc" ${f.name === activeName ? "open" : ""}>
+      return `<details class="coa-acc">
         <summary><a href="/certificates?compound=${encodeURIComponent(f.name)}" data-link>${f.name}</a><em>${n}</em></summary>
         <div>${rows.map((l) => `<a href="/certificates/${encodeURIComponent(l.code)}" data-link>${l.size} · ${l.lot}</a>`).join("")}</div>
       </details>`;
@@ -1347,7 +1345,7 @@
       const el = $("#lineTotal");
       if (!el || !qty) return;
       const q = Math.max(1, Number(qty.value) || 1);
-      el.textContent = picked.price == null ? "" : q + " × " + money(picked.price) + " = " + money(q * picked.price);
+      el.textContent = picked.price == null ? "" : money(q * picked.price);
     };
     paintTotal();
     if (qty) qty.addEventListener("input", paintTotal);
@@ -1401,8 +1399,15 @@
     const kitQty = $("#kitQty");
     const singles = state.cart.filter((l) => l.id === picked.id && l.kind !== "kit").reduce((a, l) => a + Number(l.qty || 0), 0);
     const kitMax = available >= 15 ? Math.floor((available - singles) / 10) : 0;
-    if ($("#kitMinus") && kitQty) $("#kitMinus").onclick = () => { kitQty.value = Math.max(1, Number(kitQty.value || 1) - 1); };
-    if ($("#kitPlus") && kitQty) $("#kitPlus").onclick = () => { kitQty.value = Math.min(kitMax || 1, Number(kitQty.value || 1) + 1); };
+    const paintKitTotal = () => {
+      const el = $("#kitTotal");
+      if (!el || !kitQty || picked.kitPrice == null) return;
+      el.textContent = money(Math.max(1, Number(kitQty.value || 1)) * picked.kitPrice);
+    };
+    paintKitTotal();
+    if (kitQty) kitQty.addEventListener("input", paintKitTotal);
+    if ($("#kitMinus") && kitQty) $("#kitMinus").onclick = () => { kitQty.value = Math.max(1, Number(kitQty.value || 1) - 1); paintKitTotal(); };
+    if ($("#kitPlus") && kitQty) $("#kitPlus").onclick = () => { kitQty.value = Math.min(kitMax || 1, Number(kitQty.value || 1) + 1); paintKitTotal(); };
     if ($("#addKit")) {
       $("#addKit").onclick = () => {
         if (!state.user) return showNeedAccount();
@@ -1618,13 +1623,27 @@
             .then((d) => {
               const box = $("#orderList");
               if (!box) return;
+              const escA = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+              const tLink = (o) => {
+                const u = trackUrl(o.carrier, o.tracking);
+                return u ? `<a href="${u}" target="_blank" rel="noopener">${escA(o.tracking)}</a>` : escA(o.tracking);
+              };
+              const card = (o, timeline) => `<div class="order-card">
+                <div class="order-card-head"><a href="/account/receipt/${escA(o.id)}" data-link><b>${escA(o.id)}</b></a><span class="status-pill st-${escA(o.status || "na")}">${orderStatusLabel(o.status)}</span></div>
+                <div class="muted">${escA((o.created || "").slice(0, 10))} · ${money(o.quote && o.quote.total)}</div>
+                ${o.tracking ? `<div class="order-track">Tracking ${tLink(o)}</div>` : ""}
+                ${timeline ? orderTimeline(o) : ""}
+              </div>`;
               if (!d.orders.length) {
-                box.innerHTML = `<p class="muted">No recorded orders yet.</p>`;
+                box.innerHTML = `<h2>Orders</h2><p class="muted">No orders yet. When you place one, it shows up here with live status and tracking.</p>`;
                 return;
               }
-              box.innerHTML = `<h2>Orders</h2>` + d.orders.map((o) =>
-                `<p class="hard"><a href="/account/receipt/${o.id}" data-link>${o.id}</a> · ${(o.created || "").slice(0, 10)} · ${money(o.quote && o.quote.total)} · ${orderStatusLabel(o.status)}${o.tracking ? " · " + o.tracking : ""}</p>`
-              ).join("");
+              const active = d.orders.filter((o) => o.status === "awaiting_settlement" || o.status === "settled");
+              const done = d.orders.filter((o) => o.status !== "awaiting_settlement" && o.status !== "settled");
+              box.innerHTML = `<h2>Current orders</h2>` +
+                (active.length ? active.map((o) => card(o, true)).join("") : `<p class="muted">Nothing in progress right now.</p>`) +
+                `<h2 class="order-h2">Recent orders</h2>` +
+                (done.length ? done.map((o) => card(o, false)).join("") : `<p class="muted">No past orders yet.</p>`);
             })
             .catch(() => {});
         }
