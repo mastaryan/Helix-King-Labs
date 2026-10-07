@@ -81,7 +81,7 @@
     setTimeout(() => el.remove(), 3200);
   }
 
-  window.HKL = Object.assign(window.HKL || {}, { money, api, restoreCart });
+  window.HKL = Object.assign(window.HKL || {}, { money, api, restoreCart, state });
   async function api(path, opts = {}) {
     const res = await fetch(path, {
       credentials: "same-origin",
@@ -672,58 +672,7 @@
     </section>`;
   }
 
-  function affiliatesLocked(data) {
-    if (!state.user) {
-      return `<section class="page wrap prose">
-        <div class="kicker">Affiliates</div>
-        <h1>Account first. Then an order. Then a desk.</h1>
-        <p>This page is not public. Sign in, place an order, then apply from your account.</p>
-        <p><a class="btn" href="/account" data-link>Sign in</a></p>
-      </section>`;
-    }
-    if (!data || !data.hasOrdered) {
-      return `<section class="page wrap prose">
-        <div class="kicker">Affiliates</div>
-        <h1>Order first</h1>
-        <p>The desk opens after this account has a recorded order.</p>
-        <p><a class="btn" href="/shop" data-link>Open catalog</a></p>
-      </section>`;
-    }
-    return `<section class="page wrap prose">
-      <div class="kicker">Affiliates</div>
-      <h1>Open a desk</h1>
-      <p>10% cash on merchandise after discounts. Shipping is not commissioned. Payout on request at $50. Year-end sweep 31 Dec. No store credit. An affiliate code replaces HELIX10.</p>
-      <form id="affApply">
-        <label class="check"><input type="checkbox" name="agree" required /> I want a Helix affiliate code. I accept the settlement rules.</label>
-        <button class="btn" type="submit" style="margin-top:16px">Open the desk</button>
-      </form>
-    </section>`;
-  }
 
-  function affiliatesDesk(data) {
-    const rows = (data.orders || [])
-      .map(
-        (o) => `<tr><td>${o.id}</td><td>${(o.created || "").slice(0, 10)}</td><td>${(o.lines || []).join(", ")}</td><td>${money(o.merchandise)}</td><td>${money(o.payout)}</td></tr>`
-      )
-      .join("");
-    return `<section class="page wrap">
-      <div class="kicker">Affiliate desk</div>
-      <h1>${data.affiliate.code}</h1>
-      <p class="lede">Share <span class="sku-line">${location.origin}${data.link}</span>. Commission is 10% of merchandise after discounts. Shipping is not paid.</p>
-      <div class="totals">
-        <div><span>Earned</span><span>${money(data.earned)}</span></div>
-        <div><span>Paid</span><span>${money(data.paid)}</span></div>
-        <div class="grand"><span>Available</span><span>${money(data.available)}</span></div>
-      </div>
-      <p class="lede">Cash out at $${data.payoutFloor}+. Leftover sweeps 31 Dec.</p>
-      <h2>Referred orders</h2>
-      ${
-        rows
-          ? `<table class="table"><thead><tr><th>Order</th><th>Date</th><th>Lines</th><th>Merch</th><th>10%</th></tr></thead><tbody>${rows}</tbody></table>`
-          : `<p class="lede">No referred orders yet.</p>`
-      }
-    </section>`;
-  }
 
   const ORIGIN = (window.HKL_PUBLIC_ORIGIN || "https://helixkinglabs.com").replace(/\/$/, "");
 
@@ -1242,14 +1191,6 @@
     go("/library");
   }
 
-  function captureAffFromUrl() {
-    const ref = new URLSearchParams(location.search).get("ref") || new URLSearchParams(location.search).get("aff");
-    if (!ref) return;
-    const code = String(ref).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 16);
-    if (code.length < 3 || code === "HELIX10") return;
-    state.aff = code;
-    localStorage.setItem("hkl_aff", code);
-  }
 
   async function loadBase() {
     captureAffFromUrl();
@@ -2417,6 +2358,22 @@
         render();
       };
     });
+
+    const payoutReq = $("#payoutReq");
+    if (payoutReq) {
+      payoutReq.addEventListener("click", async () => {
+        payoutReq.disabled = true;
+        try {
+          await api("/api/affiliate/payout-request", { method: "POST" });
+          toast("Payout requested.");
+          go("/affiliates");
+        } catch (err) {
+          const el = $("#payoutErr");
+          if (el) el.textContent = err.message === "floor" ? "The payout floor is $50." : err.message;
+          payoutReq.disabled = false;
+        }
+      });
+    }
 
     const affApply = $("#affApply");
     if (affApply) {
