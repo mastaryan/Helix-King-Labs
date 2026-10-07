@@ -1705,7 +1705,29 @@ async function api(req, res, url) {
       );
       if (manual) { manual.userId = user.id; aff = manual; saveStore(store); }
     }
-    if (!aff || aff.status !== "live") {
+    if (!aff) {
+      return send(res, 200, {
+        locked: true,
+        hasOrdered: hasOrdered(user.id),
+        affiliate: aff,
+      });
+    }
+    if (aff.status === "expired" || aff.status === "removed") {
+      const bal = affiliateBalance(aff);
+      const pendingRequest = (store.payoutRequests || []).find((r) => r.code === aff.code && r.status === "pending") || null;
+      return send(res, 200, {
+        locked: false,
+        closed: true,
+        closeReason: aff.status,
+        affiliate: { code: aff.code, email: aff.email },
+        earned: Math.round(bal.earned * 100) / 100,
+        paid: bal.paid,
+        available: bal.available,
+        payoutFloor: 50,
+        pendingRequest,
+      });
+    }
+    if (aff.status !== "live") {
       return send(res, 200, {
         locked: true,
         hasOrdered: hasOrdered(user.id),
@@ -1737,13 +1759,15 @@ async function api(req, res, url) {
       available: Math.round((earned - paid - pendingTotal) * 100) / 100,
       payoutFloor: 50,
       pendingRequest,
+      payoutMethod: aff.payoutMethod || null,
+      payoutDetail: aff.payoutDetail || null,
     });
   }
 
   if (method === "POST" && route === "/api/affiliate/payout-request") {
     if (!user) return send(res, 401, { error: "account_required" });
     const aff = affiliateOf(user.id);
-    if (!aff || aff.status !== "live") return send(res, 403, { error: "not_affiliate" });
+    if (!aff || (aff.status !== "live" && aff.status !== "expired" && aff.status !== "removed")) return send(res, 403, { error: "not_affiliate" });
     let body;
     try { body = await readBody(req); } catch { body = {}; }
     const payMethod = String((body && body.method) || "").toLowerCase();
@@ -1773,6 +1797,22 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true, request: pr });
   }
 
+  if (method === "POST" && route === "/api/affiliate/payout-method") {
+    if (!user) return send(res, 401, { error: "account_required" });
+    const aff = affiliateOf(user.id);
+    if (!aff || aff.status !== "live") return send(res, 403, { error: "not_affiliate" });
+    let body;
+    try { body = await readBody(req); } catch { body = {}; }
+    const payMethod = String((body && body.method) || "").toLowerCase();
+    if (payMethod !== "crypto" && payMethod !== "cashapp") return send(res, 400, { error: "method" });
+    const detail = String((body && body.detail) || "").trim().slice(0, 120);
+    if (detail.length < 3) return send(res, 400, { error: "detail" });
+    aff.payoutMethod = payMethod;
+    aff.payoutDetail = detail;
+    saveStore(store);
+    return send(res, 200, { ok: true });
+  }
+
   if (method === "POST" && route === "/api/affiliate/apply") {
     if (!user) return send(res, 401, { error: "account_required" });
     if (!hasOrdered(user.id)) return send(res, 403, { error: "order_required" });
@@ -1783,13 +1823,29 @@ async function api(req, res, url) {
       body = {};
     }
     if (!body.agree) return send(res, 400, { error: "agree" });
+    if (!body.certify) return send(res, 400, { error: "certify" });
+    const tax = {
+      legalName: String(body.legalName || "").trim().slice(0, 80),
+      businessName: String(body.businessName || "").trim().slice(0, 80),
+      address: String(body.address || "").trim().slice(0, 120),
+      city: String(body.city || "").trim().slice(0, 60),
+      state: String(body.state || "").trim().slice(0, 40),
+      zip: String(body.zip || "").trim().slice(0, 12),
+      taxIdType: String(body.taxIdType || "").toLowerCase() === "ein" ? "ein" : "ssn",
+      taxId: String(body.taxId || "").replace(/[^0-9]/g, "").slice(0, 9),
+      certifiedAt: new Date().toISOString(),
+    };
+    if (!tax.legalName || !tax.address || !tax.city || !tax.state || !tax.zip) {
+      return send(res, 400, { error: "tax_address" });
+    }
+    if (tax.taxId.length !== 9) return send(res, 400, { error: "tax_id" });
     store.affiliates = store.affiliates || [];
     let aff = affiliateOf(user.id);
     if (!aff && user.email) {
       aff = store.affiliates.find(
         (a) => !a.userId && String(a.email || "").toLowerCase() === String(user.email).toLowerCase()
       ) || null;
-      if (aff) { aff.userId = user.id; aff.status = "live"; }
+      if (aff) { aff.userId = user.id; aff.status = "live"; aff.tax = tax; }
     }
     if (!aff) {
       const base = String(user.name || user.email || "HK")
@@ -1804,6 +1860,7 @@ async function api(req, res, url) {
         code,
         status: "live",
         paid: 0,
+        tax,
         created: new Date().toISOString(),
       };
       store.affiliates.push(aff);
@@ -2022,7 +2079,7 @@ async function api(req, res, url) {
     const aff = (store.affiliates || []).find((a) => a.code === code);
     if (!aff) return send(res, 404, { error: "not_found" });
     const status = String(body.status || "");
-    if (status !== "live" && status !== "suspended") return send(res, 400, { error: "status" });
+    if (status !== "live" && status !== "suspended" && status !== "removed") return send(res, 400, { error: "status" });
     aff.status = status;
     audit(user, "affiliate", code + " " + status);
     saveStore(store);
@@ -2517,6 +2574,9 @@ function deskPayload() {
       paid: Number(a.paid || 0),
       created: a.created || "",
       earned: Math.round(referredOrders(a.code).reduce((sum, o) => sum + Number(o.affiliatePayout || 0), 0) * 100) / 100,
+      tax: a.tax || null,
+      payoutMethod: a.payoutMethod || null,
+      payoutDetail: a.payoutDetail || null,
     })),
     coupons: store.coupons || [],
     payoutRequests: (store.payoutRequests || []).filter((r) => r.status === "pending"),
@@ -2868,6 +2928,78 @@ function staleAge(order) {
   const cutoff = order.paymentMethod === "crypto" ? 60 * 60 * 1000 : 4 * 60 * 60 * 1000;
   return Number.isFinite(age) && age >= cutoff;
 }
+function affiliateBalance(aff) {
+  const earned = referredOrders(aff.code).reduce((sum, o) => sum + Number(o.affiliatePayout || 0), 0);
+  const paid = Number(aff.paid || 0);
+  const pending = (store.payoutRequests || [])
+    .filter((r) => r.code === aff.code && r.status === "pending")
+    .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+  return { earned, paid, available: Math.round((earned - paid - pending) * 100) / 100 };
+}
+
+function expireStaleAffiliates() {
+  const TWO_YEARS = 2 * 365 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  let changed = 0;
+  for (const aff of store.affiliates || []) {
+    if (aff.status !== "live") continue;
+    const orders = referredOrders(aff.code);
+    const lastUse = orders.length
+      ? Math.max(...orders.map((o) => new Date(o.created || 0).getTime()))
+      : new Date(aff.created || 0).getTime();
+    if (now - lastUse > TWO_YEARS) {
+      aff.status = "expired";
+      aff.expiredAt = new Date().toISOString();
+      audit(null, "affiliate", aff.code + " expired after 2 years unused");
+      changed++;
+    }
+  }
+  if (changed) saveStore(store);
+  return changed;
+}
+
+function sweepYearEndPayouts() {
+  const now = new Date();
+  if (now.getMonth() !== 11 || now.getDate() !== 31) return 0;
+  const year = now.getFullYear();
+  store.payoutRequests = store.payoutRequests || [];
+  let created = 0;
+  for (const aff of store.affiliates || []) {
+    if (aff.status !== "live") continue;
+    const { available } = affiliateBalance(aff);
+    if (available < 50) continue;
+    const method = aff.payoutMethod, detail = aff.payoutDetail;
+    if ((method !== "crypto" && method !== "cashapp") || !detail) continue;
+    if (store.payoutRequests.some((r) => r.code === aff.code && r.status === "pending")) continue;
+    store.payoutRequests.push({
+      id: "PR" + Date.now().toString(36).toUpperCase() + created,
+      code: aff.code,
+      email: aff.email || "",
+      amount: available,
+      method,
+      detail,
+      requested: now.toISOString(),
+      status: "pending",
+      auto: "year-end-" + year,
+    });
+    created++;
+  }
+  if (created) {
+    audit(null, "affiliate", created + " year-end auto-payouts created");
+    saveStore(store);
+  }
+  return created;
+}
+
+function dailyAffiliateMaintenance() {
+  try {
+    expireStaleAffiliates();
+    sweepYearEndPayouts();
+  } catch (err) {
+    console.error("affiliate maintenance:", err.message);
+  }
+}
+
 function sweepStaleOrders() {
   let released = 0;
   for (const order of store.orders || []) {
@@ -2960,8 +3092,10 @@ async function recheckPendingCrypto() {
 }
 
 sweepStaleOrders();
+dailyAffiliateMaintenance();
 drainOutbox().catch(() => {});
 setInterval(() => sweepStaleOrders(), 60 * 60 * 1000);
+setInterval(() => dailyAffiliateMaintenance(), 24 * 60 * 60 * 1000);
 setInterval(() => drainOutbox().catch(() => {}), 5 * 60 * 1000);
 setInterval(() => recheckPendingCrypto().catch(() => {}), 3 * 60 * 1000);
 setTimeout(() => recheckPendingCrypto().catch(() => {}), 60 * 1000);
