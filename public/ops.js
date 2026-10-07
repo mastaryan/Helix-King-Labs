@@ -169,7 +169,9 @@ function affiliates() {
     const earned = Number(a.earned || 0), paid = Number(a.paid || 0);
     return `<tr><td>${a.code || "—"}<div class="muted">/shop?ref=${a.code || ""}</div></td><td>${a.email || a.userId || "—"}</td><td>${a.status || "—"}</td><td>${money(earned)}</td><td>${money(paid)}</td><td><b>${money(earned - paid)}</b></td>
     <td><button class="act" data-aff="${a.code}" data-op="toggle">${a.status === "live" ? "Suspend" : "Activate"}</button>
-    <button class="act" data-aff="${a.code}" data-op="payout">Payout</button></td></tr>`;
+    <button class="act" data-aff="${a.code}" data-op="payout">Payout</button>
+    ${a.tax ? `<button class="act" data-aff="${a.code}" data-tax='${JSON.stringify(a.tax).replace(/'/g, "&#39;")}' data-op="tax">Tax</button>` : `<span class="muted">no tax</span>`}
+    ${a.status !== "removed" && a.status !== "expired" ? `<button class="act" data-aff="${a.code}" data-op="remove">Remove</button>` : ``}</td></tr>`;
   }).join("")}
   </tbody></table>
   <p class="muted">Payout floor is $50. Recording a payout marks it paid on the affiliate's dashboard.</p>`}
@@ -287,6 +289,14 @@ function draw() {
         if (op === "toggle") {
           const row = (state.desk.affiliates || []).find((a) => a.code === code);
           await api("/api/ops/affiliates", { method: "POST", body: { code, status: row && row.status === "live" ? "suspended" : "live" } });
+        } else if (op === "remove") {
+          if (!confirm("Remove affiliate " + code + "? Their link stops working immediately.")) return;
+          await api("/api/ops/affiliates", { method: "POST", body: { code, status: "removed" } });
+        } else if (op === "tax") {
+          try {
+            const t = JSON.parse(ab.dataset.tax.replace(/&#39;/g, "'"));
+            alert("Legal: " + t.legalName + (t.businessName ? " (" + t.businessName + ")" : "") + "\n" + t.address + "\n" + t.city + ", " + t.state + " " + t.zip + "\n" + t.taxIdType.toUpperCase() + ": " + t.taxId + "\nCertified: " + (t.certifiedAt || "").slice(0, 10));
+          } catch { alert("Could not read tax record."); }
         } else if (op === "payout") {
           const amt = prompt("Payout amount for " + code + " (USD):");
           if (amt === null) return;
