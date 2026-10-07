@@ -76,7 +76,7 @@
 
       <div class="card" style="padding:20px">
         <h3>Retail markup per vial</h3>
-        <p class="muted">Rosy cost derived from wholesale price (wholesale − $10 per box ÷ 10 vials).</p>
+        <p class="muted">Based on your cost field per product.</p>
         <div id="wsMarkup"><p class="muted">Loading…</p></div>
       </div>`;
 
@@ -162,12 +162,12 @@
       document.getElementById("wsPricing").innerHTML = `<p class="hard">Couldn't load products.</p>`;
     }
 
-    // Retail markup table (Rosy cost = wholesale − 10 per box)
+    // Retail markup table (uses product cost field)
     try {
       const prods = await api("/api/ops/wholesale/products");
-      const items = (prods.items || []).filter((p) => p.wholesalePrice != null && p.price);
+      const items = (prods.items || []).filter((p) => p.cost != null && p.price);
       const rows = items.map((p) => {
-        const costVial = (p.wholesalePrice - 10) / 10;
+        const costVial = Number(p.cost);
         const markup = p.price - costVial;
         const margin = p.price ? Math.round((markup / p.price) * 100) : 0;
         return { sku: p.sku, name: p.name, size: p.size, costVial, retail: p.price, markup, margin };
