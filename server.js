@@ -35,8 +35,7 @@ function seedDataDir() {
   if (!fs.existsSync(inc) && fs.existsSync(path.join(BUNDLED, "coas"))) {
     fs.cpSync(path.join(BUNDLED, "coas"), inc, { recursive: true });
   }
-  // One-time safe migration: if the external dir has no store yet, import the
-  // live database from the bundled dir instead of starting empty.
+  // Migrate: import live DB from bundled dir if external dir is empty.
   const destStore = path.join(DATA, "store.json");
   const srcStore = path.join(BUNDLED, "store.json");
   if (!fs.existsSync(destStore) && fs.existsSync(srcStore)) {
@@ -885,6 +884,7 @@ function quoteCart(items, user, opts) {
       available,
       stockStatus: stockStatus(available, p.stockThreshold || STOCK_THRESHOLD),
       oversold: vials > available,
+      image:p.image||"",
     });
   }
   const vol = volumeRate(units);
@@ -1114,7 +1114,7 @@ async function api(req, res, url) {
 
   if (method === "GET" && route === "/api/library") {
     return send(res, 200, {
-      title: "Documentation library",
+      title: "Research library",
       link: "/library",
       items: [
         { t: "Permitted use", href: "/use" },
@@ -1319,6 +1319,7 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true, sent: !!sent.sent });
   }
 
+  if(await authx.pwReset(req,res,url,{store,saveStore,setSession,publicUser,validEmail,hashPassword,loadOutbox,saveOutbox,mailer,limited,ip}))return;
   if (method === "POST" && route === "/api/auth/magic/consume") {
     let body;
     try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
@@ -1553,7 +1554,7 @@ async function api(req, res, url) {
     if (quote.discountKind === "coupon" && quote.coupon) useCoupon(quote.coupon);
     store.orders.push(order);
     saveStore(store);
-    queueMail(orderMail(order, "placed"));
+    queueMail(mailer.orderMail(order, "placed", {origin: (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", deliveredText: fulfillHandle.deliveredText}));
     return send(res, 200, { order });
   }
 
@@ -1640,10 +1641,9 @@ async function api(req, res, url) {
     order.events.push({ at: new Date().toISOString(), kind: prev === next ? "note" : next, by: user.email });
     audit(user, "order", order.id + " " + next);
     saveStore(store);
-    if (prev !== next && (next === "settled" || next === "shipped" || next === "delivered" || next === "voided")) queueMail(orderMail(order, next));
+    if (prev !== next && (next === "settled" || next === "shipped" || next === "delivered" || next === "voided")) queueMail(mailer.orderMail(order, next, {origin: (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", deliveredText: fulfillHandle.deliveredText}));
     return send(res, 200, { ok: true, order });
   }
-
 
   if (method === "GET" && route === "/api/tracking") {
     const q = String(url.searchParams.get("q") || "").trim();
@@ -1999,7 +1999,7 @@ async function api(req, res, url) {
       order.events.push({ at: new Date().toISOString(), kind: "voided", by: user.email });
       audit(user, "order", order.id + " customer void");
       saveStore(store);
-      queueMail(orderMail(order, "voided"));
+      queueMail(mailer.orderMail(order, "voided", {origin: (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", deliveredText: fulfillHandle.deliveredText}));
       return send(res, 200, { ok: true, order: publicOrder(order) });
     }
     return send(res, 404, { error: "not_found" });
@@ -2311,7 +2311,6 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true });
   }
 
-
   if (method === "POST" && route === "/api/wholesale") {
     let body;
     try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
@@ -2456,7 +2455,6 @@ async function api(req, res, url) {
   return send(res, 404, { error: "not_found" });
 }
 
-
 function sortForIpn(value) {
   if (Array.isArray(value)) return value.map(sortForIpn);
   if (!value || typeof value !== "object") return value;
@@ -2483,20 +2481,20 @@ function createNowPayment(order, network) {
     return Promise.resolve({ provider: "nowpayments", status: "key_missing", message: "Payment key is not on the server." });
   }
   const origin = PUBLIC_ORIGIN || "https://helixkinglabs.com";
-  const payCurrency = network === "solana" ? "usdcsol" : "usdc";
   const payload = JSON.stringify({
     price_amount: order.quote.total,
     price_currency: "usd",
-    pay_currency: payCurrency,
     order_id: order.id,
     order_description: "Helix King Labs research order " + order.id,
     ipn_callback_url: origin + "/api/payments/nowpayments",
+    success_url: origin + "/account/receipt/" + order.id,
+    cancel_url: origin + "/cart",
   });
   return new Promise((resolve) => {
     const req = https.request(
       {
         hostname: "api.nowpayments.io",
-        path: "/v1/payment",
+        path: "/v1/invoice",
         method: "POST",
         headers: {
           "x-api-key": key,
@@ -2512,11 +2510,11 @@ function createNowPayment(order, network) {
             const data = JSON.parse(raw);
             resolve({
               provider: "nowpayments",
-              status: data.pay_address ? "awaiting_payment" : "payment_failed",
-              paymentId: data.payment_id || null,
-              payAddress: data.pay_address || null,
-              payAmount: data.pay_amount || null,
-              payCurrency: data.pay_currency || payCurrency,
+              status: data.invoice_url ? "awaiting_payment" : "payment_failed",
+              paymentId: data.id || null,
+              invoiceUrl: data.invoice_url || null,
+              payAmount: data.price_amount || null,
+              payCurrency: "USD",
               network: network === "solana" ? "Solana" : "Ethereum",
               message: data.message || data.code || null,
             });
@@ -2535,7 +2533,6 @@ function createNowPayment(order, network) {
     req.end();
   });
 }
-
 
 function audit(user, action, detail) {
   store.audit = store.audit || [];
@@ -2936,44 +2933,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-function orderMail(order, kind) {
-  const q = order.quote || {};
-  const pay = order.payment || {};
-  const total = "$" + Number(q.total || 0).toFixed(2);
-  const lines = ((q.lines || []).map((l) => `${l.name || ""} ${l.size || ""} × ${l.qty}`).join("\n")) || "See the desk for lines.";
-  let payText = "Payment instructions are on the order.";
-  if (pay.payAddress) payText = `Pay ${pay.payAmount} ${pay.payCurrency} on ${pay.network || "the stated network"} to ${pay.payAddress}. Do not send a different coin or network.`;
-  else if (order.paymentMethod === "venmo") payText = `Venmo @fibkingpeps ${total}. Put ${order.id} in the note.`;
-  else if (order.paymentMethod === "cashapp") payText = `Cash App $FibKingPep ${total}. Put ${order.id} in the note.`;
-  const subjects = {
-    placed: `Order ${order.id} — Helix King Labs`,
-    settled: `Payment received ${order.id} — Helix King Labs`,
-    shipped: `Shipped ${order.id} — Helix King Labs`,
-    delivered: `Delivered ${order.id} — thank you — Helix King Labs`,
-    voided: `Did you miss something? ${order.id} — Helix King Labs`,
-  };
-  const origin = (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com";
-  const deliveredText = (typeof fulfillHandle !== "undefined" && fulfillHandle && fulfillHandle.deliveredText)
-    ? fulfillHandle.deliveredText(order)
-    : `${order.id} is delivered. Thank you for ordering with Helix King Labs.`;
-  const text = {
-    placed: `Order ${order.id} is recorded.\nTotal ${total}\n\n${lines}\n\n${payText}\n\nNothing ships until payment is confirmed. Research use only.`,
-    settled: `Payment received for ${order.id}. The order is being prepared. Nothing has shipped yet.`,
-    shipped: `${order.id} is booked${order.carrier ? " with " + order.carrier : ""}. Tracking ${order.tracking || "posts on the next note"}.`,
-    delivered: deliveredText,
-    voided: `Did you miss something? Your order ${order.id} was released before payment was confirmed, so the items are back on the shelf.\n\nRestore your cart in one tap:\n${origin + "/account/receipt/" + order.id}\n\nNothing ships until payment is confirmed. Research use only.`,
-  };
-  return {
-    to: order.email,
-    subject: subjects[kind] || `Helix King Labs ${order.id}`,
-    text: text[kind] || text.placed,
-    kind,
-    orderId: order.id,
-    created: new Date().toISOString(),
-    status: "queued",
-    attempts: 0,
-  };
-}
+
 function queueMail(msg) {
   if (!msg || !msg.to) return;
   const box = loadOutbox();
@@ -3090,7 +3050,7 @@ function sweepStaleOrders() {
     order.events = order.events || [];
     order.events.push({ at: new Date().toISOString(), kind: "voided", by: "sweep" });
     audit({ email: "sweep" }, "order", order.id + " stale void");
-    queueMail(orderMail(order, "voided"));
+    queueMail(mailer.orderMail(order, "voided", {origin: (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", deliveredText: fulfillHandle.deliveredText}));
     released += 1;
   }
   if (released) saveStore(store);
