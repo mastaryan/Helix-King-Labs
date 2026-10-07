@@ -183,10 +183,62 @@
     });
   }
 
-  // ---- Notify-me: delegated submit handler (one-time, works for all product pages) ----
-  (function initNotifyDelegation() {
+  // ---- Notify-me: single gold button replaces out-of-stock, expands inline form ----
+  function trackEvent(name, params) {
+    try {
+      if (window.gtag) window.gtag("event", name, params || {});
+      else if (window.dataLayer) window.dataLayer.push({ event: name, ...(params || {}) });
+    } catch (e) {}
+  }
+
+  function notifyFormHtml(p, userEmail) {
+    return `<form id="notifyForm" data-sku="${esc(p.sku || p.id)}" class="notify-form">
+      <p class="notify-title">Get notified when ${esc(p.name)} ${esc(p.size)} is back.</p>
+      <input type="email" name="email" placeholder="Email" required value="${esc(userEmail || "")}" />
+      <label class="check"><input type="checkbox" name="consent" required /> Email me when it's back in stock. One email, no marketing list.</label>
+      <div class="notify-actions">
+        <button class="btn" type="submit">Notify me</button>
+        <button class="btn ghost" type="button" id="notifyDismiss">No thanks</button>
+      </div>
+      <p class="muted" id="notifyMsg"></p>
+    </form>`;
+  }
+
+  (function initNotify() {
     if (document.__hklNotifyBound) return;
     document.__hklNotifyBound = true;
+
+    // Expand form on button click
+    document.addEventListener("click", function (e) {
+      var btn = e.target && e.target.id === "notifyBtn" ? e.target : null;
+      if (!btn) return;
+      var wrap = document.getElementById("notifyWrap");
+      if (!wrap) return;
+      if (wrap.innerHTML) { wrap.innerHTML = ""; return; } // toggle closed
+      var HKL = window.HKL || {};
+      var sku = btn.getAttribute("data-s") || "";
+      // Find product data from HKL state
+      var p = null;
+      try {
+        var items = (HKL.state && HKL.state.catalog && HKL.state.catalog.items) || [];
+        p = items.find(function (x) { return x.sku === sku || x.id === sku; }) || { sku: sku, name: sku, size: "" };
+      } catch (err) { p = { sku: sku, name: sku, size: "" }; }
+      var userEmail = (HKL.state && HKL.state.user && HKL.state.user.email) || "";
+      wrap.innerHTML = notifyFormHtml(p, userEmail);
+      trackEvent("notify_click", { sku: sku });
+    });
+
+    // Dismiss
+    document.addEventListener("click", function (e) {
+      if (e.target && e.target.id === "notifyDismiss") {
+        var wrap = document.getElementById("notifyWrap");
+        if (wrap) wrap.innerHTML = "";
+        var btn = document.getElementById("notifyBtn");
+        trackEvent("notify_dismiss", { sku: btn ? btn.getAttribute("data-s") : "" });
+      }
+    });
+
+    // Submit
     document.addEventListener("submit", async function (e) {
       var form = e.target && e.target.id === "notifyForm" ? e.target : null;
       if (!form) return;
@@ -196,11 +248,14 @@
       var toast = HKL.toast || alert;
       var fd = new FormData(form);
       var msg = document.getElementById("notifyMsg");
+      var sku = form.getAttribute("data-s");
       try {
-        await api("/api/waitlist", { method: "POST", body: { email: fd.get("email"), sku: form.getAttribute("data-sku"), consent: !!fd.get("consent") } });
-        if (msg) msg.textContent = "You're on the notify list. We'll email you when it's back.";
+        await api("/api/waitlist", { method: "POST", body: { email: fd.get("email"), sku: sku, consent: !!fd.get("consent") } });
+        trackEvent("notify_submit", { sku: sku });
+        if (msg) msg.textContent = "You're on the list. We'll email you once when it's back.";
         else toast("You're on the notify list.");
         form.reset();
+        setTimeout(function () { var w = document.getElementById("notifyWrap"); if (w) w.innerHTML = ""; }, 3000);
       } catch (err) {
         var m = err.message === "consent_required" ? "Check the consent box to get notified." : "Could not join the list: " + (err.message || "error");
         if (msg) msg.textContent = m;
@@ -221,22 +276,6 @@
     return true;
   }
 
-  // ---- Notify-me box for out-of-stock products ----
-  function notifyHtml(p, userEmail) {
-    var out = (p.available != null ? Number(p.available) : Number(p.stock || 0)) <= 0;
-    var pending = p && (p.releaseState === "pending_testing" || p.unavailableReason);
-    if (!out || pending) return "";
-    return `<div class="notify-box">
-      <div class="kicker">Back in stock</div>
-      <p class="muted">Want an email when ${esc(p.name)} ${esc(p.size)} is back?</p>
-      <form id="notifyForm" data-sku="${esc(p.sku || p.id)}" class="row-form">
-        <input type="email" name="email" placeholder="Email" required value="${esc(userEmail || "")}" />
-        <label class="check"><input type="checkbox" name="consent" /> Email me when it's back in stock.</label>
-        <button class="btn" type="submit">Notify me</button>
-      </form>
-      <p class="muted" id="notifyMsg"></p>
-    </div>`;
-  }
 
   // ---- Mount intake + COA sections on the ops page ----
   function mountOpsExtras() {
@@ -368,5 +407,5 @@
     }, 500);
   })();
 
-  window.HKL_FULFILL = { mountOrderDetail: mountOrderDetail, mountIntake: mountIntake, mountCoa: mountCoa, routeOpsOrder: routeOpsOrder, notifyHtml: notifyHtml, mountOpsExtras: mountOpsExtras, mountOpsSidebar: mountOpsSidebar };
+  window.HKL_FULFILL = { mountOrderDetail: mountOrderDetail, mountIntake: mountIntake, mountCoa: mountCoa, routeOpsOrder: routeOpsOrder, mountOpsExtras: mountOpsExtras, mountOpsSidebar: mountOpsSidebar };
 })();
