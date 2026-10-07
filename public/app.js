@@ -81,7 +81,7 @@
     setTimeout(() => el.remove(), 3200);
   }
 
-  window.HKL = Object.assign(window.HKL || {}, { money, api, restoreCart, state, toast });
+  Object.assign(window.HKL ||= {}, { money, api, restoreCart, state, toast, saveCart, paintCartCount });
   async function api(path, opts = {}) {
     const res = await fetch(path, {
       credentials: "same-origin",
@@ -448,6 +448,7 @@
               <p class="line-total" id="kitTotal"></p>
               ${!state.user ? "" : `<button class="btn ghost" id="addKit" type="button">Add kit · ${money(p.kitPrice)}</button>`}
             </div>` : ""}
+            ${HKL_FULFILL.notifyHtml(p, state.user && state.user.email)}
           </div>
           ${state.user && onHand(p) <= 0 ? `<p class="hard">Sold out.</p>` : ""}
           ${
@@ -1658,7 +1659,7 @@
       } else if (p === "/ops") {
         go("/ops/catalog");
         return;
-      } else if (p === "/ops/catalog") {
+      }else if(p.startsWith("/ops/orders/")){HKL_FULFILL.routeOpsOrder(p,app,state)} else if (p === "/ops/catalog") {
         if (!state.user || !state.user.isOps) {
           app.innerHTML = `<section class="page wrap"><h1>Not found</h1><p class="lede">This address is not a catalog page.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
         } else {
@@ -1833,7 +1834,7 @@
                 };
               });
             }
-            const cust = $("#custDesk");
+           HKL_FULFILL.mountOpsExtras();const cust=$("#custDesk")
             if (cust) {
               const rows = d.customers || [];
               cust.innerHTML = `<h2>Accounts</h2>` + (rows.length
