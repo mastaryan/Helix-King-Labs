@@ -156,7 +156,7 @@
       const h = a.getAttribute("href");
       a.classList.toggle("active", h === p || (h !== "/" && p.startsWith(h)));
     });
-    $("#acctLink").textContent = state.user ? state.user.email.split("@")[0] : "Account";
+    $("#acctLink").textContent = state.user ? state.user.email.split("@")[0] : "Account"; window.HKL_ACCT?.();
     document.querySelectorAll('[data-nav="ops"]').forEach((a) => {
       const on = !!(state.user && state.user.isOps);
       a.classList.toggle("is-hidden", !on);
@@ -261,8 +261,6 @@
     </article>`;
   }
 
-
-
   function specRows(p, about) {
     const skip = new Set(["NA", "Not published on the storefront", ""]);
     const rows = (p.specs || []).filter((row) => row && !skip.has(String(row[1] || "").trim()) && !/ops sku/i.test(String(row[0] || "")));
@@ -293,7 +291,6 @@
     if (!rows.length) return "";
     return `<p class="sources">${rows.map((r) => `<a href="${r.href}" rel="noopener noreferrer">${r.label}</a>`).join(" · ")}</p>`;
   }
-
 
   function faqAnswer(f) {
     if (f.q === "Where are the certificates?") {
@@ -525,7 +522,6 @@
     return coaLots().filter((l) => l.file && l.everStocked);
   }
 
-
   function certMenu(activeName) {
     const lots = publishedLots();
     const families = ((state.catalog && state.catalog.families) || []).filter((f) => f.shopVisible !== false);
@@ -605,11 +601,10 @@
     const lot = lots.find((l) => l.code === code || l.lot === code || (l.alias || []).includes(code));
     if (!lot) return `<section class="page wrap"><h1>Not found</h1><p class="lede">This lot is not on the public certificate index. A file publishes after the strength has been stocked and the report is accepted.</p><a href="/certificates" data-link>Certificates</a></section>`;
     const siblings = lots.filter((l) => l.name === lot.name);
-    const tiles = `<article class="coa-tile"><span>Purity</span><strong>${lot.purity || "—"}</strong><em>Pass</em></article>
-         <article class="coa-tile"><span>Net content</span><strong>${lot.net || "—"}</strong><em>Reported</em></article>
-         <article class="coa-tile"><span>Identity</span><strong>${lot.identity || "—"}</strong><em>Pass</em></article>
-         <article class="coa-tile"><span>Fentanyl</span><strong>${lot.fentanyl || "—"}</strong><em>Screen</em></article>
-         <article class="coa-tile"><span>Appearance</span><strong>${lot.appearance || "—"}</strong><em>Visual</em></article>`;
+    const tiles = `<article class="coa-tile"><span>Purity</span><strong>${lot.purity||"—"}</strong><em>Pass</em></article><article class="coa-tile"><span>Net content</span><strong>${lot.net||"—"}</strong><em>Reported</em></article>
+         <article class="coa-tile"><span>Identity</span><strong>${lot.identity||"—"}</strong><em>Pass</em></article>
+         <article class="coa-tile"><span>Fentanyl</span><strong>${lot.fentanyl||"—"}</strong><em>Screen</em></article>
+         <article class="coa-tile"><span>Appearance</span><strong>${lot.appearance||"—"}</strong><em>Visual</em></article>`;
     const fileBlock = `<a class="btn" href="${lot.file}">Download report</a> <span class="coa-pass">Pass</span>`;
     return `<section class="page wrap coa">
       <p class="crumb"><a href="/certificates" data-link>Certificates</a> / <a href="/certificates?compound=${encodeURIComponent(lot.name)}" data-link>${lot.name}</a> / ${lot.lot}</p>
@@ -638,12 +633,12 @@
               <div><span>Received</span><strong>${lot.received || "—"}</strong></div>
               <div><span>Reported</span><strong>${lot.reported || "—"}</strong></div>
             </div>
+            <div class="coa-tiles coa-tiles-top">${tiles}</div>
             ${fileBlock}
             <img class="coa-report" src="${lot.file}" alt="Laboratory report for ${lot.name} ${lot.size}" />
           </div>
         </div>
       </div>
-      <div class="coa-tiles">${tiles}</div>
       ${coaWarning()}
     </section>`;
   }
@@ -651,7 +646,7 @@
   function libraryView() {
     return `<section class="page wrap prose">
       <div class="kicker">Library</div>
-      <h1>Documentation library</h1>
+      <h1>Research library</h1>
       <p>Lot files, use terms, and cart rules. Certificates publish when a lot clears the panel.</p>
       <h2>On file</h2>
       <ul>
@@ -670,8 +665,6 @@
       <p>Subscribe from the footer. The address is stored for lot alerts and the library link.</p>
     </section>`;
   }
-
-
 
   const ORIGIN = (window.HKL_PUBLIC_ORIGIN || "https://helixkinglabs.com").replace(/\/$/, "");
 
@@ -948,7 +941,7 @@
         <h1>Open the catalog.</h1>
         <p class="lede">List prices are on the catalog. An account is required to purchase. HELIX10 applies on a first order over $99.</p>
         <form id="regForm">
-          <div class="row-form" style="flex-direction:column;align-items:stretch">
+          <div class="row-form col">
             <input name="name" type="text" placeholder="Name" />
             <input name="email" type="email" placeholder="Email" required />
             <input name="password" type="password" placeholder="Password (8+)" required minlength="8" />
@@ -981,6 +974,7 @@
             <input name="email" type="email" placeholder="Email" required />
             <input name="password" type="password" placeholder="Password" required />
             <button class="btn" type="submit">Sign in</button>
+            <a href="/reset" data-link>Forgot password?</a>
             <button class="btn ghost" type="button" id="magicBtn">Email me a link</button>
             <button class="btn ghost" type="button" id="passkeyBtn">Passkey</button>
             ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleLoginBtn">Continue with Google</button>` : ""}
@@ -1044,7 +1038,7 @@
         <div class="grand"><span>Total</span><span>${money(quote.total)}</span></div>
       </div>
       <label class="aff-field">Affiliate code
-        <input id="affCode" type="text" maxlength="16" value="${state.aff || ""}" placeholder="Affiliate or coupon code (blank for HELIX10 over $99)" />
+        <input id="affCode" type="text" maxlength="16" value="${state.aff || ""}" placeholder="Code" />
       </label>
       ${
         quote.shipping > 0
@@ -1066,11 +1060,14 @@
         <select name="researchField" required aria-label="Research field">
           ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
         </select>
-        <label class="check"><input type="radio" name="paymentMethod" value="crypto" ${state.payMethod !== "venmo" && state.payMethod !== "cashapp" ? "checked" : ""} /> USDC on this page</label>
-        <label class="check"><input type="radio" name="network" value="ethereum" checked /> Ethereum</label>
-        <label class="check"><input type="radio" name="network" value="solana" /> Solana</label>
-        <label class="check"><input type="radio" name="paymentMethod" value="venmo" ${state.payMethod === "venmo" ? "checked" : ""} /> Venmo @fibkingpeps</label>
-        <label class="check"><input type="radio" name="paymentMethod" value="cashapp" ${state.payMethod === "cashapp" ? "checked" : ""} /> Cash App $FibKingPep</label>
+        <div class="paym">
+        <label class="paycard"><input type="radio" name="paymentMethod" value="crypto"${state.payMethod==="venmo"||state.payMethod==="cashapp"?"":" checked"}/><span><b>Crypto</b><i>USDC · secure checkout</i></span></label>
+        <div id="payNet"${state.payMethod==="venmo"||state.payMethod==="cashapp"?' class="hide"':""}>
+        <label class="check"><input type="radio" name="network" value="ethereum" checked/>Ethereum network</label>
+        <label class="check"><input type="radio" name="network" value="solana"/>Solana network</label></div>
+        <label class="paycard"><input type="radio" name="paymentMethod" value="venmo"${state.payMethod==="venmo"?" checked":""}/><span><b>Venmo</b><i>@fibkingpeps</i></span></label>
+        <label class="paycard"><input type="radio" name="paymentMethod" value="cashapp"${state.payMethod==="cashapp"?" checked":""}/><span><b>Cash App</b><i>$FibKingPep</i></span></label>
+        </div>
         <label class="check"><input type="checkbox" name="researchAck" required /> Chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</label>
         <label class="check"><input type="checkbox" name="termsAck" required /> Accept Terms.</label>
         <button class="btn" type="submit">Place order</button>
@@ -1099,7 +1096,7 @@
           <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms. Research materials stay in the lab. This is not a clinic or a pharmacy.</label>
           <input type="email" name="email" placeholder="Email (optional)" />
           <label class="check"><input type="checkbox" name="consent" /> Email me lot alerts, restocks, and group buys. Optional — uncheck to skip the list.</label>
-          <div style="margin-top:16px;display:grid;gap:8px">
+          <div class="mt-grid">
             <button class="btn" type="submit">Enter Helix King Labs</button>
             ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="gateGoogle">Continue with Google</button>` : ""}
             ${state.auth.apple ? `<button class="btn ghost" type="button" id="gateApple">Continue with Apple</button>` : ""}
@@ -1193,7 +1190,6 @@
     dismissPopup();
     go("/library");
   }
-
 
   async function loadBase() {
     captureAffFromUrl();
@@ -1430,7 +1426,6 @@
     }
   }
 
-
   function wholesalePage() {
     return `<section class="page wrap">
       <div class="kicker">Wholesale desk</div>
@@ -1600,7 +1595,8 @@
         app.innerHTML = policy("chargebacks");
       } else if (p === "/affiliate-terms") {
         app.innerHTML = policy("affiliates");
-      } else if (p === "/magic") {
+      } else if (p === "/reset") { window.HKL_RESET?.();
+    } else if (p === "/magic") {
         const token = new URLSearchParams(location.search).get("token") || "";
         app.innerHTML = `<section class="page wrap"><h1>Signing in</h1><p class="lede" id="magicMsg">Checking the link.</p></section>`;
         if (!token) {
@@ -2543,17 +2539,14 @@
           const pay = order.payment || {};
           state.cart = [];
           saveCart();
+          if (pay.invoiceUrl) { location.href = pay.invoiceUrl; return; }
           const box = $("#orderDone");
           if (box) {
-            box.innerHTML = pay.payAddress
-              ? `<p class="lede">${order.id}. Pay ${pay.payAmount} ${pay.payCurrency} on ${pay.network} to finish this order.</p><p class="hard">${pay.payAddress}</p><p>The order stays on hold until this payment finishes. Do not send a different coin or network.</p>`
-              : pay.provider === "venmo"
-                ? `<p class="lede">${order.id} recorded. Venmo @fibkingpeps the total ${money(order.quote && order.quote.total)}. Put ${order.id} in the note. We confirm before anything ships.</p>`
-                : pay.provider === "cashapp"
-                ? `<p class="lede">${order.id} recorded. Cash App $FibKingPep the total ${money(order.quote && order.quote.total)}. Put ${order.id} in the note. We confirm before anything ships.</p>`
-                : `<p class="lede">${order.id} could not open a payment. ${pay.message || "Check the processor key and restart the app."}</p>`;
+            const total = money(order.quote && order.quote.total);
+            box.innerHTML = pay.provider === "venmo" || pay.provider === "cashapp"
+              ? `<div class="order-confirm"><h3>Order ${order.id} placed</h3><p class="grand">Total: ${total}</p><p>${pay.provider === "venmo" ? "Venmo <b>@fibkingpeps</b>" : "Cash App <b>$FibKingPep</b>"} ${total}. Put <b>${order.id}</b> in the note.</p><p class="muted">We confirm payment before shipping.</p><a class="btn" href="/account/receipt/${order.id}" data-link>View receipt</a></div>`
+              : `<p class="lede">Payment could not start. ${pay.message || "Try again or use Venmo."}</p>`;
           }
-          toast("Order recorded. Payment still open.");
         } catch (err) {
           toast(err.message || "Checkout failed");
         }
