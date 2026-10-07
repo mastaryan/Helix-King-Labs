@@ -42,12 +42,23 @@ function affiliatesDesk(data) {
         <div><span>Paid</span><span>${window.HKL.money(data.paid)}</span></div>
         <div class="grand"><span>Available</span><span>${window.HKL.money(data.available)}</span></div>
       </div>
-      <p class="lede">Cash out at $${data.payoutFloor}+. Leftover sweeps 31 Dec.</p>
-      ${data.pendingRequest
-        ? `<p class="lede"><b>Payout requested:</b> ${window.HKL.money(data.pendingRequest.amount)} on ${(data.pendingRequest.requested || "").slice(0, 10)}. It lands once it is approved.</p>`
-        : data.available >= (data.payoutFloor || 50)
-          ? `<p><button class="btn" id="payoutReq">Request payout of ${window.HKL.money(data.available)}</button></p><div class="err" id="payoutErr"></div>`
-          : ``}
+      <p class="lede">Leave your balance in as long as you like. Cash out at $${data.payoutFloor}+, paid in crypto or Cash App — your choice.</p>
+      ${(() => {
+        const floor = data.payoutFloor || 50;
+        const pct = Math.min(100, Math.round((data.available / floor) * 100));
+        const bar = `<div style="background:#1c231c;border:1px solid #2c362c;border-radius:8px;height:14px;overflow:hidden;margin:8px 0"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#2e9e4f,#4ade80);transition:width .4s"></div></div>
+        <p class="lede">${window.HKL.money(data.available)} of ${window.HKL.money(floor)} to cash out</p>`;
+        if (data.pendingRequest) return bar + `<p class="lede"><b>Payout requested:</b> ${window.HKL.money(data.pendingRequest.amount)} via ${data.pendingRequest.method === "cashapp" ? "Cash App" : "crypto"} on ${(data.pendingRequest.requested || "").slice(0, 10)}. It lands once it is sent.</p>`;
+        if (data.available < floor) return bar;
+        return bar + `<form id="payoutReq" style="margin-top:12px">
+          <p class="lede"><b>Cash out ${window.HKL.money(data.available)}</b></p>
+          <label class="check"><input type="radio" name="method" value="crypto" checked /> Crypto</label>
+          <label class="check"><input type="radio" name="method" value="cashapp" /> Cash App</label>
+          <input name="detail" id="payoutDetail" placeholder="Wallet address (with network) or $CashApp handle" required maxlength="120" style="margin-top:8px" />
+          <p><button class="btn" type="submit">Request payout</button></p>
+          <div class="err" id="payoutErr"></div>
+        </form>`;
+      })()}
       <h2>Referred orders</h2>
       ${
         rows
