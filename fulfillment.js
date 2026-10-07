@@ -126,6 +126,9 @@ function createFulfillment(deps) {
       }
       if (Number(item.stock || 0) > 0) item.everStocked = true;
       item.available = Math.max(0, Number(item.stock || 0) - Number(item.reserved || 0));
+      // COA safety: restocked item without accepted COA stays hidden.
+      const coaMissing = item.certificateStatus !== "accepted";
+      if (coaMissing && item.available > 0) item.shopVisible = false;
       attachCertificates();
       item.stockStatus = stockStatus(item.available, item.stockThreshold || STOCK_THRESHOLD);
       writeInventoryCsv();
@@ -139,7 +142,7 @@ function createFulfillment(deps) {
         waitlistNotified = elh.checkWaitlist(item.sku, item.name + " " + (item.size || ""), getRequestOrigin(req)) || 0;
       }
       const isLive = shopVisibleOf(item) && item.available > 0 && item.releaseState !== "pending_testing";
-      return send(res, 200, { ok: true, sku: item.sku, available: item.available, live: isLive, waitlistNotified }) || true;
+      return send(res, 200, { ok: true, sku: item.sku, available: item.available, live: isLive, waitlistNotified, coaRequired: coaMissing }) || true;
     }
 
     if (method === "POST" && route === "/api/ops/coa/upload") {
@@ -166,6 +169,7 @@ function createFulfillment(deps) {
       item.certificateFile = "/docs/" + filename;
       item.certificateStatus = "accepted";
       if (lot !== "lot") item.lot = lot;
+      if (item.shopVisible === false && (item.available || 0) > 0) item.shopVisible = true;
       attachCertificates();
       saveStore(store);
       fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2));
