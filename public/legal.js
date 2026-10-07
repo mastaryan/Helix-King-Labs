@@ -22,6 +22,7 @@
     ["Refunds", "/refunds"],
     ["Chargebacks", "/chargebacks"],
     ["Permitted use", "/use"],
+    ["Affiliate terms", "/affiliate-terms"],
   ];
 
   function mail() {
@@ -312,6 +313,44 @@
           title: "Acknowledgment",
           body: `<p>An order requires this acknowledgment: chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</p>
             <p>The research field on the account is one of: ${FIELDS.join("; ")}. Company name may be Independent research.</p>`,
+        },
+      ],
+    },
+    affiliates: {
+      code: "HKL-LEG-008",
+      title: "Affiliate Program Terms",
+      kicker: "Referral commissions",
+      lede: "These terms govern the Helix King Labs affiliate program: who may hold a code, how commission is earned, how tax information is handled, and how payouts work.",
+      sections: [
+        {
+          id: "eligibility",
+          title: "Eligibility",
+          body: `<p>An affiliate account opens after the account holder places at least one recorded order. Helix King Labs may also issue codes directly. You must be 18 or older.</p>
+            <p>Before a code is issued you must submit complete tax information: legal name, mailing address, and a Social Security number or Employer Identification Number, with a signed certification that it is correct. A code is not issued until that information is on file. If your tax information changes, you must update it before your next payout.</p>`,
+        },
+        {
+          id: "commission",
+          title: "Commission",
+          body: `<p>Commission is 10% of merchandise after discounts. Shipping, taxes, and fees are not commissionable. One discount applies per order: an affiliate code replaces the first-order code and any coupon.</p>
+            <p>No commission is earned on your own orders. A code used on the affiliate's own account earns the buyer discount but $0 commission.</p>`,
+        },
+        {
+          id: "payouts",
+          title: "Payouts",
+          body: `<p>Cash out at $50 or more, any time, from the affiliate desk. Payouts are sent in crypto or by Cash App to the destination you provide — keep that information current. You may leave your balance in as long as you like.</p>
+            <p>On December 31 of each year, every balance of $50 or more is automatically queued for payout to your saved payout destination, and your available balance resets toward the new year. Balances under $50 carry forward.</p>
+            <p>Payouts are reported as required by law. If you earn $600 or more in a calendar year we will issue a Form 1099-NEC to the legal name, address, and Tax ID you provided. It is your responsibility to report affiliate income.</p>`,
+        },
+        {
+          id: "expiry",
+          title: "Code expiry and removal",
+          body: `<p>A code that generates no referred order for 2 consecutive years expires automatically. Helix King Labs may also remove a code at any time, for any reason, including suspected abuse, self-dealing, or misleading promotion.</p>
+            <p>An expired or removed code stops giving discounts and stops earning commission immediately. Any earned balance remains yours and may still be cashed out at the $50 floor.</p>`,
+        },
+        {
+          id: "conduct",
+          title: "Conduct",
+          body: `<p>Promote honestly. Do not claim products are for human use, do not publish doses or protocols, and do not present yourself as Helix King Labs. Spam, misleading claims, or coupon-code scraping ends the code.</p>`,
         },
       ],
     },
