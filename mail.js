@@ -77,4 +77,42 @@ function orderHtml(order) {
   return '<div style="font-family:Arial,sans-serif;max-width:600px"><h2>Helix King Labs</h2><p>Order ' + order.id + ' · Total <strong>' + total + '</strong></p><table cellpadding="6">' + lines + '</table><p style="color:#888;font-size:12px">Research use only.</p></div>';
 }
 
-module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml };
+function orderMail(order, kind, deps) {
+  const q = order.quote || {};
+  const pay = order.payment || {};
+  const total = "$" + Number(q.total || 0).toFixed(2);
+  const lines = ((q.lines || []).map((l) => `${l.name || ""} ${l.size || ""} × ${l.qty}`).join("\n")) || "See the desk for lines.";
+  let payText = "Payment instructions are on the order.";
+  if (pay.payAddress) payText = `Pay ${pay.payAmount} ${pay.payCurrency} on ${pay.network || "the stated network"} to ${pay.payAddress}. Do not send a different coin or network.`;
+  else if (order.paymentMethod === "venmo") payText = `Venmo @fibkingpeps ${total}. Put ${order.id} in the note.`;
+  else if (order.paymentMethod === "cashapp") payText = `Cash App $FibKingPep ${total}. Put ${order.id} in the note.`;
+  const subjects = {
+    placed: `Order ${order.id} — Helix King Labs`,
+    settled: `Payment received ${order.id} — Helix King Labs`,
+    shipped: `Shipped ${order.id} — Helix King Labs`,
+    delivered: `Delivered ${order.id} — thank you — Helix King Labs`,
+    voided: `Did you miss something? ${order.id} — Helix King Labs`,
+  };
+  const origin = (deps && deps.origin) || "https://helixkinglabs.com";
+  const deliveredText = (deps && deps.deliveredText) ? deps.deliveredText(order) : `${order.id} is delivered. Thank you for ordering with Helix King Labs.`;
+  const text = {
+    placed: `Order ${order.id} is recorded.\nTotal ${total}\n\n${lines}\n\n${payText}\n\nNothing ships until payment is confirmed. Research use only.`,
+    settled: `Payment received for ${order.id}. The order is being prepared. Nothing has shipped yet.`,
+    shipped: `${order.id} is booked${order.carrier ? " with " + order.carrier : ""}. Tracking ${order.tracking || "posts on the next note"}.`,
+    delivered: deliveredText,
+    voided: `Did you miss something? Your order ${order.id} was released before payment was confirmed, so the items are back on the shelf.\n\nRestore your cart in one tap:\n${origin + "/account/receipt/" + order.id}\n\nNothing ships until payment is confirmed. Research use only.`,
+  };
+
+  return {
+    to: order.email,
+    subject: subjects[kind] || `Helix King Labs ${order.id}`,
+    text: text[kind] || text.placed,
+    html: orderHtml(order),
+    kind,
+    orderId: order.id,
+    created: new Date().toISOString(),
+    status: "queued",
+    attempts: 0,
+  };
+}
+module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml, orderMail };
