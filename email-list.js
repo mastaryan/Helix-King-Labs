@@ -4,22 +4,34 @@
 // Factory pattern matches ops-catalog.js — dependencies are injected so
 // server.js stays under the GitHub push size limit.
 
-function libraryEmail(email, unsubUrl) {
+function libraryEmail(email, origin, unsubToken) {
+  const base = (origin || "https://helixkinglabs.com").replace(/\/$/, "");
+  const unsubUrl = base + "/unsubscribe?token=" + encodeURIComponent(unsubToken || "");
   return {
     to: email,
-    subject: "Helix King Labs — library access",
+    subject: "Helix King Labs — you're on the list",
     text: [
       "Helix King Labs",
       "",
-      "You are on the list.",
-      "Library: /library",
-      "Shop: /shop",
+      "Thanks for subscribing — you're on the list.",
       "",
-      "This list is for lot alerts and the documentation library.",
+      "A taste of the catalog:",
+      "",
+      "- BPC-157 — from $25 — " + base + "/product/bpc-157",
+      "- TB-500 — from $39 — " + base + "/product/tb-500",
+      "- GHK-Cu — from $25 — " + base + "/product/ghk-cu",
+      "- KPV — from $29 — " + base + "/product/kpv",
+      "",
+      "Full catalog: " + base + "/shop",
+      "Documentation library: " + base + "/library",
+      "",
+      "Create an account to order: " + base + "/account",
+      "",
+      "This list is for lot alerts, restocks, and group buys.",
       "Research materials are for laboratory use only.",
       "Not a clinic. Not a pharmacy.",
       "",
-      "Unsubscribe anytime: " + (unsubUrl || "https://helixkinglabs.com/unsubscribe"),
+      "Unsubscribe anytime: " + unsubUrl,
     ].join("\n"),
   };
 }
@@ -85,7 +97,7 @@ function createEmailList(deps) {
         saveOutbox(box);
       }
       if (!row.unsub) row.unsub = token();
-      const mail = libraryEmail(email, origin + "/unsubscribe?token=" + encodeURIComponent(row.unsub));
+      const mail = libraryEmail(email, origin, row.unsub);
       const box = loadOutbox();
       box.messages.push({
         ...mail,
