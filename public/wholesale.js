@@ -110,7 +110,7 @@
     const win = cat.window || {};
     const now = new Date().toISOString();
     const windowOpen = (!win.start || now >= win.start) && (!win.end || now <= win.end);
-    const items = (cat.items || []).filter((p) => p.shopVisible !== false);
+    const items = (cat.items || []).filter((p) => p.wholesaleVisible !== false);
     const committed = cat.committed || {};
     const groupMinDefault = win.groupMinDefault || 5;
 
