@@ -68,10 +68,16 @@
         </tbody></table>
       </div>` : ""}
 
-      <div class="card" style="padding:20px">
+      <div class="card" style="padding:20px;margin-bottom:24px">
         <h3>Per-SKU wholesale pricing</h3>
         <p class="muted">Leave price blank to use 60% of retail. Group min = how many the GROUP must commit before this SKU is confirmed (blank = window default).</p>
         <div id="wsPricing"><p class="muted">Loading products…</p></div>
+      </div>
+
+      <div class="card" style="padding:20px">
+        <h3>Retail markup per vial</h3>
+        <p class="muted">Rosy cost derived from wholesale price (wholesale − $10 per box ÷ 10 vials).</p>
+        <div id="wsMarkup"><p class="muted">Loading…</p></div>
       </div>`;
 
     // Config form
@@ -154,6 +160,25 @@
       });
     } catch (e) {
       document.getElementById("wsPricing").innerHTML = `<p class="hard">Couldn't load products.</p>`;
+    }
+
+    // Retail markup table (Rosy cost = wholesale − 10 per box)
+    try {
+      const prods = await api("/api/ops/wholesale/products");
+      const items = (prods.items || []).filter((p) => p.wholesalePrice != null && p.price);
+      const rows = items.map((p) => {
+        const costVial = (p.wholesalePrice - 10) / 10;
+        const markup = p.price - costVial;
+        const margin = p.price ? Math.round((markup / p.price) * 100) : 0;
+        return { sku: p.sku, name: p.name, size: p.size, costVial, retail: p.price, markup, margin };
+      }).sort((a, b) => b.markup - a.markup);
+      document.getElementById("wsMarkup").innerHTML = `<table class="tbl"><thead><tr><th>SKU</th><th>Product</th><th>Cost/vial</th><th>Retail</th><th>Markup/vial</th><th>Margin</th></tr></thead><tbody>
+        ${rows.map((r) => `<tr><td>${esc(r.sku)}</td><td>${esc(r.name)} ${esc(r.size || "")}</td>
+          <td>${money(r.costVial)}</td><td>${money(r.retail)}</td>
+          <td><b>${money(r.markup)}</b></td><td>${r.margin}%</td></tr>`).join("")}
+      </tbody></table>`;
+    } catch (e) {
+      document.getElementById("wsMarkup").innerHTML = `<p class="hard">Couldn't load markup.</p>`;
     }
   }
 
