@@ -1647,6 +1647,9 @@
             })
             .catch(() => {});
         }
+      } else if (p === "/ops") {
+        go("/ops/catalog");
+        return;
       } else if (p === "/ops/catalog") {
         if (!state.user || !state.user.isOps) {
           app.innerHTML = `<section class="page wrap"><h1>Not found</h1><p class="lede">This address is not a catalog page.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
