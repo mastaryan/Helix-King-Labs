@@ -111,30 +111,50 @@
     const now = new Date().toISOString();
     const windowOpen = (!win.start || now >= win.start) && (!win.end || now <= win.end);
     const items = (cat.items || []).filter((p) => p.shopVisible !== false);
+    const committed = cat.committed || {};
+    const groupMinDefault = win.groupMinDefault || 5;
+
+    // Group progress bar
+    let groupHtml = "";
+    const totalCommitted = Object.values(committed).reduce((a, b) => a + b, 0);
+    if (win.groupTotalTarget) {
+      const pct = Math.min(100, Math.round((totalCommitted / win.groupTotalTarget) * 100));
+      groupHtml = `<div class="card" style="padding:20px;margin-bottom:24px">
+        <div class="kicker">Group total</div>
+        <div style="font-size:24px;font-weight:700">${totalCommitted} / ${win.groupTotalTarget} vials committed</div>
+        <div style="background:#eee;border-radius:8px;height:12px;margin-top:8px"><div style="background:#2a7;width:${pct}%;height:12px;border-radius:8px"></div></div>
+      </div>`;
+    }
 
     return `<section class="page wrap"><div class="kicker">Wholesale</div>
-      <h1>Wholesale order form</h1>
+      <h1>Wholesale group order</h1>
       ${win.announce ? `<p class="lede">${escapeHtml(win.announce)}</p>` : ""}
+      <p class="lede">This is a group order — products are confirmed once the group hits the minimum. Commit what you want below.</p>
+      ${groupHtml}
       ${win.end && windowOpen ? countdownHtml(win.end) : ""}
       ${!windowOpen ? `<div class="card" style="padding:20px;margin-bottom:24px"><b>${win.start && now < win.start ? "The next order window opens " + new Date(win.start).toLocaleString() : "The order window is currently closed."}</b><p class="muted">Check back soon or contact wholesale@helixkinglabs.com.</p></div>` : ""}
       ${windowOpen ? `
-      <p class="lede">Minimum order: <b>${money(win.orderMinimum || 0)}</b> · Per-SKU minimums shown below.</p>
       <form id="wsOrderForm">
-        <table class="tbl"><thead><tr><th>Product</th><th>Size</th><th>Price</th><th>Min</th><th>Qty</th><th>Line</th></tr></thead><tbody>
-          ${items.map((p) => `<tr>
+        <table class="tbl"><thead><tr><th>Product</th><th>Size</th><th>Price</th><th>Group progress</th><th>Your qty</th><th>Line</th></tr></thead><tbody>
+          ${items.map((p) => {
+            const gmin = p.groupMin != null ? p.groupMin : groupMinDefault;
+            const got = committed[p.sku] || 0;
+            const pct = Math.min(100, Math.round((got / gmin) * 100));
+            const met = got >= gmin;
+            return `<tr>
             <td><b>${escapeHtml(p.name)}</b></td>
             <td>${escapeHtml(p.size || "")}</td>
             <td>${money(p.price)}</td>
-            <td>${p.minQty}</td>
-            <td><input type="number" min="0" value="0" data-sku="${p.sku}" data-price="${p.price}" data-min="${p.minQty}" class="wsQty" style="width:72px" ${p.stock <= 0 ? "disabled" : ""} /></td>
+            <td><div style="min-width:120px"><div style="font-size:13px">${got}/${gmin} ${met ? "✓" : ""}</div>
+              <div style="background:#eee;border-radius:6px;height:8px"><div style="background:${met ? "#2a7" : "#fa0"};width:${pct}%;height:8px;border-radius:6px"></div></div></div></td>
+            <td><input type="number" min="0" value="0" data-sku="${p.sku}" data-price="${p.price}" class="wsQty" style="width:72px" ${p.stock <= 0 ? "disabled" : ""} /></td>
             <td class="wsLine" data-sku="${p.sku}">—</td>
-          </tr>`).join("")}
+          </tr>`; }).join("")}
         </tbody></table>
         <div style="margin-top:16px;text-align:right">
-          <div style="font-size:20px">Total: <b id="wsTotal">$0.00</b></div>
-          <p class="muted" id="wsMinNote"></p>
+          <div style="font-size:20px">Your total: <b id="wsTotal">$0.00</b></div>
           <label>Payment method <select name="wspay"><option value="crypto">Crypto (NOWPayments)</option><option value="wire">Wire / ACH</option></select></label>
-          <button class="btn" type="submit" style="margin-top:12px">Place wholesale order</button>
+          <button class="btn" type="submit" style="margin-top:12px">Commit to group order</button>
           <p id="wsOrderNote" class="hard"></p>
         </div>
       </form>` : ""}
@@ -162,15 +182,14 @@
         try {
           const r = await api("/api/wholesale/order", { method: "POST", body: { lines, paymentMethod: fd.get("wspay") } });
           ga4("wholesale_purchase", { order_id: r.order.id, value: r.order.total, currency: "USD" });
-          toast("Order " + r.order.id + " placed — " + money(r.order.total));
-          document.getElementById("wsOrderNote").textContent = "Order " + r.order.id + " recorded. We'll confirm payment details.";
+          toast("Committed — " + money(r.order.total));
+          document.getElementById("wsOrderNote").textContent = "Commitment " + r.order.id + " recorded. We'll confirm once group minimums are met.";
           form.reset();
           paintWholesaleTotal();
         } catch (err) {
-          const msg = err.error === "below_minimum" ? `Minimum ${err.min} vials for ${err.sku}.`
-            : err.error === "below_order_minimum" ? `Order minimum is ${money(err.minimum)} — your total is ${money(err.total)}.`
+          const msg = err.error === "below_order_minimum" ? `Order minimum is ${money(err.minimum)} — your total is ${money(err.total)}.`
             : err.error === "window_closed" ? "The order window is closed."
-            : "Order failed — try again.";
+            : "Commit failed — try again.";
           document.getElementById("wsOrderNote").textContent = msg;
           toast(msg);
         }
@@ -187,9 +206,6 @@
       total += line;
       const cell = document.querySelector(`.wsLine[data-sku="${inp.dataset.sku}"]`);
       if (cell) cell.textContent = qty ? money(line) : "—";
-      // Warn below minimum
-      const min = Number(inp.dataset.min) || 0;
-      inp.style.borderColor = qty > 0 && qty < min ? "#c00" : "";
     });
     const totalEl = document.getElementById("wsTotal");
     if (totalEl) totalEl.textContent = money(total);
@@ -204,5 +220,6 @@
     mountWholesalePage();
   }
 
+  window.WS_ROUTE = route;
   window.HKL_WHOLESALE = { wholesalePage, mountWholesalePage, mountRequestForm, route };
 })();
