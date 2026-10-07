@@ -1425,25 +1425,6 @@
     }
   }
 
-  function wholesalePage() {
-    return `<section class="page wrap">
-      <div class="kicker">Wholesale desk</div>
-      <h1>Request access</h1>
-      <p class="lede">Kits of 10. Reply within two business days.</p>
-      <form id="wholesaleForm">
-        <label>Name<input name="name" required autocomplete="name" /></label>
-        <label>Email<input name="email" type="email" required autocomplete="email" /></label>
-        <label>Organization<select name="organization" required>
-          ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option>${f}</option>`).join("")}
-        </select></label>
-        <label>Approximate monthly kits<input name="volume" required inputmode="numeric" /></label>
-        <label>Materials of interest<textarea name="interest" required rows="4"></textarea></label>
-        <button class="btn" type="submit">Send the request</button>
-      </form>
-      <p id="wholesaleNote" class="hard"></p>
-    </section>`;
-  }
-
   function groupBuyPage(gb) {
     if (sessionStorage.getItem("hkl-gb") !== "1") {
       return `<section class="page wrap prose">
@@ -1489,6 +1470,7 @@
     try {
       if (p === "/") {
         app.innerHTML = home();
+   }else if(p==='/wholesale'){await WS_ROUTE();
       } else if (p === "/shop") {
         app.innerHTML = shop();
         window.HKL_SUGGEST?.mountShop();
