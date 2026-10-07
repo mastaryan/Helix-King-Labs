@@ -16,6 +16,7 @@ const createOpsCatalog = require("./ops-catalog");
 const createEmailList = require("./email-list");
 const createFulfillment = require("./fulfillment");
 const { createSuggestions } = require("./suggestions");
+const { createWholesale } = require("./wholesale");
 const QRCode = require("qrcode");
 const mailer = require("./mail");
 
@@ -392,6 +393,7 @@ let opsCatalogHandle;
 let emailListHandle;
 let fulfillHandle;
 let suggestHandle;
+let wholesaleHandle;
 
 function loadOutbox() {
   try {
@@ -472,6 +474,10 @@ opsCatalogHandle = createOpsCatalog({ products, store, saveStore, send, readBody
 emailListHandle = createEmailList({ store, saveStore, send, readBody, validEmail, token, requestOrigin: authx.requestOrigin, loadOutbox, saveOutbox, writeSubscribersCsv, audit, isOpsUser });
 fulfillHandle = createFulfillment({ products, store, saveStore, send, readBody, isOpsUser, findProduct, attachCertificates, writeInventoryCsv, writePricingCsv, audit, PUBLIC, DATA, SHOP_HIDDEN_FAMILIES, affiliateOf, stockStatus, STOCK_THRESHOLD, getPublicOrigin: () => (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", getRequestOrigin: (req) => authx.requestOrigin(req), getEmailListHandle: () => emailListHandle });
 suggestHandle = createSuggestions({ store, saveStore, send, readBody, isOpsUser });
+wholesaleHandle = createWholesale({
+  store, saveStore, send, readBody, isOpsUser, products,
+  saveProducts: () => { fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2)); },
+});
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
   const derived = crypto.scryptSync(password, salt, 32).toString("hex");
@@ -551,6 +557,7 @@ function publicUser(u) {
     provider: u.provider || "password",
     role: isOpsUser(u) ? "ops" : "customer",
     isOps: isOpsUser(u),
+    wholesale: !!u.wholesale,
     firstOrderOpen: !u.firstOrderUsed,
     coupon: u.firstOrderUsed ? null : "HELIX10",
     company: u.company || "",
@@ -2459,6 +2466,7 @@ async function api(req, res, url) {
   if (await emailListHandle(req, res, url, user)) return;
   if (await fulfillHandle(req, res, url, user)) return;
   if (await suggestHandle(req, res, url, user)) return;
+  if (await wholesaleHandle(req, res, url, user)) return;
 
   return send(res, 404, { error: "not_found" });
 }
