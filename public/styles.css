@@ -689,3 +689,32 @@ input:focus, select:focus { border-color: var(--silver-2); }
 .codeaddr { font-family: monospace; word-break: break-all; background: #101012; padding: 10px 12px; border-radius: 8px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 20px 0; }
 @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } .steps { flex-direction: column; } }
+
+/* Product page buy box */
+.line-total:empty { display: none; }
+.buy-split .btn { display: inline-block; margin-top: 12px; }
+
+/* Account order cards */
+.order-h2 { margin-top: 32px; }
+.order-card { border: 1px solid var(--line); padding: 16px; margin-top: 12px; }
+.order-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.status-pill { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid var(--line-2); color: var(--silver-2); padding: 3px 8px; white-space: nowrap; }
+.st-awaiting_settlement { color: #c4a15c; border-color: #c4a15c; }
+.st-settled { color: var(--silver); border-color: var(--silver); }
+.st-shipped { color: #8dcea0; border-color: #8dcea0; }
+.st-voided { color: var(--muted); }
+.order-track { margin-top: 8px; font-size: 14px; }
+
+/* Vertical order timeline (account cards) */
+.order-tl { list-style: none; margin: 14px 0 4px; padding: 0; }
+.order-tl li { position: relative; display: flex; gap: 12px; padding: 0 0 18px 0; }
+.order-tl li:last-child { padding-bottom: 0; }
+.order-tl li::before { content: ""; position: absolute; left: 5px; top: 14px; bottom: -2px; width: 1px; background: var(--line-2); }
+.order-tl li:last-child::before { display: none; }
+.order-tl .dot { flex: none; width: 11px; height: 11px; margin-top: 3px; border-radius: 50%; border: 1px solid var(--silver-2); background: transparent; }
+.order-tl li.done .dot { background: #8dcea0; border-color: #8dcea0; }
+.order-tl li.now .dot { background: #c4a15c; border-color: #c4a15c; box-shadow: 0 0 0 3px rgba(196, 161, 92, 0.18); }
+.order-tl li > div b { display: block; font-size: 14px; font-weight: 600; }
+.order-tl li > div span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.order-tl li.done > div b { color: var(--silver); }
+.order-tl li:not(.done):not(.now) { opacity: 0.55; }

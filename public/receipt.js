@@ -5,6 +5,46 @@ function orderStatusLabel(status) {
   return { awaiting_settlement: "Awaiting payment", settled: "Paid", shipped: "Shipped", voided: "Cancelled" }[status] || status || "";
 }
 
+function trackUrl(carrier, num) {
+  if (!num) return null;
+  const c = String(carrier || "").toLowerCase();
+  const n = encodeURIComponent(String(num).trim());
+  if (c.includes("usps")) return "https://tools.usps.com/go/TrackConfirmAction?tLabels=" + n;
+  if (c.includes("fedex") || c.includes("fed ex")) return "https://www.fedex.com/fedextrack/?trknbr=" + n;
+  if (c.includes("ups")) return "https://www.ups.com/track?tracknum=" + n;
+  if (c.includes("dhl")) return "https://www.dhl.com/us-en/home/tracking/tracking-express.html?submit=1&tracking-id=" + n;
+  return null;
+}
+
+function orderShortDate(at) {
+  if (!at) return "";
+  try { return new Date(at).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }); }
+  catch { return String(at).slice(0, 10); }
+}
+
+/* Vertical fulfillment timeline for current orders: Order placed -> Payment confirmed -> Shipped. */
+function orderTimeline(o) {
+  const st = o.status || "";
+  if (st === "voided") return `<p class="muted">This order was cancelled. Nothing was charged beyond what was sent.</p>`;
+  const events = o.events || [];
+  const at = (kind) => { const e = events.find((e) => e.kind === kind); return e ? orderShortDate(e.at) : ""; };
+  const steps = [
+    { label: "Order placed", date: at("placed") || orderShortDate(o.created) },
+    { label: "Payment confirmed", date: at("settled"), waiting: "Waiting on payment" },
+    { label: "Shipped", date: at("shipped"), waiting: "Being prepared" },
+  ];
+  const stateOf = (i) => {
+    if (st === "shipped") return "done";
+    if (st === "settled") return i <= 1 ? "done" : "now";
+    return i === 0 ? "done" : i === 1 ? "now" : "";
+  };
+  return `<ol class="order-tl">${steps.map((s, i) => {
+    const cls = stateOf(i);
+    const sub = s.date || (cls === "now" ? s.waiting : "");
+    return `<li class="${cls}"><span class="dot"></span><div><b>${s.label}</b>${sub ? `<span>${sub}</span>` : ""}</div></li>`;
+  }).join("")}</ol>`;
+}
+
 function orderWhen(at) {
   if (!at) return "";
   try { return new Date(at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
@@ -50,9 +90,10 @@ function receiptView(o) {
   const shipView = ship.line1
     ? `${esc(ship.name || "")}<br>${esc(ship.line1)}${ship.line2 ? "<br>" + esc(ship.line2) : ""}<br>${esc(ship.city)}, ${esc(ship.region)} ${esc(ship.postal)}`
     : "Missing — the order cannot ship without it.";
+  const tUrl = typeof trackUrl === "function" ? trackUrl(o.carrier, o.tracking) : null;
   const trackBox = st === "shipped"
     ? `<div class="paybox"><h3>Shipped${o.carrier ? " · " + esc(o.carrier) : ""}</h3>
-      <p class="codeaddr">${esc(o.tracking || "")} <button class="btn ghost" type="button" id="copyTrack">Copy</button></p></div>`
+      <p class="codeaddr">${tUrl ? `<a href="${tUrl}" target="_blank" rel="noopener">${esc(o.tracking || "")}</a>` : esc(o.tracking || "")} <button class="btn ghost" type="button" id="copyTrack">Copy</button></p></div>`
     : "";
   const eventLabel = { placed: "Order placed", settled: "Payment confirmed", shipped: "Shipped", voided: "Order cancelled", address: "Shipping address updated", note: "Note" };
   const feed = (o.events || []).map((e) => `<p class="muted">${orderWhen(e.at)} — ${eventLabel[e.kind] || e.kind}</p>`).join("");
