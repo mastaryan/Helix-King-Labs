@@ -23,7 +23,11 @@
           <div style="display:flex;gap:12px;flex-wrap:wrap">
             <label>Opens <input type="datetime-local" name="wstart" value="${cfg.windowStart ? toLocal(cfg.windowStart) : ""}" /></label>
             <label>Closes <input type="datetime-local" name="wend" value="${cfg.windowEnd ? toLocal(cfg.windowEnd) : ""}" /></label>
-            <label>Order minimum ($) <input type="number" name="wmin" min="0" step="1" value="${cfg.orderMinimum || 0}" style="width:100px" /></label>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+            <label>Group min per SKU <span class="muted">(default)</span> <input type="number" name="wgmin" min="1" step="1" value="${cfg.groupMinDefault || 5}" style="width:80px" /></label>
+            <label>Group total target <span class="muted">(optional — blank to disable)</span> <input type="number" name="wgtotal" min="0" step="1" value="${cfg.groupTotalTarget || ""}" placeholder="—" style="width:100px" /></label>
+            <label>Per-person order min ($) <span class="muted">(0 = off)</span> <input type="number" name="wmin" min="0" step="1" value="${cfg.orderMinimum || 0}" style="width:100px" /></label>
           </div>
           <label>Announcement <span class="muted">(shown on the wholesale page)</span>
             <input name="wannounce" value="${esc(cfg.announce || "")}" maxlength="500" style="width:100%" /></label>
@@ -66,7 +70,7 @@
 
       <div class="card" style="padding:20px">
         <h3>Per-SKU wholesale pricing</h3>
-        <p class="muted">Leave price blank to use 60% of retail. Leave minimum blank for the default (10).</p>
+        <p class="muted">Leave price blank to use 60% of retail. Group min = how many the GROUP must commit before this SKU is confirmed (blank = window default).</p>
         <div id="wsPricing"><p class="muted">Loading products…</p></div>
       </div>`;
 
@@ -80,6 +84,8 @@
           windowStart: fd.get("wstart") ? new Date(fd.get("wstart")).toISOString() : null,
           windowEnd: fd.get("wend") ? new Date(fd.get("wend")).toISOString() : null,
           orderMinimum: Number(fd.get("wmin")) || 0,
+          groupMinDefault: Math.max(1, Math.floor(Number(fd.get("wgmin")) || 5)),
+          groupTotalTarget: fd.get("wgtotal") === "" ? null : Math.max(1, Math.floor(Number(fd.get("wgtotal")) || 0)) || null,
           announce: fd.get("wannounce"),
         }});
         note.textContent = "Saved.";
@@ -120,24 +126,24 @@
     try {
       const prods = await api("/api/ops/wholesale/products");
       const items = prods.items || prods.products || [];
-      document.getElementById("wsPricing").innerHTML = `<table class="tbl"><thead><tr><th>SKU</th><th>Name</th><th>Retail</th><th>Wholesale $</th><th>Min qty</th><th></th></tr></thead><tbody>
+      document.getElementById("wsPricing").innerHTML = `<table class="tbl"><thead><tr><th>SKU</th><th>Name</th><th>Retail</th><th>Wholesale $</th><th>Group min</th><th></th></tr></thead><tbody>
         ${items.map((p) => `<tr>
           <td>${esc(p.sku)}</td><td>${esc(p.name)}</td><td>${money(p.price)}</td>
           <td><input type="number" min="0" step="0.01" placeholder="${(p.price * 0.6).toFixed(2)}" value="${p.wholesalePrice != null ? p.wholesalePrice : ""}" data-wp="${esc(p.sku)}" style="width:90px" /></td>
-          <td><input type="number" min="1" step="1" placeholder="10" value="${p.wholesaleMin != null ? p.wholesaleMin : ""}" data-wm="${esc(p.sku)}" style="width:70px" /></td>
+          <td><input type="number" min="1" step="1" placeholder="${cfg.groupMinDefault || 5}" value="${p.wholesaleGroupMin != null ? p.wholesaleGroupMin : ""}" data-wm="${esc(p.sku)}" style="width:70px" /></td>
           <td><button class="btn" data-wsave="${esc(p.sku)}">Save</button></td>
         </tr>`).join("")}
       </tbody></table>`;
       document.getElementById("wsPricing").querySelectorAll("[data-wsave]").forEach((b) => {
         b.onclick = async () => {
           const sku = b.dataset.wsave;
-          const wp = document.querySelector(`[data-wp="${sku}"]`).value;
-          const wm = document.querySelector(`[data-wm="${sku}"]`).value;
+          const wp = document.querySelector(`[data-wp="${CSS.escape(sku)}"]`).value;
+          const wm = document.querySelector(`[data-wm="${CSS.escape(sku)}"]`).value;
           try {
             await api("/api/ops/wholesale/pricing", { method: "POST", body: {
               sku,
               wholesalePrice: wp === "" ? null : Number(wp),
-              wholesaleMin: wm === "" ? null : Math.floor(Number(wm)),
+              wholesaleGroupMin: wm === "" ? null : Math.floor(Number(wm)),
             }});
             toast("Saved.");
           } catch (err) { toast("Failed."); }
