@@ -331,7 +331,7 @@
         }
       });
     });
-    // Intake + COA sections
+    // Intake + COA sections (before inventory to match sidebar order)
     var inv = document.getElementById("invDesk");
     if (!inv || document.getElementById("intakeDesk")) return;
     var intake = document.createElement("div");
@@ -340,7 +340,7 @@
     var coa = document.createElement("div");
     coa.id = "coaDesk";
     coa.style.marginTop = "36px";
-    inv.after(intake);
+    inv.before(intake);
     intake.after(coa);
     mountIntake(intake);
     mountCoa(coa);
