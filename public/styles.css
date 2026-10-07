@@ -704,6 +704,28 @@ input:focus, select:focus { border-color: var(--silver-2); }
 .st-shipped { color: #8dcea0; border-color: #8dcea0; }
 .st-delivered { color: #8dcea0; border-color: #8dcea0; background: rgba(141, 206, 160, 0.12); }
 
+/* Notify-me button (gold, distinct from gray out-of-stock) */
+.btn.notify-btn {
+  background: var(--accent, #c4a15c);
+  border-color: var(--accent, #c4a15c);
+  color: #1a1a1a;
+  font-weight: 600;
+}
+.btn.notify-btn:hover {
+  filter: brightness(1.1);
+}
+.notify-form {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: var(--bg-2);
+  display: grid;
+  gap: 10px;
+}
+.notify-title { font-weight: 600; margin: 0; }
+.notify-actions { display: flex; gap: 8px; }
+
 /* Ops sidebar */
 #opsSidebar {
   position: fixed;
