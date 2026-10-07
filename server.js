@@ -835,7 +835,15 @@ function liveCoupon(code) {
   const found = (store.coupons || []).find((x) => x.code === c && x.active !== false);
   if (!found) return null;
   if (found.expires && new Date(found.expires).getTime() < Date.now()) return null;
+  if (found.maxUses > 0 && Number(found.uses || 0) >= found.maxUses) return null;
   return found;
+}
+
+function useCoupon(code) {
+  const c = liveCoupon(code);
+  if (!c) return;
+  c.uses = Number(c.uses || 0) + 1;
+  saveStore(store);
 }
 
 function quoteCart(items, user, opts) {
@@ -894,7 +902,11 @@ function quoteCart(items, user, opts) {
     discountKind = "affiliate";
   } else if (cpn && afterVolume >= Number(cpn.minTotal || 0)) {
     coupon = cpn.code;
-    couponOff = Math.round(afterVolume * (Number(cpn.pct) / 100) * 100) / 100;
+    if (Number(cpn.amount) > 0) {
+      couponOff = Math.min(afterVolume, Math.round(Number(cpn.amount) * 100) / 100);
+    } else {
+      couponOff = Math.round(afterVolume * (Number(cpn.pct) / 100) * 100) / 100;
+    }
     discountKind = "coupon";
   } else if (user && !user.firstOrderUsed && afterVolume > 99) {
     coupon = price.firstOrderCoupon || "HELIX10";
@@ -1065,12 +1077,26 @@ async function api(req, res, url) {
   }
 
   if (method === "GET" && route === "/api/certificates") {
+    const records = [];
+    for (const p of products.items || []) {
+      if (!p.certificateFile || !p.certificatePublic) continue;
+      const fam = (products.families || []).find((f) => f.id === (p.family || p.id));
+      records.push({
+        sku: p.sku,
+        name: p.name,
+        size: p.size,
+        lot: p.lot || "",
+        file: p.certificateFile,
+        family: fam ? fam.name : "",
+        slug: fam ? (fam.slug || fam.id) : "",
+      });
+    }
     return send(res, 200, {
       disclaimer: "Lot certificates publish here when testing is complete.",
       labs: [],
-      count: 0,
-      records: [],
-      status: "pending",
+      count: records.length,
+      records,
+      status: records.length ? "live" : "pending",
     });
   }
 
@@ -1519,6 +1545,7 @@ async function api(req, res, url) {
     writeInventoryCsv();
     order.stockDecremented = true;
     if (quote.discountKind === "first_order") user.firstOrderUsed = true;
+    if (quote.discountKind === "coupon" && quote.coupon) useCoupon(quote.coupon);
     store.orders.push(order);
     saveStore(store);
     queueMail(orderMail(order, "placed"));
@@ -2075,13 +2102,18 @@ async function api(req, res, url) {
     try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
     const code = String(body.code || "").trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 16);
     if (code.length < 3 || code === "HELIX10") return send(res, 400, { error: "code" });
-    const pct = Math.max(1, Math.min(90, Number(body.pct) || 0));
-    if (!pct) return send(res, 400, { error: "pct" });
+    const pct = Math.max(0, Math.min(90, Number(body.pct) || 0));
+    const amount = Math.max(0, Number(body.amount) || 0);
+    if (!pct && !amount) return send(res, 400, { error: "discount" });
+    const maxUses = Math.max(0, Math.floor(Number(body.maxUses) || 0));
     store.coupons = store.coupons || [];
     const cur = store.coupons.find((x) => x.code === code);
     const rec = {
       code,
       pct,
+      amount: Math.round(amount * 100) / 100,
+      maxUses,
+      uses: (cur && Number(cur.uses) || 0),
       minTotal: Math.max(0, Number(body.minTotal) || 0),
       expires: body.expires ? new Date(body.expires).toISOString() : null,
       active: body.active === false ? false : true,
@@ -2089,7 +2121,7 @@ async function api(req, res, url) {
       created: (cur && cur.created) || new Date().toISOString(),
     };
     if (cur) Object.assign(cur, rec); else store.coupons.push(rec);
-    audit(user, "coupon", code + " " + pct + "%");
+    audit(user, "coupon", code + " " + (pct ? pct + "%" : "$" + rec.amount) + (maxUses ? " x" + maxUses : ""));
     saveStore(store);
     return send(res, 200, { ok: true, coupons: store.coupons });
   }
