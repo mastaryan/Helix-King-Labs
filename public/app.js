@@ -2361,16 +2361,22 @@
 
     const payoutReq = $("#payoutReq");
     if (payoutReq) {
-      payoutReq.addEventListener("click", async () => {
-        payoutReq.disabled = true;
+      payoutReq.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = payoutReq.querySelector("button[type=submit]");
+        if (btn) btn.disabled = true;
+        const fd = new FormData(payoutReq);
         try {
-          await api("/api/affiliate/payout-request", { method: "POST" });
+          await api("/api/affiliate/payout-request", { method: "POST", body: {
+            method: String(fd.get("method") || "crypto"),
+            detail: String(fd.get("detail") || ""),
+          }});
           toast("Payout requested.");
           go("/affiliates");
         } catch (err) {
           const el = $("#payoutErr");
           if (el) el.textContent = err.message === "floor" ? "The payout floor is $50." : err.message;
-          payoutReq.disabled = false;
+          if (btn) btn.disabled = false;
         }
       });
     }
