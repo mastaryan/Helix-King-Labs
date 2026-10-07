@@ -63,7 +63,7 @@
         <label>Unit cost<input name="cost" type="number" step="0.01" value="${it.cost ?? ""}" /></label>
         <label>Lot<input name="lot" value="${it.lot || ""}" required /></label>
         <label>On hand<input name="stock" type="number" min="0" value="${it.stock || 0}" required /></label>
-        <label>Shop<select name="shopVisible"><option value="true" ${it.shopVisible !== false ? "selected" : ""}>On shop</option><option value="false" ${it.shopVisible === false ? "selected" : ""}>Hidden</option></select></label>
+        <label class="check" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="shopVisible" ${it.shopVisible !== false ? "checked" : ""} style="width:auto" /> Show on shop</label>
         <label>Laboratory<input name="lab" value="${coa.lab || ""}" /></label>
         <label>Report ID<input name="reportId" value="${coa.reportId || ""}" /></label>
         <label>Received<input name="received" value="${coa.received || ""}" placeholder="2026-07-31" /></label>
@@ -102,7 +102,7 @@
         cost: fd.get("cost"),
         lot: fd.get("lot"),
         stock: fd.get("stock"),
-        shopVisible: fd.get("shopVisible") === "true",
+        shopVisible: form.querySelector('[name="shopVisible"]').checked,
         coa: {
           lab: fd.get("lab"),
           reportId: fd.get("reportId"),
