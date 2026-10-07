@@ -1709,6 +1709,28 @@ async function api(req, res, url) {
     });
   }
 
+  if (method === "POST" && route === "/api/ops/users/delete") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const id = String(body.id || "").trim();
+    const email = String(body.email || "").toLowerCase().trim();
+    const target = (store.users || []).find((u) => (id && u.id === id) || (email && String(u.email || "").toLowerCase() === email));
+    if (!target) return send(res, 404, { error: "not_found" });
+    if (target.id === user.id) return send(res, 400, { error: "cannot_delete_self" });
+    if (isOpsUser(target)) return send(res, 400, { error: "cannot_delete_ops" });
+    const orderCount = (store.orders || []).filter((o) => o.userId === target.id).length;
+    if (orderCount) return send(res, 400, { error: "has_orders", orders: orderCount });
+    store.users = (store.users || []).filter((u) => u.id !== target.id);
+    store.sessions = (store.sessions || []).filter((s) => s.userId !== target.id);
+    for (const aff of store.affiliates || []) {
+      if (aff.userId === target.id) { aff.userId = null; aff.status = "closed"; aff.closedAt = new Date().toISOString(); }
+    }
+    saveStore(store);
+    audit(user.id, "user", "deleted user " + (target.email || target.id));
+    return send(res, 200, { ok: true });
+  }
+
   if (method === "GET" && route === "/api/ops/board") {
     if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
     const orders = store.orders || [];
@@ -2601,6 +2623,7 @@ function deskPayload() {
     opsEmails: [...OPS_EMAILS],
     inventory,
     customers: (store.users || []).map((u) => ({
+      id: u.id,
       email: u.email,
       name: u.name,
       company: u.company || "",
