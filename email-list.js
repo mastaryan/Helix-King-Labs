@@ -87,17 +87,6 @@ function createEmailList(deps) {
           library: "/library",
         };
         store.captures.push(row);
-        // Notify the owner of the new subscriber.
-        const box = loadOutbox();
-        box.messages.push({
-          to: process.env.HKL_NOTIFY_EMAIL || "info@helixkinglabs.com",
-          subject: "New email subscriber: " + email,
-          text: ["Helix King Labs", "", "New subscriber: " + email, "Source: " + source, "Time: " + row.created].join("\n"),
-          source: "capture-notify",
-          created: new Date().toISOString(),
-          status: "queued",
-        });
-        saveOutbox(box);
       }
       if (!row.unsub) row.unsub = token();
       const mail = libraryEmail(email, origin, row.unsub);
