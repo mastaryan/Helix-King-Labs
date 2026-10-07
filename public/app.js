@@ -436,7 +436,7 @@
                 <button type="button" id="qtyPlus">+</button>
               </div>
               <p class="line-total" id="lineTotal"></p>
-              ${!state.user ? `<a class="btn" href="/account" data-link>Sign in to add</a>` : `<button class="btn" id="addBtn" ${isPending(p) || onHand(p) <= 0 ? "disabled" : ""}>${isPending(p) ? "Waiting for testing to complete" : onHand(p) <= 0 ? "Out of stock" : "Add single · " + money(p.price)}</button>`}
+              ${isPending(p)?`<button class="btn" disabled>Waiting for testing to complete</button>`:onHand(p)<=0?`<button class="btn notify-btn" id="notifyBtn" data-s="${esc(p.sku||p.id)}">Notify me</button><div id="notifyWrap"></div>`:!state.user?`<a class="btn" href="/account" data-link>Sign in to add</a>`:`<button class="btn" id="addBtn">Add single · ${money(p.price)}</button>`}
             </div>
             ${onHand(p) >= 15 && p.kitPrice ? `<div>
               <div class="kicker">Kit of 10</div>
@@ -448,7 +448,6 @@
               <p class="line-total" id="kitTotal"></p>
               ${!state.user ? "" : `<button class="btn ghost" id="addKit" type="button">Add kit · ${money(p.kitPrice)}</button>`}
             </div>` : ""}
-            ${HKL_FULFILL.notifyHtml(p, state.user && state.user.email)}
           </div>
           ${state.user && onHand(p) <= 0 ? `<p class="hard">Sold out.</p>` : ""}
           ${
