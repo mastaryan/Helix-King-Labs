@@ -87,7 +87,7 @@ function createWholesale(deps) {
         price: p.wholesalePrice != null ? p.wholesalePrice : Math.round((p.price || 0) * 0.6 * 100) / 100,
         // Group minimum: how many the GROUP must commit before this SKU is ordered
         groupMin: p.wholesaleGroupMin != null ? p.wholesaleGroupMin : null,
-        shopVisible: p.shopVisible !== false,
+        wholesaleVisible: p.wholesaleVisible !== false,
       }));
       // Group commitments so far (this window)
       const committed = groupCommitments();
@@ -217,6 +217,7 @@ function createWholesale(deps) {
       if (!p) return send(res, 404, { error: "not_found" });
       if ("wholesalePrice" in body) p.wholesalePrice = body.wholesalePrice === null ? null : Math.max(0, Number(body.wholesalePrice) || 0);
       if ("wholesaleGroupMin" in body) p.wholesaleGroupMin = body.wholesaleGroupMin === null ? null : Math.max(1, Math.floor(Number(body.wholesaleGroupMin) || 5));
+      if ("wholesaleVisible" in body) p.wholesaleVisible = body.wholesaleVisible === true;
       if (deps.saveProducts) deps.saveProducts();
       return send(res, 200, { ok: true });
     }
