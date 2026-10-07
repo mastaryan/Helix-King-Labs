@@ -184,7 +184,7 @@ function createEmailList(deps) {
   async function waitlistHandle(req, res, url, user) {
     const method = req.method;
     const route = url.pathname;
-    const { store, saveStore, send, readBody, validEmail, loadOutbox, saveOutbox } = waitlistHandle.deps;
+    const { store, saveStore, send, readBody, validEmail, loadOutbox, saveOutbox, token } = waitlistHandle.deps;
 
     if (method === "POST" && route === "/api/waitlist") {
       let body;
@@ -201,10 +201,31 @@ function createEmailList(deps) {
       store.waitlist = store.waitlist || [];
       const exists = store.waitlist.some((w) => w.email === email && w.sku === sku);
       if (!exists) {
-        store.waitlist.push({ email, sku, created: new Date().toISOString(), consent: true });
+        const unsubToken = token().slice(0, 16);
+        store.waitlist.push({ email, sku, created: new Date().toISOString(), consent: true, unsubToken });
         saveStore(store);
+        // Confirmation email
+        const box = loadOutbox();
+        box.messages.push({
+          to: email,
+          subject: `You're on the notify list — Helix King Labs`,
+          text: `Helix King Labs\n\nYou're signed up to get one email when ${sku} is back in stock.\n\nNo marketing list — just this one notification.\n\nDon't want it? Unsubscribe here:\nhttps://helixkinglabs.com/api/waitlist/unsubscribe?token=${unsubToken}\n\nResearch use only.`,
+          source: "waitlist-confirm",
+          created: new Date().toISOString(),
+          status: "queued",
+        });
+        saveOutbox(box);
       }
       return send(res, 200, { ok: true, waiting: true });
+    }
+
+    if (method === "GET" && route === "/api/waitlist/unsubscribe") {
+      const t = String(url.searchParams.get("token") || "");
+      store.waitlist = store.waitlist || [];
+      const before = store.waitlist.length;
+      store.waitlist = store.waitlist.filter((w) => w.unsubToken !== t);
+      if (store.waitlist.length < before) saveStore(store);
+      return send(res, 200, { ok: true, removed: before > store.waitlist.length });
     }
     return false;
   }
