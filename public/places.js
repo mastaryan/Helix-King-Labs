@@ -1,11 +1,22 @@
 // Google Places address autocomplete for checkout.
-// API key is domain-restricted in Google Cloud Console.
+// API key is fetched from the backend (/api/config) — never hardcoded.
 (function () {
-  const PLACES_KEY = "AIzaSyBlBqGrzpekpXEv65NBDS-vtJQ61Ep7fT0";
   let loaded = false;
+  let keyPromise = null;
 
-  function loadScript() {
+  function getKey() {
+    if (!keyPromise) {
+      keyPromise = fetch("/api/config")
+        .then((r) => r.json())
+        .then((c) => c.placesKey || "")
+        .catch(() => "");
+    }
+    return keyPromise;
+  }
+
+  function loadScript(key) {
     return new Promise((resolve, reject) => {
+      if (!key) return reject(new Error("no key"));
       if (window.google && window.google.maps && window.google.maps.places) return resolve();
       if (loaded) {
         const check = setInterval(() => {
@@ -16,7 +27,7 @@
       }
       loaded = true;
       const s = document.createElement("script");
-      s.src = "https://maps.googleapis.com/maps/api/js?key=" + PLACES_KEY + "&libraries=places";
+      s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&libraries=places";
       s.async = true;
       s.onload = () => resolve();
       s.onerror = () => reject(new Error("load failed"));
@@ -28,13 +39,15 @@
     if (!input || input.dataset.places) return;
     input.dataset.places = "1";
     input.setAttribute("autocomplete", "off");
-    loadScript().then(() => {
-      const session = new google.maps.places.AutocompleteSessionToken();
+    getKey().then((key) => {
+      if (!key) return;
+      return loadScript(key);
+    }).then(() => {
+      if (!window.google || !window.google.maps || !window.google.maps.places) return;
       const ac = new google.maps.places.Autocomplete(input, {
         types: ["address"],
         componentRestrictions: { country: "us" },
       });
-      // Use session token via the new API if available
       ac.addListener("place_changed", () => {
         const place = ac.getPlace();
         if (!place || !place.address_components) return;
@@ -61,12 +74,10 @@
     }).catch(() => {});
   }
 
-  // Wire up any street address field on the page
   window.HKL_PLACES = function () {
     document.querySelectorAll('input[name="line1"]').forEach(wireAutocomplete);
   };
 
-  // Auto-wire on load and after SPA renders
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => window.HKL_PLACES());
   } else {
