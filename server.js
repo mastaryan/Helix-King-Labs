@@ -2661,6 +2661,7 @@ function knownPaths() {
     "/ops",
     "/ops/catalog",
     "/unsubscribe",
+    "/welcome",
     "/library",
   ]);
   for (const f of shopFamilies()) paths.add("/product/" + (f.slug || f.id));
