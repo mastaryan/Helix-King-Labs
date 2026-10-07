@@ -414,7 +414,7 @@
         <div>
           <div class="kicker">${classLabel}</div>
           <h1>${p.name}</h1>
-          <p class="hard">${p.size} · ${categoryName(p)}</p>
+          <p class="hard">${p.size} · ${categoryName(p)}${p.aka?` (${p.aka})`:""}</p>
           <div class="sku-line">Lot ${p.lot}</div>
           <div class="dose-row" aria-label="Strengths" id="pdpDoses">
             ${vars
@@ -926,7 +926,7 @@
         <form id="profileForm" class="tool-form">
           <input name="name" value="${u.name || ""}" placeholder="Name" />
           <input name="email" type="email" value="${u.email}" required />
-          <input name="company" value="${u.company || ""}" placeholder="Company name" />
+          <input name="company" value="${u.company || ""}" />
           <select name="researchField">
             ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${u.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
           </select>
@@ -953,7 +953,7 @@
             <input name="email" type="email" placeholder="Email" required />
             <input name="password" type="password" placeholder="Password (8+)" required minlength="8" />
             <input name="company" type="text" placeholder="Company name" />
-            <select name="researchField" required aria-label="Research field">
+            <select name="researchField" required>
               <option selected>Independent Researcher</option>
               <option>Molecular Biology</option>
               <option>Biochemistry</option>
@@ -1055,14 +1055,14 @@
       }
       <p class="lede">One 10% on the cart. HELIX10 applies on a first order over $99. An affiliate code replaces it. Free shipping over $199 after discounts.</p>
       <form id="payForm" class="tool-form">
-        <input name="shipName" type="text" required value="${(state.user && state.user.name) || ""}" placeholder="Ship-to name" />
-        <input name="phone" type="text" value="${(state.user && state.user.phone) || ""}" placeholder="Phone" />
-        <input name="line1" type="text" required value="${(state.user && state.user.address && state.user.address.line1) || ""}" placeholder="Street" />
-        <input name="line2" type="text" value="${(state.user && state.user.address && state.user.address.line2) || ""}" placeholder="Suite, optional" />
-        <input name="city" type="text" required value="${(state.user && state.user.address && state.user.address.city) || ""}" placeholder="City" />
-        <input name="region" type="text" required value="${(state.user && state.user.address && state.user.address.region) || ""}" placeholder="State" />
-        <input name="postal" type="text" required value="${(state.user && state.user.address && state.user.address.postal) || ""}" placeholder="Postal code" />
-        <input name="company" type="text" value="${(state.user && state.user.company) || ""}" placeholder="Company name" />
+        <input name="shipName" required value="${(state.user && state.user.name) || ""}" placeholder="Ship-to name" />
+        <input name="phone" value="${(state.user && state.user.phone) || ""}" placeholder="Phone" />
+        <input name="line1" required value="${(state.user && state.user.address && state.user.address.line1) || ""}" placeholder="Street" />
+        <input name="line2" value="${(state.user && state.user.address && state.user.address.line2) || ""}" placeholder="Suite, optional" />
+        <input name="city" required value="${(state.user && state.user.address && state.user.address.city) || ""}" placeholder="City" />
+        <input name="region" required value="${(state.user && state.user.address && state.user.address.region) || ""}" placeholder="State" />
+        <input name="postal" required value="${(state.user && state.user.address && state.user.address.postal) || ""}" placeholder="Postal code" />
+        <input name="company" required value="${(state.user && state.user.company) || ""}" placeholder="Company name" />
         <select name="researchField" required aria-label="Research field">
           ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
         </select>
@@ -1072,6 +1072,7 @@
         <label class="check"><input type="radio" name="paymentMethod" value="venmo" ${state.payMethod === "venmo" ? "checked" : ""} /> Venmo @fibkingpeps</label>
         <label class="check"><input type="radio" name="paymentMethod" value="cashapp" ${state.payMethod === "cashapp" ? "checked" : ""} /> Cash App $FibKingPep</label>
         <label class="check"><input type="checkbox" name="researchAck" required /> Chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</label>
+        <label class="check"><input type="checkbox" name="termsAck" required /> Accept Terms.</label>
         <button class="btn" type="submit">Place order</button>
       </form>
       <p class="hard">The order does not ship until crypto is finished or Venmo is confirmed.</p>
@@ -2176,7 +2177,7 @@
               terms: !!fd.get("terms"),
               company: fd.get("company"),
               researchField: fd.get("researchField"),
-              researchAck: !!fd.get("researchAck"),
+              researchAck: !!fd.get("researchAck"), termsAck: !!fd.get("termsAck"),
             },
           });
           state.user = out.user;
