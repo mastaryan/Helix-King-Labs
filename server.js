@@ -14,6 +14,7 @@ const { URL } = require("node:url");
 const authx = require("./auth-extra");
 const createOpsCatalog = require("./ops-catalog");
 const createEmailList = require("./email-list");
+const createFulfillment = require("./fulfillment");
 const QRCode = require("qrcode");
 const mailer = require("./mail");
 
@@ -389,6 +390,7 @@ applyInventoryCsv();
 applyPendingTesting();
 let opsCatalogHandle;
 let emailListHandle;
+let fulfillHandle;
 
 function loadOutbox() {
   try {
@@ -467,6 +469,7 @@ let store = loadStore();
 
 opsCatalogHandle = createOpsCatalog({ products, store, saveStore, send, readBody, isOpsUser, findProduct, writeInventoryCsv, writePricingCsv, attachCertificates, audit, PUBLIC, DATA, QRCode, sessionOf });
 emailListHandle = createEmailList({ store, saveStore, send, readBody, validEmail, token, requestOrigin: authx.requestOrigin, loadOutbox, saveOutbox, writeSubscribersCsv, audit, isOpsUser });
+fulfillHandle = createFulfillment({ products, store, saveStore, send, readBody, isOpsUser, findProduct, attachCertificates, writeInventoryCsv, writePricingCsv, audit, PUBLIC, DATA, SHOP_HIDDEN_FAMILIES, affiliateOf, stockStatus, STOCK_THRESHOLD, getPublicOrigin: () => (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", getRequestOrigin: (req) => authx.requestOrigin(req), getEmailListHandle: () => emailListHandle });
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
   const derived = crypto.scryptSync(password, salt, 32).toString("hex");
@@ -1571,10 +1574,13 @@ async function api(req, res, url) {
     const order = (store.orders || []).find((o) => o.id === body.id);
     if (!order) return send(res, 404, { error: "not_found" });
     const next = String(body.status || order.status || "").toLowerCase();
-    const allowed = new Set(["awaiting_settlement", "settled", "shipped", "voided"]);
+    const allowed = new Set(["awaiting_settlement", "settled", "shipped", "delivered", "voided"]);
     if (!allowed.has(next)) return send(res, 400, { error: "status" });
     if (next === "shipped" && order.status !== "settled" && order.status !== "shipped") {
       return send(res, 400, { error: "settle_first" });
+    }
+    if (next === "delivered" && order.status !== "shipped" && order.status !== "delivered") {
+      return send(res, 400, { error: "ship_first" });
     }
     if (next === "voided" && order.status !== "voided") restoreStock(order);
     const prev = order.status;
@@ -1593,16 +1599,19 @@ async function api(req, res, url) {
     if (next === "shipped" && !order.shippedAt) order.shippedAt = new Date().toISOString();
     if (next === "settled" && !order.settledAt) order.settledAt = new Date().toISOString();
     if (next === "voided" && !order.voidedAt) order.voidedAt = new Date().toISOString();
+    if (next === "delivered" && !order.deliveredAt) order.deliveredAt = new Date().toISOString();
     if (next === "settled") order.fulfillment = order.fulfillment === "shipped" ? "shipped" : "ready";
     if (next === "shipped") order.fulfillment = "shipped";
+    if (next === "delivered") order.fulfillment = "delivered";
     if (next === "voided") order.fulfillment = "void";
     order.events = order.events || [];
     order.events.push({ at: new Date().toISOString(), kind: prev === next ? "note" : next, by: user.email });
     audit(user, "order", order.id + " " + next);
     saveStore(store);
-    if (prev !== next && (next === "settled" || next === "shipped" || next === "voided")) queueMail(orderMail(order, next));
+    if (prev !== next && (next === "settled" || next === "shipped" || next === "delivered" || next === "voided")) queueMail(orderMail(order, next));
     return send(res, 200, { ok: true, order });
   }
+
 
   if (method === "GET" && route === "/api/tracking") {
     const q = String(url.searchParams.get("q") || "").trim();
@@ -2165,6 +2174,7 @@ async function api(req, res, url) {
     try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
     const item = findProduct(body.sku);
     if (!item) return send(res, 404, { error: "not_found" });
+    const wasAvailable = Math.max(0, Number(item.stock || 0) - Number(item.reserved || 0));
     if (body.on_hand !== undefined && body.on_hand !== "") {
       const n = Number(body.on_hand);
       if (!Number.isFinite(n) || n < 0) return send(res, 400, { error: "on_hand" });
@@ -2185,7 +2195,13 @@ async function api(req, res, url) {
     fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2));
     audit(user, "inventory", item.sku);
     saveStore(store);
-    return send(res, 200, { ok: true });
+    // Restock: if this SKU went from 0 to available, notify the waitlist.
+    let waitlistNotified = 0;
+    if (wasAvailable <= 0 && item.available > 0 && typeof emailListHandle.checkWaitlist === "function") {
+      const origin = authx.requestOrigin(req);
+      waitlistNotified = emailListHandle.checkWaitlist(item.sku, item.name + " " + (item.size || ""), origin) || 0;
+    }
+    return send(res, 200, { ok: true, waitlistNotified });
   }
 
   if (method === "POST" && route === "/api/ops/disputes") {
@@ -2398,6 +2414,7 @@ async function api(req, res, url) {
 
   if (await opsCatalogHandle(req, res, url, user)) return;
   if (await emailListHandle(req, res, url, user)) return;
+  if (await fulfillHandle(req, res, url, user)) return;
 
   return send(res, 404, { error: "not_found" });
 }
@@ -2844,7 +2861,7 @@ function serveStatic(req, res, urlPath) {
     res.writeHead(403);
     return res.end();
   }
-  const status = knownPaths().has(pathname) || pathname.startsWith("/account") || pathname === "/magic" ? 200 : 404;
+  const status = knownPaths().has(pathname) || pathname.startsWith("/account") || pathname.startsWith("/ops/orders/") || pathname === "/magic" ? 200 : 404;
   const opsDesk = pathname === "/ops";
   const index = path.join(PUBLIC, opsDesk ? "ops.html" : "index.html");
   fs.readFile(index, (e2, buf) => {
@@ -2895,13 +2912,19 @@ function orderMail(order, kind) {
     placed: `Order ${order.id} — Helix King Labs`,
     settled: `Payment received ${order.id} — Helix King Labs`,
     shipped: `Shipped ${order.id} — Helix King Labs`,
+    delivered: `Delivered ${order.id} — thank you — Helix King Labs`,
     voided: `Did you miss something? ${order.id} — Helix King Labs`,
   };
+  const origin = (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com";
+  const deliveredText = (typeof fulfillHandle !== "undefined" && fulfillHandle && fulfillHandle.deliveredText)
+    ? fulfillHandle.deliveredText(order)
+    : `${order.id} is delivered. Thank you for ordering with Helix King Labs.`;
   const text = {
     placed: `Order ${order.id} is recorded.\nTotal ${total}\n\n${lines}\n\n${payText}\n\nNothing ships until payment is confirmed. Research use only.`,
     settled: `Payment received for ${order.id}. The order is being prepared. Nothing has shipped yet.`,
     shipped: `${order.id} is booked${order.carrier ? " with " + order.carrier : ""}. Tracking ${order.tracking || "posts on the next note"}.`,
-    voided: `Did you miss something? Your order ${order.id} was released before payment was confirmed, so the items are back on the shelf.\n\nRestore your cart in one tap:\n${(PUBLIC_ORIGIN || "https://helixkinglabs.com") + "/account/receipt/" + order.id}\n\nNothing ships until payment is confirmed. Research use only.`,
+    delivered: deliveredText,
+    voided: `Did you miss something? Your order ${order.id} was released before payment was confirmed, so the items are back on the shelf.\n\nRestore your cart in one tap:\n${origin + "/account/receipt/" + order.id}\n\nNothing ships until payment is confirmed. Research use only.`,
   };
   return {
     to: order.email,
