@@ -126,11 +126,12 @@
     try {
       const prods = await api("/api/ops/wholesale/products");
       const items = prods.items || prods.products || [];
-      document.getElementById("wsPricing").innerHTML = `<table class="tbl"><thead><tr><th>SKU</th><th>Name</th><th>Retail</th><th>Wholesale $</th><th>Group min</th><th></th></tr></thead><tbody>
+      document.getElementById("wsPricing").innerHTML = `<table class="tbl"><thead><tr><th>SKU</th><th>Name</th><th>Retail</th><th>Wholesale $</th><th>Group min</th><th>Show on wholesale</th><th></th></tr></thead><tbody>
         ${items.map((p) => `<tr>
           <td>${esc(p.sku)}</td><td>${esc(p.name)}</td><td>${money(p.price)}</td>
           <td><input type="number" min="0" step="0.01" placeholder="${(p.price * 0.6).toFixed(2)}" value="${p.wholesalePrice != null ? p.wholesalePrice : ""}" data-wp="${esc(p.sku)}" style="width:90px" /></td>
           <td><input type="number" min="1" step="1" placeholder="${cfg.groupMinDefault || 5}" value="${p.wholesaleGroupMin != null ? p.wholesaleGroupMin : ""}" data-wm="${esc(p.sku)}" style="width:70px" /></td>
+          <td><input type="checkbox" data-wv="${esc(p.sku)}" ${p.wholesaleVisible !== false ? "checked" : ""} /></td>
           <td><button class="btn" data-wsave="${esc(p.sku)}">Save</button></td>
         </tr>`).join("")}
       </tbody></table>`;
@@ -139,11 +140,13 @@
           const sku = b.dataset.wsave;
           const wp = document.querySelector(`[data-wp="${CSS.escape(sku)}"]`).value;
           const wm = document.querySelector(`[data-wm="${CSS.escape(sku)}"]`).value;
+          const wv = document.querySelector(`[data-wv="${CSS.escape(sku)}"]`).checked;
           try {
             await api("/api/ops/wholesale/pricing", { method: "POST", body: {
               sku,
               wholesalePrice: wp === "" ? null : Number(wp),
               wholesaleGroupMin: wm === "" ? null : Math.floor(Number(wm)),
+              wholesaleVisible: wv,
             }});
             toast("Saved.");
           } catch (err) { toast("Failed."); }
