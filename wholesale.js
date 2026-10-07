@@ -7,12 +7,29 @@ function createWholesale(deps) {
   }
   function getConfig() {
     if (!store.wholesaleConfig) {
-      store.wholesaleConfig = { windowStart: null, windowEnd: null, orderMinimum: 500, announce: "" };
+      store.wholesaleConfig = { windowStart: null, windowEnd: null, orderMinimum: 0, groupMinDefault: 5, groupTotalTarget: null, announce: "" };
     }
-    return store.wholesaleConfig;
+    const c = store.wholesaleConfig;
+    if (c.groupMinDefault == null) c.groupMinDefault = 5;
+    return c;
   }
   function isWholesale(user) {
     return !!(user && (user.wholesale === true || user.role === "wholesale"));
+  }
+
+  // Total committed qty per SKU across all wholesale orders in the current window
+  function groupCommitments() {
+    const cfg = getConfig();
+    const totals = {};
+    for (const o of (store.orders || [])) {
+      if (!o.wholesale) continue;
+      if (cfg.windowStart && o.at < cfg.windowStart) continue;
+      if (cfg.windowEnd && o.at > cfg.windowEnd) continue;
+      for (const l of (o.lines || [])) {
+        totals[l.sku] = (totals[l.sku] || 0) + (l.qty || 0);
+      }
+    }
+    return totals;
   }
 
   async function handle(req, res, url, user) {
@@ -68,13 +85,17 @@ function createWholesale(deps) {
         stock: p.stock || 0,
         // Wholesale price: use wholesalePrice if set, else 60% of retail
         price: p.wholesalePrice != null ? p.wholesalePrice : Math.round((p.price || 0) * 0.6 * 100) / 100,
-        minQty: p.wholesaleMin != null ? p.wholesaleMin : 10,
+        // Group minimum: how many the GROUP must commit before this SKU is ordered
+        groupMin: p.wholesaleGroupMin != null ? p.wholesaleGroupMin : null,
         shopVisible: p.shopVisible !== false,
       }));
+      // Group commitments so far (this window)
+      const committed = groupCommitments();
       return send(res, 200, {
         ok: true,
-        window: { start: cfg.windowStart, end: cfg.windowEnd, orderMinimum: cfg.orderMinimum, announce: cfg.announce },
+        window: { start: cfg.windowStart, end: cfg.windowEnd, orderMinimum: cfg.orderMinimum, groupMinDefault: cfg.groupMinDefault, groupTotalTarget: cfg.groupTotalTarget, announce: cfg.announce },
         items,
+        committed,
       });
     }
 
@@ -89,7 +110,8 @@ function createWholesale(deps) {
       const body = await readBody(req).catch(() => ({}));
       const lines = Array.isArray(body.lines) ? body.lines : [];
       if (!lines.length) return send(res, 400, { error: "empty_order" });
-      // Validate minimums
+      // No per-person minimums — this is a group commit model.
+      // Each line just needs qty >= 1. Group minimums are met collectively.
       const items = products.items || [];
       let total = 0;
       const validated = [];
@@ -97,18 +119,17 @@ function createWholesale(deps) {
         const p = items.find((x) => x.sku === l.sku);
         if (!p) return send(res, 400, { error: "bad_sku", sku: l.sku });
         const qty = Math.max(0, Math.floor(Number(l.qty) || 0));
-        const minQty = p.wholesaleMin != null ? p.wholesaleMin : 10;
-        if (qty > 0 && qty < minQty) return send(res, 400, { error: "below_minimum", sku: l.sku, min: minQty });
         if (qty <= 0) continue;
         const price = p.wholesalePrice != null ? p.wholesalePrice : Math.round((p.price || 0) * 0.6 * 100) / 100;
         total += price * qty;
         validated.push({ sku: p.sku, name: p.name, size: p.size, qty, price, line: Math.round(price * qty * 100) / 100 });
       }
       if (!validated.length) return send(res, 400, { error: "empty_order" });
-      if (total < (cfg.orderMinimum || 0)) {
+      // Optional per-person order minimum (0 = disabled)
+      if ((cfg.orderMinimum || 0) > 0 && total < cfg.orderMinimum) {
         return send(res, 400, { error: "below_order_minimum", minimum: cfg.orderMinimum, total: Math.round(total * 100) / 100 });
       }
-      // Create order (reuse store.orders)
+      // Create commitment (group buy style)
       const order = {
         id: "WS-" + Date.now().toString(36).toUpperCase(),
         userId: user.id,
@@ -116,7 +137,7 @@ function createWholesale(deps) {
         wholesale: true,
         lines: validated,
         total: Math.round(total * 100) / 100,
-        status: "awaiting_settlement",
+        status: "committed",
         paymentMethod: body.paymentMethod || "crypto",
         at: now,
       };
@@ -175,6 +196,8 @@ function createWholesale(deps) {
       if ("windowStart" in body) cfg.windowStart = body.windowStart || null;
       if ("windowEnd" in body) cfg.windowEnd = body.windowEnd || null;
       if ("orderMinimum" in body) cfg.orderMinimum = Math.max(0, Number(body.orderMinimum) || 0);
+      if ("groupMinDefault" in body) cfg.groupMinDefault = Math.max(1, Math.floor(Number(body.groupMinDefault) || 5));
+      if ("groupTotalTarget" in body) cfg.groupTotalTarget = body.groupTotalTarget === null || body.groupTotalTarget === "" ? null : Math.max(1, Math.floor(Number(body.groupTotalTarget) || 0)) || null;
       if ("announce" in body) cfg.announce = String(body.announce || "").slice(0, 500);
       saveStore(store);
       return send(res, 200, { ok: true, config: cfg });
@@ -193,7 +216,7 @@ function createWholesale(deps) {
       const p = (products.items || []).find((x) => x.sku === body.sku);
       if (!p) return send(res, 404, { error: "not_found" });
       if ("wholesalePrice" in body) p.wholesalePrice = body.wholesalePrice === null ? null : Math.max(0, Number(body.wholesalePrice) || 0);
-      if ("wholesaleMin" in body) p.wholesaleMin = body.wholesaleMin === null ? null : Math.max(1, Math.floor(Number(body.wholesaleMin) || 10));
+      if ("wholesaleGroupMin" in body) p.wholesaleGroupMin = body.wholesaleGroupMin === null ? null : Math.max(1, Math.floor(Number(body.wholesaleGroupMin) || 5));
       if (deps.saveProducts) deps.saveProducts();
       return send(res, 200, { ok: true });
     }
