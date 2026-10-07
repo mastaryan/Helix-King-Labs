@@ -171,6 +171,12 @@
             <p>If you write from the EEA or UK, the bases we rely on are contract (account and order), legitimate interests (security), and consent (analytics cookies and the optional email list).</p>`,
         },
         {
+          id: "list",
+          title: "Email list",
+          body: `<p>The promotional list is opt-in only. If you check the email-list box on the age gate, footer, home page, or popup, we store your email, the page it came from, the time, and the consent record. The list is used for lot alerts, restocks, group buys, and library notices. Order mail (receipts, tracking, sign-in links) is separate and is not the list.</p>
+            <p>Every list email carries a one-click unsubscribe link. Clicking it removes your address from the list immediately and turns off the marketing flag on your account if you have one. You can also write ${mail()} and ask to be removed. We do not sell the email list.</p>`,
+        },
+        {
           id: "share",
           title: "Sharing",
           body: `<p>We share information with processors that run infrastructure we select: hosting, email delivery, Google (Sign-In and Analytics), and NOWPayments when you choose crypto. We do not sell personal information for money.</p>
