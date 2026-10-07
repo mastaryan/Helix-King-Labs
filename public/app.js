@@ -1826,8 +1826,22 @@
             if (cust) {
               const rows = d.customers || [];
               cust.innerHTML = `<h2>Accounts</h2>` + (rows.length
-                ? `<table class="table"><thead><tr><th>Email</th><th>Company</th><th>Field</th><th>Orders</th></tr></thead><tbody>${rows.map((c) => `<tr><td>${c.email}</td><td>${c.company || "—"}</td><td>${c.researchField || "—"}</td><td>${c.orders}</td></tr>`).join("")}</tbody></table>`
+                ? `<table class="table"><thead><tr><th>Email</th><th>Company</th><th>Field</th><th>Orders</th><th></th></tr></thead><tbody>${rows.map((c) => `<tr data-uid="${c.id || ""}"><td>${c.email}</td><td>${c.company || "—"}</td><td>${c.researchField || "—"}</td><td>${c.orders}</td><td><button type="button" class="btn ghost op-user-del">Delete</button></td></tr>`).join("")}</tbody></table>`
                 : `<p class="lede">No accounts yet.</p>`);
+              cust.querySelectorAll(".op-user-del").forEach((btn) => {
+                btn.onclick = async () => {
+                  const row = btn.closest("tr");
+                  const email = row ? row.querySelector("td").textContent : "this account";
+                  if (!window.confirm(`Delete ${email}? Their sessions end and any affiliate link is closed. Accounts with orders cannot be deleted.`)) return;
+                  try {
+                    await api("/api/ops/users/delete", { method: "POST", body: { id: row.getAttribute("data-uid") } });
+                    toast("Account deleted.");
+                    render();
+                  } catch (err) {
+                    toast(err.message === "has_orders" ? "That account has orders — void them first." : err.message === "cannot_delete_ops" ? "Ops accounts cannot be deleted." : "Delete failed.");
+                  }
+                };
+              });
             }
           }).catch(() => {});
           api("/api/ops/incoming-coas").then((d) => {
@@ -1844,10 +1858,15 @@
             const box = $("#subList");
             if (!box) return;
             const rows = d.captures || [];
+            const ob = d.outbox || [];
             box.innerHTML = `<h2>Email list</h2><p class="lede">${rows.length} addresses. Written to data/subscribers.csv. Outbox queued in data/outbox.json.</p>` +
               (rows.length
                 ? `<table class="table"><thead><tr><th>Email</th><th>Source</th><th>When</th></tr></thead><tbody>${rows.map((c)=>`<tr><td>${c.email}</td><td>${c.source||""}</td><td>${(c.created||"").slice(0,19)}</td></tr>`).join("")}</tbody></table>`
-                : `<p class="muted">No subscribers yet.</p>`);
+                : `<p class="muted">No subscribers yet.</p>`) +
+              `<h2>Outbox</h2><p class="lede">Last ${ob.length} emails. Failed ones retry on the 5-minute drain, 3 attempts max.</p>` +
+              (ob.length
+                ? `<div style="overflow:auto"><table class="table"><thead><tr><th>To</th><th>Subject</th><th>Status</th><th>When</th><th>Error</th></tr></thead><tbody>${ob.slice().reverse().map((m)=>`<tr><td>${m.to||""}</td><td>${(m.subject||"").slice(0,48)}</td><td>${m.status||"queued"}</td><td>${((m.sentAt||m.created||"")+"").slice(0,19)}</td><td>${m.error||"—"}</td></tr>`).join("")}</tbody></table></div>`
+                : `<p class="muted">Outbox empty.</p>`);
           }).catch(()=>{});
         }
       } else if (p === "/cart") {
