@@ -371,7 +371,7 @@
     return `<section class="page wrap">
       <div class="kicker">Catalog</div>
       <h1>${label ? label.name : "Full catalog"}</h1>
-      <p class="lede">Documented research peptides with lot and COA information.</p>
+      <p class="lede">Research peptides with lot and COA info.</p>
       <div class="badges" style="margin-bottom:22px">
         <a class="badge" href="/shop" data-link>All</a>
         ${cats
@@ -1491,6 +1491,7 @@
         app.innerHTML = home();
       } else if (p === "/shop") {
         app.innerHTML = shop();
+        window.HKL_SUGGEST?.mountShop();
       } else if (p.startsWith("/product/")) {
         const slug = p.split("/")[2];
         const skuQ = new URLSearchParams(location.search).get("sku");
