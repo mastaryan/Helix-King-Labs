@@ -947,9 +947,12 @@ function quoteCart(items, user, opts) {
   };
 }
 
+const SCI_NAMES={BB10:["BPC-157 + TB-500 Blend","Wolverine"],BB20:["BPC-157 + TB-500 Blend","Wolverine"],GLOW:["GHK-Cu + TB-500 + BPC-157 Blend","GLOW"],KLOW:["GHK-Cu + TB-500 + BPC-157 + KPV Blend","KLOW"]};
 function sanitizeProduct(p, authed) {
   const out = { ...p };
   delete out.cost;
+  const sci = SCI_NAMES[p.sku];
+  if (sci) { out.name = sci[0]; out.aka = sci[1]; out.image = String(p.image || "").replace(/\?v=\d+/, "?v=70"); }
   const pending = p.releaseState === "pending_testing";
   if (pending) {
     out.price = null;
@@ -1460,6 +1463,8 @@ async function api(req, res, url) {
     const researchField = String(body.researchField || user.researchField || "");
     if (!RESEARCH_FIELDS.includes(researchField)) return send(res, 400, { error: "research_field" });
     if (!body.researchAck) return send(res, 400, { error: "research_ack" });
+    if (!company) return send(res, 400, { error: "company_required" });
+    if (!body.termsAck) return send(res, 400, { error: "terms_ack" });
     const paymentMethod = ["venmo", "cashapp", "crypto"].includes(body.paymentMethod) ? body.paymentMethod : "crypto";
     user.company = company;
     user.researchField = researchField;
