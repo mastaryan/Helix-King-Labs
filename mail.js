@@ -17,7 +17,7 @@ function configured() {
 }
 
 // Resend HTTPS API — works where outbound SMTP is blocked.
-async function sendViaResend({ to, subject, text }) {
+async function sendViaResend({ to, subject, text, html }) {
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -29,6 +29,7 @@ async function sendViaResend({ to, subject, text }) {
       to: [to],
       subject,
       text,
+      ...(html ? { html } : {}),
     }),
   });
   if (!r.ok) {
@@ -53,15 +54,27 @@ function transport() {
   });
 }
 
-async function sendMail({ to, subject, text }) {
-  if (resendConfigured()) return sendViaResend({ to, subject, text });
+async function sendMail({ to, subject, text, html }) {
+  if (resendConfigured()) return sendViaResend({ to, subject, text, html });
   const tx = transport();
   if (!tx) {
     const err = new Error("smtp_unconfigured");
     err.code = "smtp_unconfigured";
     throw err;
   }
-  await tx.sendMail({ from: FROM, to, subject, text });
+  await tx.sendMail({ from: FROM, to, subject, text, ...(html ? { html } : {}) });
 }
 
-module.exports = { sendMail, configured, resendConfigured, smtpConfigured };
+
+function orderHtml(order) {
+  const q = order.quote || {};
+  const total = "$" + Number(q.total || 0).toFixed(2);
+  const origin = "https://helixkinglabs.com";
+  const lines = (q.lines || []).map((l) => {
+    const img = l.image ? origin + l.image : "";
+    return "<tr><td>" + (img ? '<img src="' + img + '" width="48" style="vertical-align:middle"/>' : "") + "</td><td>" + (l.name || "") + " " + (l.size || "") + " × " + l.qty + "</td></tr>";
+  }).join("");
+  return '<div style="font-family:Arial,sans-serif;max-width:600px"><h2>Helix King Labs</h2><p>Order ' + order.id + ' · Total <strong>' + total + '</strong></p><table cellpadding="6">' + lines + '</table><p style="color:#888;font-size:12px">Research use only.</p></div>';
+}
+
+module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml };
