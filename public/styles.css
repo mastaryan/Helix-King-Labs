@@ -702,6 +702,7 @@ input:focus, select:focus { border-color: var(--silver-2); }
 .st-awaiting_settlement { color: #c4a15c; border-color: #c4a15c; }
 .st-settled { color: var(--silver); border-color: var(--silver); }
 .st-shipped { color: #8dcea0; border-color: #8dcea0; }
+.st-delivered { color: #8dcea0; border-color: #8dcea0; background: rgba(141, 206, 160, 0.12); }
 .st-voided { color: var(--muted); }
 .order-track { margin-top: 8px; font-size: 14px; }
 

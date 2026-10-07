@@ -2,7 +2,7 @@
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 function orderStatusLabel(status) {
-  return { awaiting_settlement: "Awaiting payment", settled: "Paid", shipped: "Shipped", voided: "Cancelled" }[status] || status || "";
+  return { awaiting_settlement: "Awaiting payment", settled: "Paid", shipped: "Shipped", delivered: "Delivered", voided: "Cancelled" }[status] || status || "";
 }
 
 function trackUrl(carrier, num) {
@@ -64,8 +64,8 @@ function receiptView(o) {
   const ship = o.ship || {};
   const unpaid = st === "awaiting_settlement";
   const voided = st === "voided";
-  const stepDone = (n) => (n === 0 ? true : n === 1 ? st === "settled" || st === "shipped" : st === "shipped");
-  const steps = ["Placed", "Paid", "Shipped"];
+  const steps = ["Placed", "Paid", "Shipped", "Delivered"];
+  const stepDone = (n) => (n === 0 ? true : n === 1 ? ["settled", "shipped", "delivered"].includes(st) : n === 2 ? ["shipped", "delivered"].includes(st) : st === "delivered");
   const timeline = voided
     ? `<div class="paybox"><h3>Did you miss something?</h3>
       <p>This order was released before payment was confirmed, so the items went back on the shelf. Nothing was charged beyond what you sent.</p>
@@ -95,7 +95,7 @@ function receiptView(o) {
     ? `<div class="paybox"><h3>Shipped${o.carrier ? " · " + esc(o.carrier) : ""}</h3>
       <p class="codeaddr">${tUrl ? `<a href="${tUrl}" target="_blank" rel="noopener">${esc(o.tracking || "")}</a>` : esc(o.tracking || "")} <button class="btn ghost" type="button" id="copyTrack">Copy</button></p></div>`
     : "";
-  const eventLabel = { placed: "Order placed", settled: "Payment confirmed", shipped: "Shipped", voided: "Order cancelled", address: "Shipping address updated", note: "Note" };
+  const eventLabel = { placed: "Order placed", settled: "Payment confirmed", shipped: "Shipped", delivered: "Delivered", voided: "Order cancelled", address: "Shipping address updated", note: "Note" };
   const feed = (o.events || []).map((e) => `<p class="muted">${orderWhen(e.at)} — ${eventLabel[e.kind] || e.kind}</p>`).join("");
   const lines = (q.lines || []).map((l) => `<tr><td>${esc(l.name)} ${esc(l.size)}</td><td>× ${l.qty}</td><td>${HKL.money(l.line)}</td></tr>`).join("");
   return `<section class="page wrap">
@@ -125,14 +125,79 @@ function receiptView(o) {
       </div>
     </div>
     ${feed ? `<h3>Updates</h3>${feed}<p class="muted">Email updates are sent as each step completes.</p>` : ""}
+    ${!unpaid && !voided ? `<div id="suggestBox" style="margin-top:24px"></div>` : ""}
+    ${!unpaid && !voided ? `<p style="margin-top:20px"><button class="btn" type="button" id="reorderBtn">Reorder these items</button> <span class="muted" id="reorderMsg"></span></p>` : ""}
     ${unpaid ? `<p style="margin-top:20px"><button class="btn ghost" type="button" id="cancelOrder">Cancel this order</button></p>` : ""}
     <p style="margin-top:16px"><a href="/account" data-link>Back to account</a></p>
   </section>`;
 }
 
+function receiptSuggestions(o) {
+  // Client-side suggestions: in-stock families not in this order, same category first.
+  try {
+    var HKL = window.HKL || {};
+    var catalog = (HKL.state && HKL.state.catalog) || {};
+    var fams = catalog.families || [];
+    var items = catalog.items || [];
+    var orderedFams = {};
+    (o.quote.lines || []).forEach(function (l) {
+      var it = items.find(function (x) { return x.id === l.id || x.sku === l.sku; });
+      if (it) orderedFams[it.family || it.id] = true;
+    });
+    var out = [];
+    fams.forEach(function (f) {
+      if (orderedFams[f.id] || f.shopVisible === false) return;
+      var variants = (f.variantIds || []).map(function (vid) { return items.find(function (x) { return x.id === vid; }); })
+        .filter(function (p) { return p && (p.available || 0) > 0; });
+      if (!variants.length) return;
+      var low = Math.min.apply(null, variants.map(function (p) { return Number(p.price || 0); }).filter(function (x) { return x > 0; }));
+      out.push({ name: f.name, slug: f.slug || f.id, price: low === Infinity ? null : low, cat: f.category });
+    });
+    var orderedCats = {};
+    Object.keys(orderedFams).forEach(function (fid) {
+      var f = fams.find(function (x) { return x.id === fid; });
+      if (f) orderedCats[f.category] = true;
+    });
+    out.sort(function (a, b) { return ((orderedCats[b.cat] ? 1 : 0) - (orderedCats[a.cat] ? 1 : 0)) || ((a.price || 9999) - (b.price || 9999)); });
+    return out.slice(0, 3);
+  } catch (e) { return []; }
+}
+
 function bindReceipt(o) {
   const id = o.id;
   const reload = () => location.reload();
+  const HKL = window.HKL || {};
+  // Suggestions
+  const sbox = document.getElementById("suggestBox");
+  if (sbox) {
+    const sug = receiptSuggestions(o);
+    if (sug.length) {
+      sbox.innerHTML = `<h3>Pairs well with your order</h3><div class="welcome-grid">` + sug.map(function (s) {
+        return `<a class="welcome-card" href="/product/${esc(s.slug)}" data-link><div class="welcome-card-body"><h3>${esc(s.name)}</h3><p class="welcome-price">${s.price ? "from $" + s.price : "See price"}</p></div></a>`;
+      }).join("") + `</div>`;
+    }
+  }
+  // Reorder
+  const rbo = document.getElementById("reorderBtn");
+  if (rbo) rbo.onclick = async () => {
+    const msg = document.getElementById("reorderMsg");
+    try {
+      const out = await HKL.api("/api/orders/reorder", { method: "POST", body: { id } });
+      let added = 0, skipped = 0;
+      for (const l of out.lines || []) {
+        if (!l.inStock) { skipped++; continue; }
+        const line = HKL.state.cart.find((c) => c.id === l.id && c.kind !== "kit");
+        if (line) line.qty = Math.min(9, line.qty + l.qty);
+        else HKL.state.cart.push({ id: l.id, qty: Math.min(9, l.qty), kind: "single" });
+        added++;
+      }
+      if (HKL.saveCart) HKL.saveCart(); else try { localStorage.setItem("hkl_cart", JSON.stringify(HKL.state.cart)); } catch (e) {}
+      if (msg) msg.textContent = added ? `Added ${added} item(s) to cart.${skipped ? " " + skipped + " out of stock." : ""}` : "Nothing available to reorder right now.";
+      if (added && HKL.paintCartCount) HKL.paintCartCount();
+    } catch (err) {
+      if (msg) msg.textContent = "Reorder failed: " + (err.message || "error");
+    }
+  };
   const ca = document.getElementById("copyAddr");
   if (ca) ca.onclick = () => copyText((o.payment || {}).payAddress || "", ca);
   const ct = document.getElementById("copyTrack");

@@ -55,7 +55,7 @@ function createEmailList(deps) {
     isOpsUser,
   } = deps;
 
-  return async function emailListHandle(req, res, url, user) {
+  async function emailListHandle(req, res, url, user) {
     const method = req.method;
     const route = url.pathname;
 
@@ -179,6 +179,77 @@ function createEmailList(deps) {
 
     return false;
   };
+
+  // Back-in-stock waitlist: notify when a SKU comes back.
+  async function waitlistHandle(req, res, url, user) {
+    const method = req.method;
+    const route = url.pathname;
+    const { store, saveStore, send, readBody, validEmail, loadOutbox, saveOutbox } = waitlistHandle.deps;
+
+    if (method === "POST" && route === "/api/waitlist") {
+      let body;
+      try {
+        body = await readBody(req);
+      } catch {
+        return send(res, 400, { error: "bad_request" });
+      }
+      const email = String(body.email || "").toLowerCase().trim();
+      const sku = String(body.sku || "").trim().slice(0, 40);
+      if (!validEmail(email)) return send(res, 400, { error: "email" });
+      if (!sku) return send(res, 400, { error: "sku" });
+      if (!body.consent) return send(res, 400, { error: "consent_required" });
+      store.waitlist = store.waitlist || [];
+      const exists = store.waitlist.some((w) => w.email === email && w.sku === sku);
+      if (!exists) {
+        store.waitlist.push({ email, sku, created: new Date().toISOString(), consent: true });
+        saveStore(store);
+      }
+      return send(res, 200, { ok: true, waiting: true });
+    }
+    return false;
+  }
+
+  // Called on intake: if a SKU went from 0 to in-stock, email everyone waiting.
+  function checkWaitlist(sku, productName, origin) {
+    const { store, saveStore, loadOutbox, saveOutbox } = waitlistHandle.deps;
+    store.waitlist = store.waitlist || [];
+    const waiting = store.waitlist.filter((w) => w.sku === sku);
+    if (!waiting.length) return 0;
+    const box = loadOutbox();
+    for (const w of waiting) {
+      box.messages.push({
+        to: w.email,
+        subject: `${productName} is back in stock — Helix King Labs`,
+        text: [
+          "Helix King Labs",
+          "",
+          `${productName} is back in stock.`,
+          "",
+          "Shop: " + (origin || "https://helixkinglabs.com") + "/shop",
+          "",
+          "You asked to be notified. Research use only.",
+        ].join("\n"),
+        source: "waitlist",
+        created: new Date().toISOString(),
+        status: "queued",
+      });
+    }
+    saveOutbox(box);
+    store.waitlist = store.waitlist.filter((w) => w.sku !== sku);
+    saveStore(store);
+    return waiting.length;
+  }
+
+  waitlistHandle.deps = deps;
+
+  // Route both handlers
+  async function combined(req, res, url, user) {
+    if (await emailListHandle(req, res, url, user)) return true;
+    if (await waitlistHandle(req, res, url, user)) return true;
+    return false;
+  }
+  combined.checkWaitlist = checkWaitlist;
+  return combined;
 }
 
 module.exports = createEmailList;
