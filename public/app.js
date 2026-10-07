@@ -81,7 +81,7 @@
     setTimeout(() => el.remove(), 3200);
   }
 
-  window.HKL = Object.assign(window.HKL || {}, { money, api, restoreCart, state });
+  window.HKL = Object.assign(window.HKL || {}, { money, api, restoreCart, state, toast });
   async function api(path, opts = {}) {
     const res = await fetch(path, {
       credentials: "same-origin",
@@ -358,6 +358,7 @@
         </div>
         <form id="homeCapture">
           <input type="email" name="email" placeholder="Email" required />
+          <label class="check"><input type="checkbox" name="consent" /> Email me lot alerts, restocks, and group buys.</label>
           <button class="btn" type="submit">Get updates</button>
         </form>
       </div>
@@ -1096,6 +1097,7 @@
           <label class="check"><input type="checkbox" name="age" required /> I am 21 or older.</label>
           <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms. Research materials stay in the lab. This is not a clinic or a pharmacy.</label>
           <input type="email" name="email" placeholder="Email (optional)" />
+          <label class="check"><input type="checkbox" name="consent" /> Email me lot alerts, restocks, and group buys. Optional — uncheck to skip the list.</label>
           <div style="margin-top:16px;display:grid;gap:8px">
             <button class="btn" type="submit">Enter Helix King Labs</button>
             ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="gateGoogle">Continue with Google</button>` : ""}
@@ -1141,7 +1143,8 @@
       if (!e.target.closest("#popCapture")) return;
       e.preventDefault();
       try {
-        await capture(new FormData(e.target).get("email"), "popup");
+        const edf = new FormData(e.target);
+          await capture(edf.get("email"), "popup", edf.get("consent"));
       } catch {
         toast("Use a valid email.");
       }
@@ -1173,6 +1176,7 @@
         <p>Same offer as the footer. Documentation access — not a homepage sale.</p>
         <form id="popCapture">
           <input type="email" name="email" placeholder="Email" required />
+          <label class="check"><input type="checkbox" name="consent" /> Email me lot alerts, restocks, and group buys.</label>
           <button class="btn" type="submit">Send access</button>
         </form>
         <button class="dismiss" id="popDismiss" type="button">Not now</button>
@@ -1180,11 +1184,11 @@
     }, 8000);
   }
 
-  async function capture(email, source) {
-    await api("/api/capture", { method: "POST", body: { email, source } });
+  async function capture(email, source, consent) {
+    const out = await api("/api/capture", { method: "POST", body: { email, source, consent: !!consent } });
     state.captureOk = true;
     localStorage.setItem("hkl_capture", "1");
-    toast("You are on the list. Opening the library.");
+    toast(out && out.subscribed === false ? "Entered without subscribing." : "You are on the list. Opening the library.");
     dismissPopup();
     go("/library");
   }
@@ -1575,6 +1579,8 @@
         }
       } else if (p === "/tools/calculator") {
         app.innerHTML = calcTool();
+      } else if (p === "/unsubscribe") {
+        if (window.HKL_EMAIL) window.HKL_EMAIL.unsubscribePage();
       } else if (p === "/terms") {
         app.innerHTML = policy("terms");
       } else if (p === "/shipping") {
@@ -1860,16 +1866,7 @@
           api("/api/ops/subscribers").then((d) => {
             const box = $("#subList");
             if (!box) return;
-            const rows = d.captures || [];
-            const ob = d.outbox || [];
-            box.innerHTML = `<h2>Email list</h2><p class="lede">${rows.length} addresses. Written to data/subscribers.csv. Outbox queued in data/outbox.json.</p>` +
-              (rows.length
-                ? `<table class="table"><thead><tr><th>Email</th><th>Source</th><th>When</th></tr></thead><tbody>${rows.map((c)=>`<tr><td>${c.email}</td><td>${c.source||""}</td><td>${(c.created||"").slice(0,19)}</td></tr>`).join("")}</tbody></table>`
-                : `<p class="muted">No subscribers yet.</p>`) +
-              `<h2>Outbox</h2><p class="lede">Last ${ob.length} emails. Failed ones retry on the 5-minute drain, 3 attempts max.</p>` +
-              (ob.length
-                ? `<div style="overflow:auto"><table class="table"><thead><tr><th>To</th><th>Subject</th><th>Status</th><th>When</th><th>Error</th></tr></thead><tbody>${ob.slice().reverse().map((m)=>`<tr><td>${m.to||""}</td><td>${(m.subject||"").slice(0,48)}</td><td>${m.status||"queued"}</td><td>${((m.sentAt||m.created||"")+"").slice(0,19)}</td><td>${m.error||"—"}</td></tr>`).join("")}</tbody></table></div>`
-                : `<p class="muted">Outbox empty.</p>`);
+            if (window.HKL_EMAIL) window.HKL_EMAIL.render(box, d);
           }).catch(()=>{});
         }
       } else if (p === "/cart") {
@@ -1990,7 +1987,8 @@
       footer.addEventListener("submit", async (e) => {
         e.preventDefault();
         try {
-          await capture(new FormData(footer).get("email"), "footer");
+          const fdf = new FormData(footer);
+          await capture(fdf.get("email"), "footer", fdf.get("consent"));
           footer.reset();
         } catch {
           toast("Use a valid email.");
@@ -2003,7 +2001,8 @@
       homeCap.addEventListener("submit", async (e) => {
         e.preventDefault();
         try {
-          await capture(new FormData(homeCap).get("email"), "home");
+          const hdf = new FormData(homeCap);
+          await capture(hdf.get("email"), "home", hdf.get("consent"));
           homeCap.reset();
         } catch {
           toast("Use a valid email.");
@@ -2034,7 +2033,7 @@
         const email = fd.get("email");
         if (email) {
           try {
-            await capture(email, "gate");
+            await capture(email, "gate", fd.get("consent"));
           } catch {}
         }
         state.gateOk = true;
@@ -2098,7 +2097,8 @@
       pop.addEventListener("submit", async (e) => {
         e.preventDefault();
         try {
-          await capture(new FormData(pop).get("email"), "popup");
+          const pdf = new FormData(pop);
+          await capture(pdf.get("email"), "popup", pdf.get("consent"));
         } catch {
           toast("Use a valid email.");
         }
