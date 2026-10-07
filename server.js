@@ -1697,7 +1697,13 @@ async function api(req, res, url) {
 
   if (method === "GET" && route === "/api/affiliate") {
     if (!user) return send(res, 401, { error: "account_required" });
-    const aff = affiliateOf(user.id);
+    let aff = affiliateOf(user.id);
+    if (!aff && user.email) {
+      const manual = (store.affiliates || []).find(
+        (a) => !a.userId && String(a.email || "").toLowerCase() === String(user.email).toLowerCase()
+      );
+      if (manual) { manual.userId = user.id; aff = manual; saveStore(store); }
+    }
     if (!aff || aff.status !== "live") {
       return send(res, 200, {
         locked: true,
@@ -1716,6 +1722,7 @@ async function api(req, res, url) {
     }));
     const earned = rows.reduce((a, r) => a + Number(r.payout || 0), 0);
     const paid = Number(aff.paid || 0);
+    const pendingRequest = (store.payoutRequests || []).find((r) => r.code === aff.code && r.status === "pending") || null;
     return send(res, 200, {
       locked: false,
       affiliate: aff,
@@ -1725,7 +1732,33 @@ async function api(req, res, url) {
       paid,
       available: Math.round((earned - paid) * 100) / 100,
       payoutFloor: 50,
+      pendingRequest,
     });
+  }
+
+  if (method === "POST" && route === "/api/affiliate/payout-request") {
+    if (!user) return send(res, 401, { error: "account_required" });
+    const aff = affiliateOf(user.id);
+    if (!aff || aff.status !== "live") return send(res, 403, { error: "not_affiliate" });
+    const earned = referredOrders(aff.code).reduce((sum, o) => sum + Number(o.affiliatePayout || 0), 0);
+    const pending = (store.payoutRequests || [])
+      .filter((r) => r.code === aff.code && r.status === "pending")
+      .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const available = Math.round((earned - Number(aff.paid || 0) - pending) * 100) / 100;
+    if (available < 50) return send(res, 400, { error: "floor" });
+    store.payoutRequests = store.payoutRequests || [];
+    const req = {
+      id: "PR" + Date.now().toString(36).toUpperCase(),
+      code: aff.code,
+      email: aff.email || user.email || "",
+      amount: available,
+      requested: new Date().toISOString(),
+      status: "pending",
+    };
+    store.payoutRequests.push(req);
+    audit(user, "affiliate", aff.code + " requested payout $" + available.toFixed(2));
+    saveStore(store);
+    return send(res, 200, { ok: true, request: req });
   }
 
   if (method === "POST" && route === "/api/affiliate/apply") {
@@ -1740,6 +1773,12 @@ async function api(req, res, url) {
     if (!body.agree) return send(res, 400, { error: "agree" });
     store.affiliates = store.affiliates || [];
     let aff = affiliateOf(user.id);
+    if (!aff && user.email) {
+      aff = store.affiliates.find(
+        (a) => !a.userId && String(a.email || "").toLowerCase() === String(user.email).toLowerCase()
+      ) || null;
+      if (aff) { aff.userId = user.id; aff.status = "live"; }
+    }
     if (!aff) {
       const base = String(user.name || user.email || "HK")
         .toUpperCase()
@@ -1978,6 +2017,36 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true });
   }
 
+  if (method === "POST" && route === "/api/ops/affiliates/create") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const email = String(body.email || "").trim().toLowerCase();
+    if (!email || !email.includes("@")) return send(res, 400, { error: "email" });
+    store.affiliates = store.affiliates || [];
+    let code = String(body.code || "").trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 16);
+    if (!code) {
+      const base = email.split("@")[0].toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) || "HK";
+      code = base + token().slice(0, 4).toUpperCase();
+    }
+    if (code.length < 3 || code === "HELIX10") return send(res, 400, { error: "code" });
+    if (store.affiliates.some((a) => a.code === code)) return send(res, 400, { error: "code_taken" });
+    const linked = (store.users || []).find((u) => String(u.email || "").toLowerCase() === email);
+    const aff = {
+      userId: linked ? linked.id : null,
+      email,
+      code,
+      status: "live",
+      paid: 0,
+      manual: true,
+      created: new Date().toISOString(),
+    };
+    store.affiliates.push(aff);
+    audit(user, "affiliate", "created " + code + " for " + email);
+    saveStore(store);
+    return send(res, 200, { ok: true, affiliate: aff });
+  }
+
   if (method === "POST" && route === "/api/ops/affiliates/payout") {
     if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
     let body;
@@ -1988,6 +2057,9 @@ async function api(req, res, url) {
     const amount = Math.round(Number(body.amount) * 100) / 100;
     if (!Number.isFinite(amount) || amount <= 0) return send(res, 400, { error: "amount" });
     aff.paid = Math.round((Number(aff.paid || 0) + amount) * 100) / 100;
+    for (const r of store.payoutRequests || []) {
+      if (r.code === code && r.status === "pending") { r.status = "paid"; r.paidAt = new Date().toISOString(); }
+    }
     audit(user, "affiliate", code + " paid $" + amount.toFixed(2));
     saveStore(store);
     return send(res, 200, { ok: true, paid: aff.paid });
@@ -2435,6 +2507,7 @@ function deskPayload() {
       earned: Math.round(referredOrders(a.code).reduce((sum, o) => sum + Number(o.affiliatePayout || 0), 0) * 100) / 100,
     })),
     coupons: store.coupons || [],
+    payoutRequests: (store.payoutRequests || []).filter((r) => r.status === "pending"),
     audit: (store.audit || []).slice(0, 12),
   };
 }
