@@ -101,6 +101,50 @@ function rpId(origin) {
   }
 }
 
+
+async function pwReset(req, res, url, ctx) {
+  const { method } = req;
+  const route = url.pathname;
+  const { store, saveStore, setSession, publicUser, validEmail, hashPassword, loadOutbox, saveOutbox, mailer, limited, ip } = ctx;
+  const send = (code, obj) => { res.writeHead(code, { "Content-Type": "application/json" }); res.end(JSON.stringify(obj)); return true; };
+  const readBody = () => new Promise((resolve, reject) => {
+    let raw = ""; req.on("data", (c) => (raw += c)); req.on("end", () => { try { resolve(JSON.parse(raw || "{}")); } catch { reject(new Error("bad")); } }); req.on("error", reject);
+  });
+  if (method === "POST" && route === "/api/auth/password/forgot") {
+    if (limited(ip, "forgot", 6, 15 * 60 * 1000)) return send(429, { error: "rate" });
+    let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
+    const email = String(body.email || "").toLowerCase().trim();
+    if (!validEmail(email)) return send(400, { error: "email" });
+    const u = store.users.find((x) => x.email === email);
+    if (u) {
+      const token = issueMagic(store, email + "|reset");
+      saveStore(store);
+      const link = requestOrigin(req) + "/reset?token=" + encodeURIComponent(token);
+      await deliver(loadOutbox, saveOutbox, mailer.sendMail, {
+        to: email, subject: "Reset your Helix King Labs password",
+        text: "Reset your password:\n\n" + link + "\n\nThis link expires in 20 minutes. If you did not request it, ignore this email.",
+      });
+    }
+    return send(200, { ok: true });
+  }
+  if (method === "POST" && route === "/api/auth/password/reset") {
+    let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
+    const row = takeMagic(store, body.token);
+    if (!row || !String(row.email || "").endsWith("|reset")) return send(400, { error: "token" });
+    const email = String(row.email).slice(0, -6);
+    const pw = String(body.password || "");
+    if (pw.length < 8) return send(400, { error: "password_length" });
+    const u = store.users.find((x) => x.email === email);
+    if (!u) return send(400, { error: "token" });
+    const h = hashPassword(pw);
+    u.salt = h.salt; u.derived = h.derived;
+    saveStore(store);
+    setSession(res, u.id);
+    return send(200, { user: publicUser(u) });
+  }
+  return false;
+}
+
 module.exports = {
   FROM,
   ORIGIN,
@@ -114,4 +158,5 @@ module.exports = {
   requestOrigin,
   rpId,
   b64url,
+  pwReset,
 };
