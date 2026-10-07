@@ -1581,6 +1581,8 @@
         app.innerHTML = calcTool();
       } else if (p === "/unsubscribe") {
         if (window.HKL_EMAIL) window.HKL_EMAIL.unsubscribePage();
+      } else if (p === "/welcome") {
+        app.innerHTML = window.HKL_WELCOME ? window.HKL_WELCOME.page() : "";
       } else if (p === "/terms") {
         app.innerHTML = policy("terms");
       } else if (p === "/shipping") {
@@ -1906,6 +1908,7 @@
       "/chargebacks": ["Chargeback policy — Helix King Labs", "Contact Helix King Labs before a payment dispute. Crypto and Venmo rails."],
       "/shipping": ["Shipping policy — Helix King Labs", "Shipping $9.95. Free at $199 merchandise after discounts. Dried research vials only."],
       "/use": ["Permitted use — Helix King Labs", "21+. Research materials only. Not for human or animal consumption."],
+      "/welcome": ["Welcome — Lab-Tested Research Peptides | Helix King Labs", "New to Helix King Labs? Browse lab-tested research peptides with lot QR codes and certificates of analysis. BPC-157, TB-500, GHK-Cu and more. Research use only."],
     };
     const row = map[p] || ["Helix King Labs", "Premium research peptides. Research use only."];
     setPageMeta(row[0], row[1], p === "/" ? "/" : p);
