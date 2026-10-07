@@ -1009,6 +1009,10 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true, brand: "Helix King Labs" });
   }
 
+  if (method === "GET" && route === "/api/config") {
+    return send(res, 200, { placesKey: process.env.GOOGLE_PLACES_KEY || "" });
+  }
+
   if (method === "GET" && route === "/api/copy") {
     return send(res, 200, copyDeck);
   }
