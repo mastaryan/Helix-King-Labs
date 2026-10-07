@@ -1292,7 +1292,7 @@ async function api(req, res, url) {
     const token = authx.issueMagic(store, email);
     saveStore(store);
     const link = authx.requestOrigin(req) + "/magic?token=" + encodeURIComponent(token);
-    const sent = await authx.deliver(loadOutbox, saveOutbox, {
+    const sent = await authx.deliver(loadOutbox, saveOutbox, mailer.sendMail, {
       to: email,
       subject: "Helix King Labs sign-in link",
       text: "Sign in to Helix King Labs.\n\n" + link + "\n\nThis link expires in 20 minutes. Research use only.",
