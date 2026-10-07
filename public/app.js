@@ -1544,7 +1544,7 @@
           app.innerHTML = affiliatesLocked(null);
         } else {
           const desk = await api("/api/affiliate");
-          app.innerHTML = desk.locked ? affiliatesLocked(desk) : affiliatesDesk(desk);
+          app.innerHTML = desk.locked ? affiliatesLocked(desk) : desk.closed ? affiliateClosed(desk) : affiliatesDesk(desk);
         }
       } else if (p === "/tracking") {
         app.innerHTML = `<section class="page wrap prose">
@@ -1584,6 +1584,8 @@
         app.innerHTML = policy("refunds");
       } else if (p === "/chargebacks" || p === "/chargeback") {
         app.innerHTML = policy("chargebacks");
+      } else if (p === "/affiliate-terms") {
+        app.innerHTML = policy("affiliates");
       } else if (p === "/magic") {
         const token = new URLSearchParams(location.search).get("token") || "";
         app.innerHTML = `<section class="page wrap"><h1>Signing in</h1><p class="lede" id="magicMsg">Checking the link.</p></section>`;
@@ -2381,17 +2383,50 @@
       });
     }
 
+    const pmForm = $("#payoutMethodForm");
+    if (pmForm) {
+      pmForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(pmForm);
+        try {
+          await api("/api/affiliate/payout-method", { method: "POST", body: {
+            method: String(fd.get("method") || "crypto"),
+            detail: String(fd.get("detail") || ""),
+          }});
+          toast("Destination saved.");
+          go("/affiliates");
+        } catch (err) {
+          const el = $("#payoutMethodErr");
+          if (el) el.textContent = err.message;
+        }
+      });
+    }
+
     const affApply = $("#affApply");
     if (affApply) {
       affApply.addEventListener("submit", async (e) => {
         e.preventDefault();
+        const fd = new FormData(affApply);
+        const errEl = $("#affApplyErr");
         try {
-          await api("/api/affiliate/apply", { method: "POST", body: { agree: true } });
+          await api("/api/affiliate/apply", { method: "POST", body: {
+            agree: fd.get("agree") === "on",
+            certify: fd.get("certify") === "on",
+            legalName: String(fd.get("legalName") || ""),
+            businessName: String(fd.get("businessName") || ""),
+            address: String(fd.get("address") || ""),
+            city: String(fd.get("city") || ""),
+            state: String(fd.get("state") || ""),
+            zip: String(fd.get("zip") || ""),
+            taxIdType: String(fd.get("taxIdType") || "ssn"),
+            taxId: String(fd.get("taxId") || ""),
+          }});
           await loadBase();
           toast("Desk open.");
           go("/affiliates");
         } catch (err) {
-          toast(err.message === "order_required" ? "Record an order first." : err.message);
+          const msg = err.message === "order_required" ? "Record an order first." : err.message;
+          if (errEl) errEl.textContent = msg; else toast(msg);
         }
       });
     }
