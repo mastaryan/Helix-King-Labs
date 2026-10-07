@@ -218,7 +218,7 @@
     const n = onHand(p);
     const threshold = Number(p.stockThreshold) || 5;
     const status = n <= 0 ? "out" : n < threshold ? "low" : "ok";
-    if (status === "out") return `<span class="badge stock out">Out of stock</span>`;
+    if (status === "out") return `<span class="badge stock out">Notify me</span>`;
     if (status === "low") return `<span class="badge stock low">Low</span>`;
     return "";
   }
@@ -1150,7 +1150,6 @@
   }
 
   function maybePopup() {
-    // Capture popup parked until final build. Footer email still live.
     const el = $("#popup");
     if (el) {
       el.classList.add("hidden");
