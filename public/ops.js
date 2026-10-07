@@ -10,6 +10,7 @@ const TABS = [
   ["affiliates", "Affiliates"],
   ["promos", "Promos"],
   ["suggest", "Requests"],
+  ["wholesale", "Wholesale"],
   ["audit", "Audit"],
   ["catalog", "Catalog editor"],
 ];
@@ -275,10 +276,14 @@ function draw() {
   nav();
   const titles = Object.fromEntries(TABS);
   $("#title").textContent = titles[state.tab];
-  const view = { overview, orders, accounts, list, inventory, affiliates, promos, suggest: () => `<div id="suggestView"><p class="muted">Loading requests…</p></div>`, audit, catalog: () => `<p class="muted">Prices, lot edits, photos, certificates, and payment notes stay on the catalog editor.</p><p><a href="/ops/catalog">Open catalog editor</a></p>` }[state.tab];
+  const view = { overview, orders, accounts, list, inventory, affiliates, promos, suggest: () => `<div id="suggestView"><p class="muted">Loading requests…</p></div>`,
+    wholesale: () => `<div id="wholesaleView"><p class="muted">Loading wholesale…</p></div>`, audit, catalog: () => `<p class="muted">Prices, lot edits, photos, certificates, and payment notes stay on the catalog editor.</p><p><a href="/ops/catalog">Open catalog editor</a></p>` }[state.tab];
   $("#view").innerHTML = view();
   if (state.tab === "suggest" && window.HKL_SUGGEST) {
     window.HKL_SUGGEST.renderOpsSuggestions(document.getElementById("suggestView"));
+  }
+  if (state.tab === "wholesale" && window.HKL_WHOLESALE_OPS) {
+    window.HKL_WHOLESALE_OPS.render(document.getElementById("wholesaleView"));
   }
   const sweep = document.getElementById("sweepNow");
   if (sweep) sweep.onclick = async () => {
