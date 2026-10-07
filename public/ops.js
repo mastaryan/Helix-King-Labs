@@ -183,7 +183,9 @@ function promos() {
   return `<h2>Coupon codes</h2>
   <form id="couponForm" class="tool-form" style="margin-bottom:16px">
     <input name="code" placeholder="CODE" maxlength="16" required style="text-transform:uppercase" />
-    <input name="pct" type="number" min="1" max="90" placeholder="% off" required />
+    <input name="pct" type="number" min="0" max="90" placeholder="% off" />
+    <input name="amount" type="number" min="0" step="0.01" placeholder="$ off" />
+    <input name="maxUses" type="number" min="0" step="1" placeholder="Max uses (0 = unlimited)" />
     <input name="minTotal" type="number" min="0" step="1" placeholder="Min order $" />
     <input name="expires" type="date" />
     <input name="note" placeholder="Note (optional)" maxlength="80" />
@@ -191,8 +193,8 @@ function promos() {
     <button class="btn" type="submit">Save code</button>
     <div class="err" id="couponErr"></div>
   </form>
-  ${rows.length ? `<table><thead><tr><th>Code</th><th>Off</th><th>Min</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>
-  ${rows.map((c) => `<tr><td>${c.code}</td><td>${c.pct}%</td><td>${money(c.minTotal || 0)}</td><td>${(c.expires || "").slice(0, 10) || "—"}</td><td>${c.active === false ? "off" : "on"}</td>
+  ${rows.length ? `<table><thead><tr><th>Code</th><th>Off</th><th>Uses</th><th>Min</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>
+  ${rows.map((c) => `<tr><td>${c.code}</td><td>${c.pct ? c.pct + "%" : ""}${c.amount ? "$" + c.amount : ""}</td><td>${c.uses || 0}${c.maxUses ? " / " + c.maxUses : ""}</td><td>${money(c.minTotal || 0)}</td><td>${(c.expires || "").slice(0, 10) || "—"}</td><td>${c.active === false ? "off" : "on"}</td>
   <td><button class="act" data-coupon="${c.code}" data-on="${c.active === false ? 1 : 0}">${c.active === false ? "Enable" : "Disable"}</button></td></tr>`).join("")}
   </tbody></table>` : `<p class="muted">No codes yet. HELIX10 (first order over $99) is automatic.</p>`}
   <p class="muted">One discount per order: an affiliate code beats a coupon, a coupon beats HELIX10.</p>`;
@@ -351,7 +353,9 @@ function draw() {
     try {
       await api("/api/ops/coupons", { method: "POST", body: {
         code: String(fd.get("code") || ""),
-        pct: Number(fd.get("pct")),
+        pct: Number(fd.get("pct") || 0),
+        amount: Number(fd.get("amount") || 0),
+        maxUses: Number(fd.get("maxUses") || 0),
         minTotal: Number(fd.get("minTotal") || 0),
         expires: String(fd.get("expires") || ""),
         note: String(fd.get("note") || ""),

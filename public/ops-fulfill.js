@@ -307,5 +307,66 @@
     mountCoa(coa);
   }
 
-  window.HKL_FULFILL = { mountOrderDetail: mountOrderDetail, mountIntake: mountIntake, mountCoa: mountCoa, routeOpsOrder: routeOpsOrder, notifyHtml: notifyHtml, mountOpsExtras: mountOpsExtras };
+  // ---- Ops sidebar nav (persistent left menu for ops pages) ----
+  function mountOpsSidebar() {
+    var isOps = location.pathname.startsWith("/ops/");
+    document.body.classList.toggle("ops-page", isOps);
+    document.body.classList.toggle("has-ops-sidebar", isOps && !!document.getElementById("opsSidebar"));
+    if (!isOps) {
+      var old = document.getElementById("opsSidebar");
+      if (old) old.remove();
+      return;
+    }
+    if (document.getElementById("opsSidebar")) return;
+    var links = [
+      ["Orders", "orders"],
+      ["Receive lot", "intakeDesk"],
+      ["Upload COA", "coaDesk"],
+      ["Inventory", "invDesk"],
+      ["Coupons", "coupons"],
+      ["Affiliates", "affiliates"],
+      ["Email list", "email"],
+    ];
+    var aside = document.createElement("aside");
+    aside.id = "opsSidebar";
+    aside.innerHTML = `<div class="ops-side-head">Seller desk</div>` + links.map(function (l) {
+      return `<a href="#" data-target="${l[1]}">${l[0]}</a>`;
+    }).join("");
+    aside.addEventListener("click", function (e) {
+      var a = e.target.closest("a[data-target]");
+      if (!a) return;
+      e.preventDefault();
+      var t = a.getAttribute("data-target");
+      if (t === "orders") {
+        if (location.pathname !== "/ops/catalog") { location.href = "/ops/catalog"; return; }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      // Find by ID first, then by h2 text
+      var el = document.getElementById(t);
+      if (!el) {
+        var heads = document.querySelectorAll("h2");
+        for (var i = 0; i < heads.length; i++) {
+          if (heads[i].textContent.toLowerCase().indexOf(t) === 0) { el = heads[i]; break; }
+        }
+      }
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      else if (t === "intakeDesk" || t === "coaDesk") { location.href = "/ops/catalog"; }
+    });
+    document.body.prepend(aside);
+    document.body.classList.add("has-ops-sidebar");
+  }
+
+  // Auto-mount on route changes
+  (function initOpsSidebar() {
+    var last = "";
+    setInterval(function () {
+      if (location.pathname !== last) {
+        last = location.pathname;
+        setTimeout(mountOpsSidebar, 100);
+      }
+    }, 500);
+  })();
+
+  window.HKL_FULFILL = { mountOrderDetail: mountOrderDetail, mountIntake: mountIntake, mountCoa: mountCoa, routeOpsOrder: routeOpsOrder, notifyHtml: notifyHtml, mountOpsExtras: mountOpsExtras, mountOpsSidebar: mountOpsSidebar };
 })();
