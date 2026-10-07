@@ -13,6 +13,7 @@ const crypto = require("node:crypto");
 const { URL } = require("node:url");
 const authx = require("./auth-extra");
 const createOpsCatalog = require("./ops-catalog");
+const createEmailList = require("./email-list");
 const QRCode = require("qrcode");
 const mailer = require("./mail");
 
@@ -387,6 +388,7 @@ applyPricingCsv();
 applyInventoryCsv();
 applyPendingTesting();
 let opsCatalogHandle;
+let emailListHandle;
 
 function loadOutbox() {
   try {
@@ -410,23 +412,7 @@ function writeSubscribersCsv() {
   fs.writeFileSync(SUB_CSV, lines.join("\n") + "\n");
 }
 
-function libraryEmail(email) {
-  return {
-    to: email,
-    subject: "Helix King Labs — library access",
-    text: [
-      "Helix King Labs",
-      "",
-      "You are on the list.",
-      "Library: /library",
-      "Shop: /shop",
-      "",
-      "This list is for lot alerts and the documentation library.",
-      "Research materials are for laboratory use only.",
-      "Not a clinic. Not a pharmacy.",
-    ].join("\n"),
-  };
-}
+// libraryEmail moved to email-list.js
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -480,6 +466,7 @@ function saveStore(s) {
 let store = loadStore();
 
 opsCatalogHandle = createOpsCatalog({ products, store, saveStore, send, readBody, isOpsUser, findProduct, writeInventoryCsv, writePricingCsv, attachCertificates, audit, PUBLIC, DATA, QRCode, sessionOf });
+emailListHandle = createEmailList({ store, saveStore, send, readBody, validEmail, token, requestOrigin: authx.requestOrigin, loadOutbox, saveOutbox, writeSubscribersCsv, audit, isOpsUser });
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
   const derived = crypto.scryptSync(password, salt, 32).toString("hex");
@@ -1535,43 +1522,6 @@ async function api(req, res, url) {
     return send(res, 200, { order });
   }
 
-  if (method === "POST" && route === "/api/capture") {
-    let body;
-    try {
-      body = await readBody(req);
-    } catch {
-      return send(res, 400, { error: "bad_request" });
-    }
-    const email = String(body.email || "").toLowerCase().trim();
-    if (!validEmail(email)) return send(res, 400, { error: "email" });
-    const row = store.captures.find((c) => c.email === email);
-    if (!row) {
-      store.captures.push({
-        email,
-        source: String(body.source || "unknown").slice(0, 40),
-        created: new Date().toISOString(),
-        library: "/library",
-      });
-    }
-    const mail = libraryEmail(email);
-    const box = loadOutbox();
-    box.messages.push({
-      ...mail,
-      source: String(body.source || "unknown").slice(0, 40),
-      created: new Date().toISOString(),
-      status: "queued",
-    });
-    saveOutbox(box);
-    saveStore(store);
-    writeSubscribersCsv();
-    return send(res, 200, {
-      ok: true,
-      library: "/library",
-      queued: true,
-      note: "Email is stored. Outbound send waits on SMTP or an ESP.",
-    });
-  }
-
   if (method === "GET" && route === "/api/ops/channels") {
     if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
     return send(res, 200, loadChannels());
@@ -2447,6 +2397,7 @@ async function api(req, res, url) {
   }
 
   if (await opsCatalogHandle(req, res, url, user)) return;
+  if (await emailListHandle(req, res, url, user)) return;
 
   return send(res, 404, { error: "not_found" });
 }
@@ -2709,6 +2660,7 @@ function knownPaths() {
     "/cart",
     "/ops",
     "/ops/catalog",
+    "/unsubscribe",
     "/library",
   ]);
   for (const f of shopFamilies()) paths.add("/product/" + (f.slug || f.id));
