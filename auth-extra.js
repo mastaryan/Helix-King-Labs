@@ -1,8 +1,6 @@
 "use strict";
 
 const crypto = require("node:crypto");
-const net = require("node:net");
-const tls = require("node:tls");
 
 const FROM = process.env.SMTP_FROM || "orders@helixkinglabs.com";
 const ORIGIN = (process.env.HKL_PUBLIC_ORIGIN || "https://helixkinglabs.com").replace(/\/$/, "");
@@ -11,107 +9,35 @@ function b64url(buf) {
   return Buffer.from(buf).toString("base64url");
 }
 
-function queueMail(loadOutbox, saveOutbox, message) {
+// Queue the message, then attempt an immediate send through the shared
+// mailer (Resend HTTPS API when RESEND_API_KEY is set, else SMTP).
+// The queued copy is marked sent on success so the 5-minute drain
+// does not send a duplicate; on failure it stays queued for retry.
+async function deliver(loadOutbox, saveOutbox, sendNow, message) {
   const box = loadOutbox();
   box.messages = box.messages || [];
-  box.messages.push({ ...message, from: FROM, created: new Date().toISOString(), status: "queued" });
+  const entry = {
+    ...message,
+    from: FROM,
+    created: new Date().toISOString(),
+    status: "queued",
+    attempts: 0,
+  };
+  box.messages.push(entry);
   saveOutbox(box);
-}
-
-function smtpSend(message) {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  if (!host || !user || !pass) return Promise.resolve({ sent: false, reason: "smtp_not_configured" });
-  const port = Number(process.env.SMTP_PORT || 587);
-  const secure = port === 465;
-  return new Promise((resolve) => {
-    const sock = secure
-      ? tls.connect({ host, port, servername: host })
-      : net.connect(port, host);
-    let buf = "";
-    let step = 0;
-    const fail = () => {
-      sock.destroy();
-      resolve({ sent: false, reason: "smtp_failed" });
-    };
-    sock.setTimeout(12000, fail);
-    const send = (line) => sock.write(line + "\r\n");
-    const ehlo = () => send("EHLO helixkinglabs.com");
-    sock.on("error", fail);
-    sock.on("data", (chunk) => {
-      buf += chunk.toString();
-      if (!buf.includes("\n")) return;
-      const line = buf.trim().split("\n").pop() || "";
-      buf = "";
-      const code = line.slice(0, 3);
-      if (code[0] === "5" || code[0] === "4") return fail();
-      if (step === 0 && code === "220") {
-        step = 1;
-        return ehlo();
-      }
-      if (step === 1 && code === "250") {
-        if (!secure && /STARTTLS/i.test(line + buf)) {
-          step = 2;
-          return send("STARTTLS");
-        }
-        step = 3;
-        return send("AUTH LOGIN");
-      }
-      if (step === 2 && code === "220") {
-        const next = tls.connect({ socket: sock, servername: host });
-        next.on("error", fail);
-        next.on("secureConnect", () => {
-          step = 1;
-          next.write("EHLO helixkinglabs.com\r\n");
-        });
-        return;
-      }
-      if (step === 3 && code === "334") {
-        step = 4;
-        return send(Buffer.from(user).toString("base64"));
-      }
-      if (step === 4 && code === "334") {
-        step = 5;
-        return send(Buffer.from(pass).toString("base64"));
-      }
-      if (step === 5 && code === "235") {
-        step = 6;
-        return send("MAIL FROM:<" + FROM + ">");
-      }
-      if (step === 6 && code === "250") {
-        step = 7;
-        return send("RCPT TO:<" + message.to + ">");
-      }
-      if (step === 7 && code === "250") {
-        step = 8;
-        return send("DATA");
-      }
-      if (step === 8 && code === "354") {
-        step = 9;
-        const body = [
-          "From: Helix King Labs <" + FROM + ">",
-          "To: " + message.to,
-          "Subject: " + message.subject,
-          "Content-Type: text/plain; charset=utf-8",
-          "",
-          message.text,
-          ".",
-        ].join("\r\n");
-        return send(body);
-      }
-      if (step === 9 && code === "250") {
-        send("QUIT");
-        sock.end();
-        return resolve({ sent: true });
-      }
-    });
-  });
-}
-
-async function deliver(loadOutbox, saveOutbox, message) {
-  queueMail(loadOutbox, saveOutbox, message);
-  return smtpSend(message);
+  if (typeof sendNow === "function") {
+    try {
+      await sendNow(message);
+      entry.status = "sent";
+      entry.sentAt = new Date().toISOString();
+    } catch (err) {
+      entry.status = "failed";
+      entry.attempts = 1;
+      entry.error = String((err && err.message) || err).slice(0, 160);
+    }
+    saveOutbox(box);
+  }
+  return { ok: true, sent: entry.status === "sent" };
 }
 
 function issueMagic(store, email) {
