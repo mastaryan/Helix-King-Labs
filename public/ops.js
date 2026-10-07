@@ -158,8 +158,8 @@ function affiliates() {
     <div class="err" id="affErr"></div>
   </form>
   ${reqs.length ? `<h2>Payout requests</h2>
-  <table><thead><tr><th>Code</th><th>Email</th><th>Amount</th><th>Requested</th><th></th></tr></thead><tbody>
-  ${reqs.map((r) => `<tr><td>${r.code}</td><td>${r.email || "—"}</td><td><b>${money(r.amount)}</b></td><td>${(r.requested || "").slice(0, 10)}</td>
+  <table><thead><tr><th>Code</th><th>Email</th><th>Amount</th><th>Method</th><th>Detail</th><th>Requested</th><th></th></tr></thead><tbody>
+  ${reqs.map((r) => `<tr><td>${r.code}</td><td>${r.email || "—"}</td><td><b>${money(r.amount)}</b></td><td>${r.method === "cashapp" ? "Cash App" : "Crypto"}</td><td class="muted">${r.detail || "—"}</td><td>${(r.requested || "").slice(0, 10)}</td>
   <td><button class="act" data-payreq="${r.code}" data-amt="${r.amount}">Mark paid</button></td></tr>`).join("")}
   </tbody></table>` : ``}
   <h2>Affiliates</h2>
