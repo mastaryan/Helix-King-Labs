@@ -28,6 +28,19 @@
     const slot = document.getElementById(slotId);
     if (!slot) return;
     slot.innerHTML = suggestForm();
+    wireForm();
+  }
+
+  function mountShop() {
+    const section = document.querySelector('section.page.wrap');
+    if (!section || document.getElementById("suggestForm")) return;
+    const div = document.createElement("div");
+    div.innerHTML = suggestForm();
+    section.after(div.firstElementChild);
+    wireForm();
+  }
+
+  function wireForm() {
     const form = document.getElementById("suggestForm");
     if (!form) return;
     const note = document.getElementById("suggestNote");
@@ -84,5 +97,5 @@
     return String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
-  window.HKL_SUGGEST = { suggestForm, mount, renderOpsSuggestions };
+  window.HKL_SUGGEST = { suggestForm, mount, mountShop, renderOpsSuggestions };
 })();
