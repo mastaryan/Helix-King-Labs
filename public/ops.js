@@ -149,8 +149,22 @@ function inventory() {
 
 function affiliates() {
   const rows = state.desk.affiliates || [];
-  if (!rows.length) return `<p class="muted">No desks open.</p>`;
-  return `<table><thead><tr><th>Code</th><th>Email</th><th>Status</th><th>Earned</th><th>Paid</th><th>Owed</th><th></th></tr></thead><tbody>
+  const reqs = state.desk.payoutRequests || [];
+  return `<h2>New affiliate</h2>
+  <form id="affForm" class="tool-form" style="margin-bottom:16px">
+    <input name="email" type="email" placeholder="Affiliate email" required />
+    <input name="code" placeholder="Code (auto if blank)" maxlength="16" style="text-transform:uppercase" />
+    <button class="btn" type="submit">Create code</button>
+    <div class="err" id="affErr"></div>
+  </form>
+  ${reqs.length ? `<h2>Payout requests</h2>
+  <table><thead><tr><th>Code</th><th>Email</th><th>Amount</th><th>Requested</th><th></th></tr></thead><tbody>
+  ${reqs.map((r) => `<tr><td>${r.code}</td><td>${r.email || "—"}</td><td><b>${money(r.amount)}</b></td><td>${(r.requested || "").slice(0, 10)}</td>
+  <td><button class="act" data-payreq="${r.code}" data-amt="${r.amount}">Mark paid</button></td></tr>`).join("")}
+  </tbody></table>` : ``}
+  <h2>Affiliates</h2>
+  ${!rows.length ? `<p class="muted">No desks open.</p>` : `
+  <table><thead><tr><th>Code</th><th>Email</th><th>Status</th><th>Earned</th><th>Paid</th><th>Owed</th><th></th></tr></thead><tbody>
   ${rows.map((a) => {
     const earned = Number(a.earned || 0), paid = Number(a.paid || 0);
     return `<tr><td>${a.code || "—"}<div class="muted">/shop?ref=${a.code || ""}</div></td><td>${a.email || a.userId || "—"}</td><td>${a.status || "—"}</td><td>${money(earned)}</td><td>${money(paid)}</td><td><b>${money(earned - paid)}</b></td>
@@ -158,7 +172,8 @@ function affiliates() {
     <button class="act" data-aff="${a.code}" data-op="payout">Payout</button></td></tr>`;
   }).join("")}
   </tbody></table>
-  <p class="muted">Payout floor is $50. Recording a payout marks it paid on the affiliate's dashboard.</p>`;
+  <p class="muted">Payout floor is $50. Recording a payout marks it paid on the affiliate's dashboard.</p>`}
+`;
 }
 
 function promos() {
@@ -281,6 +296,14 @@ function draw() {
       } catch (err) { alert(err.error || "Could not update the affiliate."); }
       return;
     }
+    const pr = e.target.closest("[data-payreq]");
+    if (pr) {
+      try {
+        await api("/api/ops/affiliates/payout", { method: "POST", body: { code: pr.dataset.payreq, amount: Number(pr.dataset.amt) } });
+        await load(); draw();
+      } catch (err) { alert(err.error || "Could not record the payout."); }
+      return;
+    }
     const cb2 = e.target.closest("[data-coupon]");
     if (cb2) {
       try {
@@ -298,6 +321,18 @@ function draw() {
     state.order = (state.desk.orders || []).find((o) => o.id === row.dataset.id) || null;
     state.tab = "orders";
     draw();
+  };
+  const af = document.getElementById("affForm");
+  if (af) af.onsubmit = async (ev) => {
+    ev.preventDefault();
+    const fd = new FormData(af);
+    try {
+      await api("/api/ops/affiliates/create", { method: "POST", body: {
+        email: String(fd.get("email") || ""),
+        code: String(fd.get("code") || ""),
+      }});
+      await load(); draw();
+    } catch (err) { document.getElementById("affErr").textContent = err.error || "Could not create the affiliate."; }
   };
   const cf = document.getElementById("couponForm");
   if (cf) cf.onsubmit = async (ev) => {
