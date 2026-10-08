@@ -40,11 +40,8 @@
     menu.className = "acct-menu hide";
     menu.innerHTML = `<a href="/account">My account</a><button id="signOutBtn" type="button">Sign out</button>`;
     wrap.appendChild(menu);
-    link.addEventListener("click", (e) => { e.preventDefault(); menu.classList.toggle("hide"); });
+    link.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); menu.classList.toggle("hide"); });
     document.addEventListener("click", (e) => { if (!wrap.contains(e.target)) menu.classList.add("hide"); });
-    // Hover open/close: menu stays open while pointer is on the wrapper, closes on leave.
-    wrap.addEventListener("mouseenter", () => menu.classList.remove("hide"));
-    wrap.addEventListener("mouseleave", () => menu.classList.add("hide"));
     menu.querySelector("#signOutBtn").onclick = async () => {
       try { await HKL.api("/api/auth/logout", { method: "POST" }); } catch (x) {}
       location.href = "/";

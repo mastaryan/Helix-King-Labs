@@ -74,8 +74,8 @@
 
   function alertStrip() {
     var coa = 0, labels = 0;
-    Object.keys(state).forEach(function (sku) {
-      (state[sku].lots || []).forEach(function (l) {
+    skus.forEach(function (s) {
+      (s.lots || []).forEach(function (l) {
         if (!l.lot) return;
         if (l.status === "coa_needed") coa++;
         else if (l.status === "labels_needed") labels++;
@@ -250,13 +250,12 @@
   var tries = 0;
   var timer = setInterval(function () {
     tries++;
-    if (window.HKL && window.HKL.api) mount();
+    if (window.HKL && window.HKL.api) {
+      mount();
+      if (document.getElementById("mergedTable")) clearInterval(timer);
+    }
     renameChannels();
-    if (tries > 120) clearInterval(timer);
+    if (tries > 40) clearInterval(timer);
   }, 700);
-  new MutationObserver(function () {
-    if (window.HKL && window.HKL.api) mount();
-    renameChannels();
-  }).observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener("hkl:route", mount);
 })();

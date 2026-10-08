@@ -18,12 +18,19 @@
   }
 
   /* ---------- Account page: set/change password card ---------- */
+  var cardPending = false;
   async function injectAccountCard() {
-    if (document.getElementById("setPwCard")) return;
+    if (document.getElementById("setPwCard") || cardPending) return;
     var profile = document.getElementById("profileForm");
     if (!profile) return;
     if (!window.HKL.state || !window.HKL.state.user) return;
-    var sec = await security();
+    cardPending = true;
+    try {
+      var sec = await security();
+    } catch (e) {
+      cardPending = false;
+      return;
+    }
     var card = document.createElement("div");
     card.id = "setPwCard";
     card.className = "card";
@@ -43,6 +50,7 @@
       '<p class="hard" id="setPwNote" style="margin:0"></p>' +
       "</form>";
     profile.after(card);
+    cardPending = false;
     card.querySelector("#setPwForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       var note = card.querySelector("#setPwNote");
@@ -180,9 +188,7 @@
   var timer = setInterval(function () {
     tries++;
     boot();
-    if (tries > 120) clearInterval(timer);
+    if (tries > 40) clearInterval(timer);
   }, 700);
-  new MutationObserver(function () { boot(); })
-    .observe(document.documentElement, { childList: true, subtree: true });
-  window.addEventListener("hkl:route", function () { securityCache = null; boot(); });
+  window.addEventListener("hkl:route", function () { securityCache = null; cardPending = false; boot(); });
 })();
