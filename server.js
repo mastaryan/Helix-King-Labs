@@ -301,20 +301,27 @@ const PENDING_FAMILIES = new Set([
   "selank-ns",
   "semax-ns",
 ]);
-const SHOP_HIDDEN_FAMILIES = new Set([
-  "bac-water",
-  "al-kemi",
-  "h7-hair",
-  "snake-serum",
-  "t25-tallow",
-  "lights-out",
-  "joint-juice",
-  "lipo-c",
-  "l-carnitine",
-  "sleepy-cbd",
-  "cbd",
-  "selank-ns",
-  "semax-ns",
+const SHOP_VISIBLE_FAMILIES = new Set([
+  "pgl-gic1",    // Retatrutide
+  "pgl-gi1",     // Tirzepatide
+  "bpc-157",     // BPC-157
+  "tb-500",      // TB-500
+  "bpc-tb",      // Wolverine blend
+  "ghk-cu",      // GHK-Cu
+  "glow",        // GLOW
+  "klow",        // KLOW
+  "tesamorelin", // Tesamorelin
+  "mots-c",      // MOTS-c
+  "nad",         // NAD+
+  "kpv",         // KPV
+  "ss-31",       // SS-31
+  "pgl-el1",     // Eloralintide
+  "pgl-g1",      // Semaglutide
+  "cgl-1",       // Cagrilintide
+]);
+// IPs excluded from visitor tracking (owner devices)
+const TRACKING_IP_BLOCKLIST = new Set([
+  "12.75.226.77", // Ryan mobile
 ]);
 const INCOMING_INDEX = path.join(DATA, "coas", "incoming-index.json");
 const INCOMING_DIR = path.join(DATA, "coas", "incoming");
@@ -365,8 +372,11 @@ function shopVisibleOf(p) {
   if (!p) return false;
   if (p.shopVisible === false) return false;
   const fam = p.family || p.id;
-  if (SHOP_HIDDEN_FAMILIES.has(fam)) return false;
-  return true;
+  // Allowlisted families always show. Others appear automatically once
+  // intake gives them stock.
+  if (SHOP_VISIBLE_FAMILIES.has(fam)) return true;
+  if (Number(p.available || 0) > 0) return true;
+  return false;
 }
 const SUB_CSV = path.join(DATA, "subscribers.csv");
 const OUTBOX = path.join(DATA, "outbox.json");
@@ -473,7 +483,7 @@ let store = loadStore();
 
 opsCatalogHandle = createOpsCatalog({ products, store, saveStore, send, readBody, isOpsUser, findProduct, writeInventoryCsv, writePricingCsv, attachCertificates, audit, PUBLIC, DATA, QRCode, sessionOf });
 emailListHandle = createEmailList({ store, saveStore, send, readBody, validEmail, token, requestOrigin: authx.requestOrigin, loadOutbox, saveOutbox, writeSubscribersCsv, audit, isOpsUser });
-fulfillHandle = createFulfillment({ products, store, saveStore, send, readBody, isOpsUser, findProduct, attachCertificates, writeInventoryCsv, writePricingCsv, audit, PUBLIC, DATA, SHOP_HIDDEN_FAMILIES, affiliateOf, stockStatus, STOCK_THRESHOLD, getPublicOrigin: () => (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", getRequestOrigin: (req) => authx.requestOrigin(req), getEmailListHandle: () => emailListHandle });
+fulfillHandle = createFulfillment({ products, store, saveStore, send, readBody, isOpsUser, findProduct, attachCertificates, writeInventoryCsv, writePricingCsv, audit, PUBLIC, DATA, SHOP_VISIBLE_FAMILIES, affiliateOf, stockStatus, STOCK_THRESHOLD, getPublicOrigin: () => (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", getRequestOrigin: (req) => authx.requestOrigin(req), getEmailListHandle: () => emailListHandle });
 suggestHandle = createSuggestions({ store, saveStore, send, readBody, isOpsUser });
 wholesaleHandle = createWholesale({
   store, saveStore, send, readBody, isOpsUser, products,
@@ -986,9 +996,17 @@ function sanitizeProduct(p, authed) {
   return out;
 }
 
+function familyVisibleOf(f) {
+  if (!f) return false;
+  if (f.shopVisible === false) return false;
+  if (SHOP_VISIBLE_FAMILIES.has(f.id)) return true;
+  // Auto-reveal: family appears once intake gives any of its items stock
+  return (products.items || []).some((it) => it.family === f.id && Number(it.available || 0) > 0);
+}
+
 function sanitizeFamily(f) {
   const out = { ...f };
-  out.shopVisible = f.shopVisible !== false && !SHOP_HIDDEN_FAMILIES.has(f.id);
+  out.shopVisible = familyVisibleOf(f);
   return out;
 }
 
@@ -1022,7 +1040,7 @@ async function api(req, res, url) {
   }
 
   if (method === "GET" && route === "/api/config") {
-    return send(res, 200, { placesKey: process.env.GOOGLE_PLACES_KEY || "" });
+    return send(res, 200, { placesKey: process.env.GOOGLE_PLACES_KEY || "", trackingExcluded: TRACKING_IP_BLOCKLIST.has(ip) });
   }
 
   if (method === "GET" && route === "/api/copy") {
@@ -2620,9 +2638,7 @@ function escHtml(s) {
 }
 
 function shopFamilies() {
-  return (products.families || []).filter(
-    (f) => f.shopVisible !== false && !SHOP_HIDDEN_FAMILIES.has(f.id)
-  );
+  return (products.families || []).filter((f) => familyVisibleOf(f));
 }
 
 function familyItems(f) {
@@ -2684,7 +2700,13 @@ function pageModel(pathname) {
     };
   }
   if (pathname === "/shop") {
+    const GLP_ORDER = ["pgl-gic1", "pgl-gi1", "pgl-g1", "pgl-el1", "cgl-1", "pgl-el1-pair", "pgl-sr1"];
+    const glpRank = (f) => {
+      const i = GLP_ORDER.indexOf(f.id);
+      return i < 0 ? 999 : i;
+    };
     const cards = shopFamilies()
+      .sort((a, b) => glpRank(a) - glpRank(b))
       .map((f) => {
         const items = familyItems(f).filter((it) => it.price != null && it.releaseState !== "pending_testing");
         const from = items.length ? Math.min(...items.map((it) => Number(it.price))) : null;
