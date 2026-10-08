@@ -16,6 +16,6 @@ function createTracking({ store, saveStore, send, readBody }) {
     }
     return null;
   }
-  return { handle };
+  return handle;
 }
 module.exports = { createTracking };
