@@ -159,14 +159,26 @@
   <script src="/ops-email.js?v=1"></script>
   <script src="/welcome.js?v=1"></script>
   <script src="/ops-fulfill.js?v=1"></script>
-<<<<<<< Updated upstream
-=======
   <script src="/auth-reset.js?v=1"></script>
   <script src="/places.js?v=1"></script>
   <script src="/suggest.js?v=1"></script>
   <script src="/wholesale.js?v=1"></script>
   <script src="/track.js?v=1"></script>
->>>>>>> Stashed changes
   <script src="/app.js?v=50"></script>
+  <script>
+  // Magic link double-click prevention + confirmation
+  (function(){
+    let sending=false;
+    document.addEventListener("click",function(e){
+      const btn=e.target.closest("#magicBtn");
+      if(!btn)return;
+      if(sending){e.preventDefault();e.stopImmediatePropagation();return;}
+      sending=true;
+      btn.disabled=true;
+      const t=btn.textContent;btn.textContent="Sending...";
+      setTimeout(()=>{sending=false;btn.disabled=false;btn.textContent=t;},4000);
+    },true);
+  })();
+  </script>
 </body>
 </html>
