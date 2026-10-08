@@ -17,6 +17,7 @@ const createEmailList = require("./email-list");
 const createFulfillment = require("./fulfillment");
 const { createSuggestions } = require("./suggestions");
 const { createWholesale } = require("./wholesale");
+const { createPayments } = require("./payments");
 const QRCode = require("qrcode");
 const mailer = require("./mail");
 
@@ -393,7 +394,7 @@ let opsCatalogHandle;
 let emailListHandle;
 let fulfillHandle;
 let suggestHandle;
-let wholesaleHandle;
+let wholesaleHandle,paymentsHandle;
 
 function loadOutbox() {
   try {
@@ -478,6 +479,7 @@ wholesaleHandle = createWholesale({
   store, saveStore, send, readBody, isOpsUser, products,
   saveProducts: () => { fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2)); },
 });
+paymentsHandle=createPayments({store,saveStore,send,readBody,queueMail,orderMail,audit,getPublicOrigin:()=>PUBLIC_ORIGIN||"https://helixkinglabs.com"});
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
   const derived = crypto.scryptSync(password, salt, 32).toString("hex");
@@ -1550,7 +1552,7 @@ async function api(req, res, url) {
         note: order.id,
       };
     } else {
-      order.payment = await createNowPayment(order, body.network);
+      order.payment = await paymentsHandle.createNowPayment(order, body.network);
     }
     if (paymentMethod === "crypto" && order.payment && ["payment_failed", "key_missing", "invoice_pending"].includes(order.payment.status)) {
       return send(res, 400, { error: "payment_unavailable", message: order.payment.message || "Crypto payment is not available. Use Venmo or Cash App." });
@@ -2428,7 +2430,7 @@ async function api(req, res, url) {
     }
     writeInventoryCsv();
     const stored = { ...order, stockDecremented: true, quote: { lines, total: order.total, shipping: 25, surcharge: 0 }, company: "", researchField: user.researchField || "" };
-    if (order.paymentMethod === "crypto") stored.payment = await createNowPayment(stored, body.network);
+    if (order.paymentMethod === "crypto") stored.payment = await paymentsHandle.createNowPayment(stored, body.network);
     else stored.payment = { provider: order.paymentMethod, handle: order.paymentMethod === "venmo" ? "fibkingpeps" : "FibKingPep", status: "awaiting_confirmation", amount: order.total, note: order.id };
     if (order.paymentMethod === "crypto" && stored.payment && ["payment_failed", "key_missing", "invoice_pending"].includes(stored.payment.status)) {
       return send(res, 400, { error: "payment_unavailable", message: stored.payment.message || "Crypto payment is not available." });
@@ -2441,34 +2443,8 @@ async function api(req, res, url) {
     return send(res, 200, { order: stored });
   }
 
-  if (method === "POST" && (route === "/api/payments/nowpayments" || route === "/api/pay/nowpayments")) {
-    let body;
-    try {
-      body = await readBody(req);
-    } catch {
-      return send(res, 400, { error: "bad_request" });
-    }
-    const secret = process.env.NOWPAYMENTS_IPN_SECRET;
-    if (!secret) return send(res, 503, { error: "ipn_secret_missing" });
-    const given = String(req.headers["x-nowpayments-sig"] || "");
-    const sorted = sortForIpn(body);
-    const expect = crypto.createHmac("sha512", secret).update(JSON.stringify(sorted)).digest("hex");
-    const a = Buffer.from(given);
-    const b = Buffer.from(expect);
-    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return send(res, 401, { error: "bad_signature" });
-    const orderId = String(body.order_id || "");
-    let order=null;
-    for (const id of [String(body.order_id||""),String(body.invoice_id||""),String(body.payment_id||"")].filter(Boolean)) {
-      order=(store.orders||[]).find((o)=>o.id===id||(o.payment&&(o.payment.invoiceId===id||o.payment.paymentId===id)));
-      if(order)break;
-    }
-    if (!order) return send(res, 200, { ok: true, matched: false });
-    const invId = String(body.invoice_id||"");
-    if (invId && order.payment && !order.payment.invoiceId) order.payment.invoiceId = invId;
-    const result = applyPaymentStatus(order, String(body.payment_status || ""), body);
-    return send(res, 200, { ok: true, status: result.status, skipped: result.skipped || null });
-  }
 
+  if (await paymentsHandle(req, res, url)) return;
   if (await opsCatalogHandle(req, res, url, user)) return;
   if (await emailListHandle(req, res, url, user)) return;
   if (await fulfillHandle(req, res, url, user)) return;
@@ -2476,15 +2452,6 @@ async function api(req, res, url) {
   if (await wholesaleHandle(req, res, url, user)) return;
 
   return send(res, 404, { error: "not_found" });
-}
-
-function sortForIpn(value) {
-  if (Array.isArray(value)) return value.map(sortForIpn);
-  if (!value || typeof value !== "object") return value;
-  return Object.keys(value).sort().reduce((out, key) => {
-    out[key] = sortForIpn(value[key]);
-    return out;
-  }, {});
 }
 
 const RESEARCH_FIELDS = [
@@ -2497,66 +2464,6 @@ const RESEARCH_FIELDS = [
   "Academic Research",
   "Pharmacology",
 ];
-
-function createNowPayment(order, network) {
-  const key = process.env.NOWPAYMENTS_API_KEY;
-  if (!key) {
-    return Promise.resolve({ provider: "nowpayments", status: "key_missing", message: "Payment key is not on the server." });
-  }
-  const origin = PUBLIC_ORIGIN || "https://helixkinglabs.com";
-  const payload = JSON.stringify({
-    price_amount: order.quote.total,
-    price_currency: "usd",
-    order_id: order.id,
-    order_description: "Helix King Labs research order " + order.id,
-    ipn_callback_url: origin + "/api/payments/nowpayments",
-    success_url: origin + "/account/receipt/" + order.id,
-    cancel_url: origin + "/cart",
-  });
-  return new Promise((resolve) => {
-    const req = https.request(
-      {
-        hostname: "api.nowpayments.io",
-        path: "/v1/invoice",
-        method: "POST",
-        headers: {
-          "x-api-key": key,
-          "Content-Type": "application/json",
-          "Content-Length": Buffer.byteLength(payload),
-        },
-      },
-      (res) => {
-        let raw = "";
-        res.on("data", (c) => (raw += c));
-        res.on("end", () => {
-          try {
-            const data = JSON.parse(raw);
-            resolve({
-              provider: "nowpayments",
-              status: data.invoice_url ? "awaiting_payment" : "payment_failed",
-              paymentId: data.id || null,
-              invoiceUrl: data.invoice_url || null,
-              payAmount: data.price_amount || null,
-              payCurrency: "USD",
-              network: network === "solana" ? "Solana" : "Ethereum",
-              message: data.message || data.code || null,
-              invoiceId: data.id || null,
-            });
-          } catch {
-            resolve({ provider: "nowpayments", status: "invoice_pending" });
-          }
-        });
-      }
-    );
-    req.setTimeout(8000, () => {
-      req.destroy();
-      resolve({ provider: "nowpayments", status: "invoice_pending" });
-    });
-    req.on("error", () => resolve({ provider: "nowpayments", status: "invoice_pending" }));
-    req.write(payload);
-    req.end();
-  });
-}
 
 function audit(user, action, detail) {
   store.audit = store.audit || [];
@@ -3081,100 +2988,14 @@ function sweepStaleOrders() {
   }
   if (released) saveStore(store);
   return released;
-}
-function applyPaymentStatus(order, status, body) {
-  body = body || {};
-  order.payment = Object.assign({}, order.payment, {
-    provider: "nowpayments",
-    paymentId: body.payment_id || body.invoice_id || (order.payment && order.payment.paymentId) || null,
-    invoiceId: body.invoice_id || (order.payment && order.payment.invoiceId) || null,
-    paymentStatus: status,
-    status: status || (order.payment && order.payment.status) || "",
-    payCurrency: body.pay_currency || (order.payment && order.payment.payCurrency) || null,
-    actuallyPaid: body.actually_paid != null ? body.actually_paid : order.payment && order.payment.actuallyPaid,
-    expectedAmount: body.price_amount != null ? body.price_amount : order.payment && order.payment.expectedAmount,
-  });
-  if (order.status === "voided") return { ok: true, skipped: "voided", status: order.status };
-  const paid = status === "finished" || status === "confirmed";
-  const partial = status === "partially_paid";
-
-  if (partial && !paid) {
-    const p = order.payment;
-    p.underpaidAt=p.underpaidAt||new Date().toISOString();
-    p.shortBy=Math.max(0,(p.expectedAmount||order.quote.total)-(Number(body.actually_paid)||0));
-    saveStore(store);
-    return { ok: true, status: order.status, partial: true };
-  }
-
-  if (paid && order.status !== "settled" && order.status !== "shipped") {
-    order.status = "settled";
-    order.fulfillment = "ready";
-    order.settledAt = new Date().toISOString();
-    order.events = order.events || [];
-    order.events.push({ at: new Date().toISOString(), kind: "settled", by: "nowpayments" });
-    queueMail(orderMail(order, "settled"));
-  }
-  saveStore(store);
-  return { ok: true, status: order.status };
-}
-function fetchNowPayment(paymentId) {
-  const key = process.env.NOWPAYMENTS_API_KEY;
-  return new Promise((resolve, reject) => {
-    const req = https.request(
-      {
-        hostname: "api.nowpayments.io",
-        path: "/v1/payment/" + encodeURIComponent(paymentId),
-        method: "GET",
-        headers: { "x-api-key": key },
-      },
-      (res) => {
-        let raw = "";
-        res.on("data", (c) => (raw += c));
-        res.on("end", () => {
-          try { resolve(JSON.parse(raw)); } catch (err) { reject(err); }
-        });
-      }
-    );
-    req.setTimeout(8000, () => { req.destroy(); reject(new Error("timeout")); });
-    req.on("error", reject);
-    req.end();
-  });
-}
-
-let rechecking = false;
-async function recheckPendingCrypto() {
-  if (rechecking || !process.env.NOWPAYMENTS_API_KEY) return;
-  rechecking = true;
-  try {
-    const now = Date.now();
-    for (const order of store.orders || []) {
-      if (order.status !== "awaiting_settlement" || order.paymentMethod !== "crypto") continue;
-      const pid = order.payment && order.payment.paymentId;
-      if (!pid) continue;
-      const age = now - new Date(order.created || 0).getTime();
-      if (!Number.isFinite(age) || age > 25 * 60 * 60 * 1000) continue;
-      try {
-        const data = await fetchNowPayment(pid);
-        const status = String(data.payment_status || "");
-        const known = order.payment && order.payment.paymentStatus;
-        if (status && status !== known) applyPaymentStatus(order, status, data);
-      } catch (err) {
-        console.error("auto recheck", order.id, err.message);
-      }
-    }
-  } finally {
-    rechecking = false;
-  }
-}
-
-sweepStaleOrders();
+}let rechecking = false;sweepStaleOrders();
 dailyAffiliateMaintenance();
 drainOutbox().catch(() => {});
 setInterval(() => sweepStaleOrders(), 5 * 60 * 1000);
 setInterval(() => dailyAffiliateMaintenance(), 24 * 60 * 60 * 1000);
 setInterval(() => drainOutbox().catch(() => {}), 5 * 60 * 1000);
-setInterval(() => recheckPendingCrypto().catch(() => {}), 3 * 60 * 1000);
-setTimeout(() => recheckPendingCrypto().catch(() => {}), 60 * 1000);
+setInterval(() => paymentsHandle.recheckPendingCrypto().catch(() => {}), 3 * 60 * 1000);
+setTimeout(() => paymentsHandle.recheckPendingCrypto().catch(() => {}), 60 * 1000);
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Helix King Labs storefront shell → http://0.0.0.0:${PORT}`);
