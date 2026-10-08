@@ -2298,7 +2298,7 @@
         if (!email) return toast("Enter the email first.");
         try {
           const out = await api("/api/auth/magic", { method: "POST", body: { email } });
-          toast(out.sent ? "Sign-in link sent." : "Link queued. Mail sends when orders@ is connected on the server.");
+          toast(out.sent ? "Sign-in link sent. Check your inbox — and your spam folder, just in case." : "Link queued. Mail sends when orders@ is connected on the server.");
         } catch {
           toast("Could not send the link.");
         }
