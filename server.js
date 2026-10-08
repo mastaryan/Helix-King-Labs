@@ -479,7 +479,7 @@ wholesaleHandle = createWholesale({
   store, saveStore, send, readBody, isOpsUser, products,
   saveProducts: () => { fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2)); },
 });
-paymentsHandle=createPayments({store,saveStore,send,readBody,queueMail,orderMail,audit,getPublicOrigin:()=>PUBLIC_ORIGIN||"https://helixkinglabs.com"});
+paymentsHandle=createPayments({store,saveStore,send,readBody,queueMail,orderMail:(o,k)=>mailer.orderMail(o,k),audit,getPublicOrigin:()=>PUBLIC_ORIGIN||"https://helixkinglabs.com"});
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
   const derived = crypto.scryptSync(password, salt, 32).toString("hex");
