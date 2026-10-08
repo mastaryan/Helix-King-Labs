@@ -1,6 +1,8 @@
 // Wholesale: request/approve flow, gated pricing, order windows, minimums.
 function createWholesale(deps) {
   const { store, saveStore, send, readBody, isOpsUser, products } = deps;
+  // SKUs excluded from wholesale (non-peptide / topical / CBD lines) — Ryan 2026-10-08
+  const WHOLESALE_HIDDEN_SKUS = new Set(["ALK30","H7","FSS30","SEL10","SMX10","T25","LO25","JJ1","LC30","CRN30","SCBD","CBD30"]);
   function getRequests() {
     if (!Array.isArray(store.wholesaleRequests)) store.wholesaleRequests = [];
     return store.wholesaleRequests;
@@ -87,7 +89,7 @@ function createWholesale(deps) {
         price: p.wholesalePrice != null ? p.wholesalePrice : Math.round((p.price || 0) * 0.6 * 100) / 100,
         // Group minimum: how many the GROUP must commit before this SKU is ordered
         groupMin: p.wholesaleGroupMin != null ? p.wholesaleGroupMin : null,
-        wholesaleVisible: p.wholesaleVisible !== false,
+        wholesaleVisible: p.wholesaleVisible !== false && !WHOLESALE_HIDDEN_SKUS.has(p.sku),
       }));
       // Group commitments so far (this window)
       const committed = groupCommitments();
