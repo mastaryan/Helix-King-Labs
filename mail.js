@@ -16,6 +16,16 @@ function configured() {
   return resendConfigured() || smtpConfigured();
 }
 
+// Shared email footer — Telegram + social links + team signature (Ryan 2026-10-08).
+// team: "research" (info@) or "orders" (orders@). No phone number.
+function emailFooter(team) {
+  const teamName = team === "orders" ? "Helix King Orders Team" : "Helix King Research Team";
+  return {
+    text: `\n\n—\nThanks,\n${teamName}\nhelixkinglabs.com\nTelegram: https://t.me/HKL_RESEARCH\nInstagram: @HelixKingLabs`,
+    html: `<hr style="border:none;border-top:1px solid #ddd;margin:20px 0"><p>Thanks,<br><strong>${teamName}</strong><br><a href="https://helixkinglabs.com">helixkinglabs.com</a><br><a href="https://t.me/HKL_RESEARCH">Telegram: @HKL_RESEARCH</a><br><a href="https://instagram.com/HelixKingLabs">Instagram: @HelixKingLabs</a></p>`,
+  };
+}
+
 // Resend HTTPS API — works where outbound SMTP is blocked.
 async function sendViaResend({ to, subject, text, html }) {
   const r = await fetch("https://api.resend.com/emails", {
@@ -95,19 +105,20 @@ function orderMail(order, kind, deps) {
   };
   const origin = (deps && deps.origin) || "https://helixkinglabs.com";
   const deliveredText = (deps && deps.deliveredText) ? deps.deliveredText(order) : `${order.id} is delivered. Thank you for ordering with Helix King Labs.`;
+  const footer = emailFooter("orders");
   const text = {
-    placed: `Order ${order.id} is recorded.\nTotal ${total}\n\n${lines}\n\n${payText}\n\nNothing ships until payment is confirmed. Research use only.`,
-    settled: `Payment received for ${order.id}. The order is being prepared. Nothing has shipped yet.`,
-    shipped: `${order.id} is booked${order.carrier ? " with " + order.carrier : ""}. Tracking ${order.tracking || "posts on the next note"}.`,
-    delivered: deliveredText,
-    voided: `Did you miss something? Your order ${order.id} was released before payment was confirmed, so the items are back on the shelf.\n\nRestore your cart in one tap:\n${origin + "/account/receipt/" + order.id}\n\nNothing ships until payment is confirmed. Research use only.`,
+    placed: `Order ${order.id} is recorded.\nTotal ${total}\n\n${lines}\n\n${payText}\n\nNothing ships until payment is confirmed. Research use only.${footer.text}`,
+    settled: `Payment received for ${order.id}. The order is being prepared. Nothing has shipped yet.${footer.text}`,
+    shipped: `${order.id} is booked${order.carrier ? " with " + order.carrier : ""}. Tracking ${order.tracking || "posts on the next note"}.${footer.text}`,
+    delivered: deliveredText + footer.text,
+    voided: `Did you miss something? Your order ${order.id} was released before payment was confirmed, so the items are back on the shelf.\n\nRestore your cart in one tap:\n${origin + "/account/receipt/" + order.id}\n\nNothing ships until payment is confirmed. Research use only.${footer.text}`,
   };
 
   return {
     to: order.email,
     subject: subjects[kind] || `Helix King Labs ${order.id}`,
     text: text[kind] || text.placed,
-    html: orderHtml(order),
+    html: orderHtml(order) + footer.html,
     kind,
     orderId: order.id,
     created: new Date().toISOString(),
@@ -120,11 +131,12 @@ function underpaymentMail(order, deps) {
   const shortBy = Number(order.payment && order.payment.shortBy || 0).toFixed(2);
   const paid = Number(order.payment && order.payment.actuallyPaid || 0).toFixed(2);
   const expected = Number(order.payment && order.payment.expectedAmount || order.quote && order.quote.total || 0).toFixed(2);
+  const footer = emailFooter("orders");
   return {
     to: order.email,
     subject: `Action needed: $${shortBy} short on order ${order.id} — Helix King Labs`,
-    text: `Hi there,\n\nWe received $${paid} of the $${expected} owed for order ${order.id} — you're $${shortBy} short.\n\nThis usually happens when a wallet deducts the network (gas) fee from the payment instead of adding it on top. The network fee is always on the buyer.\n\nTo fix it, send $${shortBy} to the same payment address within 120 minutes:\n${origin}/account/receipt/${order.id}\n\nIf we don't receive the rest within 120 minutes, the order will be cancelled and the items released. Any partial payment can be refunded — just reply to this email (refunds may differ by network fees).\n\n— Helix King Labs`,
-    html: `<p>Hi there,</p><p>We received <b>$${paid}</b> of the <b>$${expected}</b> owed for order <b>${order.id}</b> — you're <b>$${shortBy}</b> short.</p><p>This usually happens when a wallet deducts the network (gas) fee from the payment instead of adding it on top. The network fee is always on the buyer.</p><p>To fix it, send <b>$${shortBy}</b> to the same payment address within <b>120 minutes</b>:<br><a href="${origin}/account/receipt/${order.id}">${origin}/account/receipt/${order.id}</a></p><p>If we don't receive the rest in time, the order will be cancelled and the items released. Any partial payment can be refunded — just reply to this email (refunds may differ by network fees).</p><p>— Helix King Labs</p>`,
+    text: `Hi there,\n\nWe received $${paid} of the $${expected} owed for order ${order.id} — you're $${shortBy} short.\n\nThis usually happens when a wallet deducts the network (gas) fee from the payment instead of adding it on top. The network fee is always on the buyer.\n\nTo fix it, send $${shortBy} to the same payment address within 120 minutes:\n${origin}/account/receipt/${order.id}\n\nIf we don't receive the rest within 120 minutes, the order will be cancelled and the items released. Any partial payment can be refunded — just reply to this email (refunds may differ by network fees).\n\n— Helix King Labs${footer.text}`,
+    html: `<p>Hi there,</p><p>We received <b>$${paid}</b> of the <b>$${expected}</b> owed for order <b>${order.id}</b> — you're <b>$${shortBy}</b> short.</p><p>This usually happens when a wallet deducts the network (gas) fee from the payment instead of adding it on top. The network fee is always on the buyer.</p><p>To fix it, send <b>$${shortBy}</b> to the same payment address within <b>120 minutes</b>:<br><a href="${origin}/account/receipt/${order.id}">${origin}/account/receipt/${order.id}</a></p><p>If we don't receive the rest in time, the order will be cancelled and the items released. Any partial payment can be refunded — just reply to this email (refunds may differ by network fees).</p><p>— Helix King Labs</p>${footer.html}`,
     kind: "underpayment",
     orderId: order.id,
     created: new Date().toISOString(),
@@ -137,11 +149,12 @@ function abandonmentMail(order, deps, isFirstOrder) {
   const origin = (deps && deps.origin) || "https://helixkinglabs.com";
   const total = "$" + Number(order.quote && order.quote.total || 0).toFixed(2);
   const couponLine = isFirstOrder ? `\n\nPsst — as a first-time customer, use code HELIX10 for 10% off your first order.` : "";
+  const footer = emailFooter("orders");
   return {
     to: order.email,
     subject: `Still thinking it over? Your cart is waiting — Helix King Labs`,
-    text: `Hi there,\n\nYou started checkout for ${order.id} (${total}) but didn't finish. Your items are still in your cart:\n${origin}/cart${couponLine}\n\nStock is held for 60 minutes after checkout starts — after that, items go back on the shelf.\n\n— Helix King Labs`,
-    html: `<p>Hi there,</p><p>You started checkout for <b>${order.id}</b> (${total}) but didn't finish. Your items are still waiting:</p><p><a href="${origin}/cart">Return to your cart</a>${isFirstOrder ? `</p><p>Psst — as a first-time customer, use code <b>HELIX10</b> for 10% off your first order.` : ""}</p><p><small>Stock is held for 60 minutes after checkout starts — after that, items go back on the shelf.</small></p><p>— Helix King Labs</p>`,
+    text: `Hi there,\n\nYou started checkout for ${order.id} (${total}) but didn't finish. Your items are still in your cart:\n${origin}/cart${couponLine}\n\nStock is held for 60 minutes after checkout starts — after that, items go back on the shelf.\n\n— Helix King Labs${footer.text}`,
+    html: `<p>Hi there,</p><p>You started checkout for <b>${order.id}</b> (${total}) but didn't finish. Your items are still waiting:</p><p><a href="${origin}/cart">Return to your cart</a>${isFirstOrder ? `</p><p>Psst — as a first-time customer, use code <b>HELIX10</b> for 10% off your first order.` : ""}</p><p><small>Stock is held for 60 minutes after checkout starts — after that, items go back on the shelf.</small></p><p>— Helix King Labs</p>${footer.html}`,
     kind: "abandonment",
     orderId: order.id,
     created: new Date().toISOString(),
@@ -149,4 +162,4 @@ function abandonmentMail(order, deps, isFirstOrder) {
     attempts: 0,
   };
 }
-module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml, orderMail, underpaymentMail, abandonmentMail };
+module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml, orderMail, underpaymentMail, abandonmentMail, emailFooter };
