@@ -99,7 +99,7 @@
     }
     ctx.fillStyle = "#666666";
     ctx.font = Math.round(d.w * 0.034) + "px 'IBM Plex Sans', sans-serif";
-    ctx.fillText("Research use only · 21+", cx, d.h * 0.94);
+    ctx.fillText("Research use only · 18+", cx, d.h * 0.94);
   }
 
   async function draw() {
