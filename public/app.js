@@ -1049,14 +1049,14 @@
       }
       <p class="lede">One 10% on the cart. HELIX10 applies on a first order over $99. An affiliate code replaces it. Free shipping over $199 after discounts.</p>
       <form id="payForm" class="tool-form">
-        <input name="shipName" required value="${(state.user && state.user.name) || ""}" placeholder="Ship-to name" />
-        <input name="phone" value="${(state.user && state.user.phone) || ""}" placeholder="Phone" />
-        <input name="line1" required value="${(state.user && state.user.address && state.user.address.line1) || ""}" placeholder="Street" />
-        <input name="line2" value="${(state.user && state.user.address && state.user.address.line2) || ""}" placeholder="Suite, optional" />
-        <input name="city" required value="${(state.user && state.user.address && state.user.address.city) || ""}" placeholder="City" />
-        <input name="region" required value="${(state.user && state.user.address && state.user.address.region) || ""}" placeholder="State" />
-        <input name="postal" required value="${(state.user && state.user.address && state.user.address.postal) || ""}" placeholder="Postal code" />
-        <input name="company" required value="${(state.user && state.user.company) || ""}" placeholder="Company name" />
+        <input name="shipName" required value="${esc((state.user && state.user.name) || "")}" placeholder="Ship-to name" />
+        <input name="phone" value="${esc((state.user && state.user.phone) || "")}" placeholder="Phone" />
+        <input name="line1" required value="${esc((state.user && state.user.address && state.user.address.line1) || "")}" placeholder="Street" />
+        <input name="line2" value="${esc((state.user && state.user.address && state.user.address.line2) || "")}" placeholder="Suite, optional" />
+        <input name="city" required value="${esc((state.user && state.user.address && state.user.address.city) || "")}" placeholder="City" />
+        <input name="region" value="${esc((state.user && state.user.address && state.user.address.region) || "")}" placeholder="State" />
+        <input name="postal" value="${esc((state.user && state.user.address && state.user.address.postal) || "")}" placeholder="Postal code" />
+        <input name="company" required value="${esc((state.user && state.user.company) || "")}" placeholder="Company name" />
         <select name="researchField" required aria-label="Research field">
           ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
         </select>
