@@ -1,6 +1,12 @@
 // GA4 checkout funnel, scroll tracking, and pagehide beacon.
 (function () {
+  let trackingExcluded = false;
+  // Skip analytics for owner IPs (e.g. Ryan's mobile) so testing doesn't pollute data
+  fetch("/api/config").then((r) => r.json()).then((c) => {
+    if (c && c.trackingExcluded) trackingExcluded = true;
+  }).catch(() => {});
   function ga4(event, params) {
+    if (trackingExcluded) return;
     try {
       if (window.dataLayer) window.dataLayer.push(Object.assign({ event }, params || {}));
       if (window.gtag) window.gtag("event", event, params || {});

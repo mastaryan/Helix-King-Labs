@@ -7,7 +7,7 @@ function createFulfillment(deps) {
   const {
     products, store, saveStore, send, readBody, isOpsUser, findProduct,
     attachCertificates, writeInventoryCsv, writePricingCsv, audit,
-    PUBLIC, DATA, SHOP_HIDDEN_FAMILIES, affiliateOf, stockStatus, STOCK_THRESHOLD,
+    PUBLIC, DATA, SHOP_VISIBLE_FAMILIES, affiliateOf, stockStatus, STOCK_THRESHOLD,
     getPublicOrigin, getRequestOrigin, getEmailListHandle,
   } = deps;
 
@@ -15,8 +15,9 @@ function createFulfillment(deps) {
     if (!p) return false;
     if (p.shopVisible === false) return false;
     const fam = p.family || p.id;
-    if (SHOP_HIDDEN_FAMILIES.has(fam)) return false;
-    return true;
+    if (SHOP_VISIBLE_FAMILIES.has(fam)) return true;
+    if (Number(p.available || 0) > 0) return true;
+    return false;
   }
 
   // ---- Multi-lot inventory ----
@@ -148,7 +149,13 @@ function createFulfillment(deps) {
       if (p) orderedFamilies.add(p.family || p.id);
     }
     const fams = (products.families || []).filter(
-      (f) => f.shopVisible !== false && !SHOP_HIDDEN_FAMILIES.has(f.id) && !orderedFamilies.has(f.id)
+      (f) => {
+        if (f.shopVisible === false) return false;
+        if (SHOP_VISIBLE_FAMILIES.has(f.id)) return !orderedFamilies.has(f.id);
+        // Non-allowlisted families show if they have stock and weren't ordered
+        const hasStock = (products.items || []).some((it) => it.family === f.id && Number(it.available || 0) > 0);
+        return hasStock && !orderedFamilies.has(f.id);
+      }
     );
     const orderedCats = new Set();
     for (const fid of orderedFamilies) {
