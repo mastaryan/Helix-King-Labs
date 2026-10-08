@@ -910,30 +910,8 @@
 
   function account() {
     if (state.user) {
-      const u = state.user;
-      const addr = u.address || {};
-      return `<section class="page wrap">
-        <div class="kicker">Account</div>
-        <h1>${u.email}</h1>
-        <p class="lede">First-order code ${u.firstOrderOpen ? "HELIX10 is open on this account." : "has already been applied."}</p>
-        <form id="profileForm" class="tool-form">
-          <input name="name" value="${u.name || ""}" placeholder="Name" />
-          <input name="email" type="email" value="${u.email}" required />
-          <input name="company" value="${u.company || ""}" />
-          <select name="researchField">
-            ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${u.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
-          </select>
-          <input name="phone" value="${u.phone || ""}" placeholder="Phone, optional" />
-          <input name="line1" value="${addr.line1 || ""}" placeholder="Ship-to address" />
-          <input name="city" value="${addr.city || ""}" placeholder="City" />
-          <input name="region" value="${addr.region || ""}" placeholder="State" />
-          <input name="postal" value="${addr.postal || ""}" placeholder="Postal code" />
-          <label class="check"><input type="checkbox" name="emailOptIn" ${u.emailOptIn ? "checked" : ""} /> Lot alerts and promotions. Order mail is separate.</label>
-          <button class="btn" type="submit">Save profile</button>
-        </form>
-        <p style="margin-top:16px"><button class="btn ghost" type="button" id="passkeyAdd">Add passkey</button> <button class="btn ghost" id="logoutBtn" type="button">Sign out</button></p>
-        <div id="orderList" style="margin-top:28px"></div>
-      </section>`;
+      if (window.HKL_ACCOUNT) return window.HKL_ACCOUNT.accountHtml(state.user);
+      return `<section class="page wrap"><div class="kicker">Account</div><h1>${state.user.email}</h1><p class="lede">Loading…</p></section>`;
     }
     return `<section class="page wrap account-grid">
       <div>
@@ -2251,21 +2229,36 @@
       login.addEventListener("submit", async (e) => {
         e.preventDefault();
         const fd = new FormData(login);
+        const errEl = $("#loginErr");
         try {
           const out = await api("/api/auth/login", {
             method: "POST",
-            body: { email: fd.get("email"), password: fd.get("password") },
+            body: { email: fd.get("email"), password: fd.get("password"), totp: fd.get("totp") || undefined },
           });
           state.user = out.user;
           await loadBase();
           go("/shop");
         } catch (err) {
-          $("#loginErr").textContent = "Check the email and password.";
+          if (err.message === "totp_required") {
+            let wrap = login.querySelector("#totpWrap");
+            if (!wrap) {
+              wrap = document.createElement("div");
+              wrap.id = "totpWrap";
+              wrap.innerHTML = `<input name="totp" inputmode="numeric" placeholder="6-digit 2FA code" maxlength="6" style="margin-top:8px" />`;
+              login.querySelector("button[type=submit]").before(wrap);
+            }
+            errEl.textContent = "Enter your 2FA code to finish signing in.";
+            const ci = wrap.querySelector("input[name=totp]");
+            if (ci) ci.focus();
+          } else {
+            errEl.textContent = "Check the email and password.";
+          }
         }
       });
     }
     const logoutBtn = $("#logoutBtn");
     if (logoutBtn) {
+      if (window.HKL_2FA) window.HKL_2FA.mount();
       logoutBtn.onclick = async () => {
         await api("/api/auth/logout", { method: "POST", body: {} });
         state.user = null;
