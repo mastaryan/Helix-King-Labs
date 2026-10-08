@@ -48,11 +48,12 @@ function createFulfillment(deps) {
       }
       item.lots = legacy;
     }
-    // Backfill for lots created before qtyReleased existed.
+    // Backfill for lots created before qtyReleased / labelsCreated existed.
     for (const l of item.lots) {
       if (l.qtyReleased == null) {
         l.qtyReleased = l.certificate === "accepted" ? Math.max(0, Number(l.qtyReceived || 0)) : 0;
       }
+      if (l.labelsCreated == null) l.labelsCreated = false;
       // Rename legacy HK- lot codes to HKL- (idempotent).
       const renamed = hklLot(l.lot);
       if (renamed !== l.lot) l.lot = renamed;
@@ -104,6 +105,13 @@ function createFulfillment(deps) {
       : "pending";
   }
 
+  // Chain of custody: COA uploaded -> labels created.
+  // Returns "coa_needed" | "labels_needed" | "complete".
+  function lotStatus(l) {
+    if (!l || l.certificate !== "accepted") return "coa_needed";
+    return l.labelsCreated ? "complete" : "labels_needed";
+  }
+
   function lotView(p) {
     const lots = currentLots(p);
     return {
@@ -123,6 +131,8 @@ function createFulfillment(deps) {
         unitCost: l.unitCost != null ? Number(l.unitCost) : null,
         certificate: l.certificate || "pending",
         certificateFile: l.certificateFile || "",
+        labelsCreated: !!l.labelsCreated,
+        status: lotStatus(l),
         receivedAt: l.receivedAt || "",
       })),
     };
@@ -235,6 +245,8 @@ function createFulfillment(deps) {
           unitCost: null,
           certificate: "pending",
           certificateFile: "",
+          labelsCreated: false,
+          labelsCreatedAt: "",
           receivedAt: new Date().toISOString(),
         };
         lots.push(lot);
@@ -299,7 +311,7 @@ function createFulfillment(deps) {
       const lots = getLots(item);
       let lotRec = lots.find((l) => l.lot === lot) || lots[lots.length - 1];
       if (!lotRec) {
-        lotRec = { lot, qtyReceived: 0, qtyReleased: 0, unitCost: null, certificate: "pending", certificateFile: "", receivedAt: new Date().toISOString() };
+        lotRec = { lot, qtyReceived: 0, qtyReleased: 0, unitCost: null, certificate: "pending", certificateFile: "", labelsCreated: false, labelsCreatedAt: "", receivedAt: new Date().toISOString() };
         lots.push(lotRec);
       }
       lotRec.certificate = "accepted";
@@ -394,6 +406,32 @@ function createFulfillment(deps) {
       writePricingCsv();
       fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2));
       audit(user, "lot", `${item.sku} lot[${idx}]=${lot.lot || "-"} onHand=${body.onHand}`);
+      saveStore(store);
+      return send(res, 200, { ok: true, view: lotView(item) }) || true;
+    }
+
+    // Mark a lot's labels as created. Requires an accepted COA — the QR would
+    // point at nothing otherwise. This is the final step of the chain of custody.
+    if (method === "POST" && route === "/api/ops/lots/labels") {
+      if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+      let body;
+      try {
+        body = await readBody(req);
+      } catch {
+        return send(res, 400, { error: "bad_request" });
+      }
+      const item = findProduct(body.sku);
+      if (!item) return send(res, 404, { error: "not_found" });
+      const lots = getLots(item);
+      const lot = lots.find((l) => l.lot === String(body.lot || "").trim());
+      if (!lot) return send(res, 404, { error: "lot_not_found" });
+      if (lot.certificate !== "accepted") {
+        return send(res, 409, { error: "coa_required", message: "Upload and accept the COA for this lot before creating labels." });
+      }
+      lot.labelsCreated = true;
+      lot.labelsCreatedAt = new Date().toISOString();
+      fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2));
+      audit(user, "lot", `${item.sku} lot=${lot.lot} labels created`);
       saveStore(store);
       return send(res, 200, { ok: true, view: lotView(item) }) || true;
     }
