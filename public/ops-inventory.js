@@ -44,11 +44,14 @@
       var rMargin = st.retail != null && cost != null ? Math.round((st.retail - cost) * 100) / 100 : null;
       var first = i === 0;
       var low = l.onHand > 0 && l.onHand < 3 ? ' <span class="warn">· low</span>' : "";
+      var badge = l.status === "complete" ? '<span class="badge ok">Complete</span>'
+        : l.status === "labels_needed" ? '<span class="badge warn">Labels needed</span>'
+        : '<span class="badge err">COA needed</span>';
       return `<tr data-sku="${esc(s.sku)}" data-lotindex="${l.index}">` +
         (first ? `<td rowspan="${lots.length}"><b>${esc(s.sku)}</b></td><td rowspan="${lots.length}">${esc(s.name)} ${esc(s.size || "")}</td>` : "") +
         `<td><input class="m-lot" value="${esc(l.lot)}" placeholder="Lot code" style="width:110px" /></td>` +
         `<td><input class="m-hand" type="number" min="0" value="${l.onHand}" style="width:70px" />${low}</td>` +
-        `<td><select class="m-cert"><option value="pending"${l.certificate !== "accepted" ? " selected" : ""}>pending</option><option value="accepted"${l.certificate === "accepted" ? " selected" : ""}>accepted</option></select></td>` +
+        `<td><select class="m-cert"><option value="pending"${l.certificate !== "accepted" ? " selected" : ""}>pending</option><option value="accepted"${l.certificate === "accepted" ? " selected" : ""}>accepted</option></select><br/>${badge}</td>` +
         `<td><input class="m-cost" type="number" step="0.01" min="0" value="${cost != null ? cost : ""}" placeholder="$/vial" style="width:80px" /></td>` +
         (first ? `<td rowspan="${lots.length}"><input class="m-retail" type="number" step="0.01" min="0" value="${st.retail != null ? st.retail : ""}" style="width:80px" /></td>` : "") +
         `<td class="m-rmargin">${fmt(rMargin)}</td>` +
@@ -69,9 +72,26 @@
       `<td></td><td>${fmt(wsMarginOf(s))}</td><td></td></tr>`;
   }
 
+  function alertStrip() {
+    var coa = 0, labels = 0;
+    Object.keys(state).forEach(function (sku) {
+      (state[sku].lots || []).forEach(function (l) {
+        if (!l.lot) return;
+        if (l.status === "coa_needed") coa++;
+        else if (l.status === "labels_needed") labels++;
+      });
+    });
+    if (!coa && !labels) return "";
+    var parts = [];
+    if (coa) parts.push(`<b>${coa}</b> lot${coa === 1 ? "" : "s"} need COAs`);
+    if (labels) parts.push(`<b>${labels}</b> lot${labels === 1 ? "" : "s"} need labels`);
+    return `<div class="chain-alert"><p>⚠ Chain of custody: ${parts.join(" · ")}.</p></div>`;
+  }
+
   function tableHtml() {
     return `<h2>Inventory, lots &amp; margins</h2>
       <p class="lede">One table: lot, stock, and cost per lot; retail and wholesale pricing per SKU. Retail is per vial, wholesale is per box. Margins compute per lot — multi-lot SKUs show a blended row. Save writes the lot row and any changed SKU prices.</p>
+      ${alertStrip()}
       <div style="overflow:auto"><table class="table" id="mergedTable"><thead>
         <tr><th colspan="5"></th><th colspan="3" style="text-align:center;border-bottom:1px solid var(--line-2)">Retail — per vial</th><th colspan="2" style="text-align:center;border-bottom:1px solid var(--line-2)">Wholesale — per box</th><th></th></tr>
         <tr><th>SKU</th><th>Name</th><th>Lot</th><th>On hand</th><th>Certificate</th><th>Cost</th><th>Price</th><th>Margin</th><th>Price</th><th>Margin</th><th></th></tr>

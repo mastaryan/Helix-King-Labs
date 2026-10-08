@@ -115,17 +115,36 @@
       e.preventDefault();
       var fd = new FormData(e.target);
       var msg = box.querySelector("#intakeMsg");
+      var sku = fd.get("sku"), lot = fd.get("lot");
       try {
         var out = await api("/api/ops/intake", {
           method: "POST",
-          body: { sku: fd.get("sku"), lot: fd.get("lot"), on_hand: fd.get("on_hand"), price: fd.get("price"), unit_cost: fd.get("unit_cost") },
+          body: { sku: sku, lot: lot, on_hand: fd.get("on_hand"), price: fd.get("price"), unit_cost: fd.get("unit_cost") },
         });
         var note = `Received ${out.sku}: ${out.available} available.` +
           (out.live ? " Live on the shop." : " Not live (check COA/stock).") +
           (out.waitlistNotified ? ` ${out.waitlistNotified} waitlist email(s) sent.` : "");
-        if (msg) msg.innerHTML = `<p class="ok">${esc(note)}</p>`;
+        // Chain of custody: prompt the next step (COA upload).
+        var next = `<p class="ok">${esc(note)}</p>
+          <div class="chain-prompt"><p><b>Next:</b> lot ${esc(lot || "")} needs its COA uploaded before it can go live.</p>
+          <p><button class="btn" data-chain="coa">Upload COA now</button>
+          <button class="btn ghost" data-chain="later">Later</button></p></div>`;
+        if (msg) msg.innerHTML = next;
         toast(note);
         e.target.reset();
+        if (msg) msg.querySelector('[data-chain="coa"]').onclick = function () {
+          location.hash = "#/ops";
+          setTimeout(function () {
+            var skuI = document.querySelector('#coaForm input[name="sku"]');
+            var lotI = document.querySelector('#coaForm input[name="lot"]');
+            if (skuI) skuI.value = sku || "";
+            if (lotI) lotI.value = lot || "";
+            if (skuI) skuI.scrollIntoView({ block: "center" });
+          }, 300);
+        };
+        if (msg) msg.querySelector('[data-chain="later"]').onclick = function () {
+          msg.innerHTML = `<p class="ok">${esc(note)}</p><p class="muted">Lot ${esc(lot || "")} is flagged "COA needed" in inventory.</p>`;
+        };
       } catch (err) {
         var m = "Intake failed: " + (err.message || "error");
         if (msg) msg.innerHTML = `<p class="err">${esc(m)}</p>`;
@@ -173,9 +192,25 @@
           body: { sku: fd.get("sku"), lot: fd.get("lot"), coaData: dataUrl },
         });
         var note = `COA attached: ${out.file}.` + (out.live ? " Product is live." : " Product not live yet (check stock).");
-        if (msg) msg.innerHTML = `<p class="ok">${esc(note)}</p>`;
+        var sku = fd.get("sku"), lot = fd.get("lot");
+        // Chain of custody: prompt the next step (label creation).
+        var next = `<p class="ok">${esc(note)}</p>
+          <div class="chain-prompt"><p><b>Next:</b> lot ${esc(lot || "")} is sellable — create its vial labels.</p>
+          <p><button class="btn" data-chain="labels">Create labels now</button>
+          <button class="btn ghost" data-chain="later">Later</button></p></div>`;
+        if (msg) msg.innerHTML = next;
         toast(note);
         e.target.reset();
+        if (msg) {
+          var lb = msg.querySelector('[data-chain="labels"]');
+          if (lb) lb.onclick = function () {
+            location.href = "/tools/label?sku=" + encodeURIComponent(sku || "") + "&lot=" + encodeURIComponent(lot || "");
+          };
+          var lt = msg.querySelector('[data-chain="later"]');
+          if (lt) lt.onclick = function () {
+            msg.innerHTML = `<p class="ok">${esc(note)}</p><p class="muted">Lot ${esc(lot || "")} is flagged "Labels needed" in inventory.</p>`;
+          };
+        }
       } catch (err) {
         var m = "Upload failed: " + (err.message || "error");
         if (msg) msg.innerHTML = `<p class="err">${esc(m)}</p>`;

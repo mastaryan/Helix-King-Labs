@@ -822,3 +822,11 @@ body.has-ops-sidebar main#app {
 .acct-menu a:hover,.acct-menu button:hover{background:var(--bg-3)}
 .forgot{font-size:.85em;color:var(--muted)}
 .coa-tiles-top{margin:12px 0}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin-top:4px}
+.badge.ok{background:#123f22;color:#7ee2a0}
+.badge.warn{background:#4a3208;color:#f5c66b}
+.badge.err{background:#4a1414;color:#f28b8b}
+.chain-prompt{margin:12px 0;padding:12px;border:1px solid var(--line-2);border-radius:8px;background:var(--bg-2)}
+.chain-prompt p{margin:6px 0}
+.chain-alert{margin:12px 0;padding:10px 14px;border:1px solid #7a5b1e;border-radius:8px;background:#2a2111}
+.chain-alert p{margin:0}
