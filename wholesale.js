@@ -213,8 +213,10 @@ function createWholesale(deps) {
     if (method === "POST" && route === "/api/ops/wholesale/pricing") {
       if (!user || !isOpsUser(user)) return send(res, 403, { error: "forbidden" });
       const body = await readBody(req).catch(() => ({}));
-      const p = (products.items || []).find((x) => x.sku === body.sku);
-      if (!p) return send(res, 404, { error: "not_found" });
+      if (!body.sku) return send(res, 400, { error: "sku_required" });
+      const items = (products && products.items) || [];
+      const p = items.find((x) => x.sku === body.sku);
+      if (!p) return send(res, 404, { error: "not_found", sku: body.sku });
       if ("wholesalePrice" in body) p.wholesalePrice = body.wholesalePrice === null ? null : Math.max(0, Number(body.wholesalePrice) || 0);
       if ("wholesaleGroupMin" in body) p.wholesaleGroupMin = body.wholesaleGroupMin === null ? null : Math.max(1, Math.floor(Number(body.wholesaleGroupMin) || 5));
       if ("wholesaleVisible" in body) p.wholesaleVisible = body.wholesaleVisible === true;
