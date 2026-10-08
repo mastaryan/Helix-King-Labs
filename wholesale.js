@@ -120,6 +120,7 @@ function createWholesale(deps) {
       for (const l of lines) {
         const p = items.find((x) => x.sku === l.sku);
         if (!p) return send(res, 400, { error: "bad_sku", sku: l.sku });
+        if (WHOLESALE_HIDDEN_SKUS.has(p.sku)) return send(res, 400, { error: "not_wholesale", sku: l.sku });
         const qty = Math.max(0, Math.floor(Number(l.qty) || 0));
         if (qty <= 0) continue;
         const price = p.wholesalePrice != null ? p.wholesalePrice : Math.round((p.price || 0) * 0.6 * 100) / 100;
