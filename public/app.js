@@ -365,7 +365,14 @@
   function shop() {
     const cat = new URLSearchParams(location.search).get("cat");
     const liveFamilies = (state.catalog.families || []).filter((f) => f.shopVisible !== false);
-    const families = liveFamilies.filter((f) => !cat || f.category === cat);
+    const GLP_ORDER = ["pgl-gic1", "pgl-gi1", "pgl-g1", "pgl-el1", "cgl-1", "pgl-el1-pair", "pgl-sr1"];
+    const glpRank = (f) => {
+      const i = GLP_ORDER.indexOf(f.id);
+      return i < 0 ? 999 : i;
+    };
+    const families = liveFamilies
+      .filter((f) => !cat || f.category === cat)
+      .sort((a, b) => glpRank(a) - glpRank(b));
     const label = state.catalog.categories.find((c) => c.id === cat);
     const cats = (state.catalog.categories || []).filter((c) => c.id !== "serums" && liveFamilies.some((f) => f.category === c.id));
     return `<section class="page wrap">
