@@ -1426,16 +1426,17 @@ async function api(req, res, url) {
     if (!user) return send(res, 401, { error: "account_required" });
     let body;
     try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
-    if (typeof body.name === "string") user.name = body.name.slice(0, 80);
-    if (typeof body.company === "string") user.company = body.company.slice(0, 80) || "Independent research";
+    const clean = (s, n) => String(s || "").replace(/[<>"']/g, "").slice(0, n);
+    if (typeof body.name === "string") user.name = clean(body.name, 80);
+    if (typeof body.company === "string") user.company = clean(body.company, 80) || "Independent research";
     if (typeof body.researchField === "string" && RESEARCH_FIELDS.includes(body.researchField)) user.researchField = body.researchField;
     if (typeof body.phone === "string") user.phone = body.phone.replace(/[^0-9+() .-]/g, "").slice(0, 24);
     if (body.address && typeof body.address === "object") {
       user.address = {
-        line1: String(body.address.line1 || "").slice(0, 80),
-        city: String(body.address.city || "").slice(0, 40),
-        region: String(body.address.region || "").slice(0, 40),
-        postal: String(body.address.postal || "").slice(0, 16),
+        line1: clean(body.address.line1, 80),
+        city: clean(body.address.city, 40),
+        region: clean(body.address.region, 40),
+        postal: clean(body.address.postal, 16),
       };
     }
     if (typeof body.emailOptIn === "boolean") {
