@@ -69,6 +69,28 @@ function takeChallenge(store, key) {
   return row.challenge;
 }
 
+// Resolve the logged-in user from the hkl_sid session cookie.
+// Self-contained so auth routes don't need server.js changes.
+function sessionUserFromCookie(req, store) {
+  const jar = {};
+  for (const part of String((req.headers && req.headers.cookie) || "").split(";")) {
+    const i = part.indexOf("=");
+    if (i > 0) { try { jar[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim()); } catch (_) {} }
+  }
+  const sid = jar.hkl_sid;
+  const sess = sid && (store.sessions || []).find((s) => s.id === sid && s.exp > Date.now());
+  return (sess && (store.users || []).find((x) => x.id === sess.userId)) || null;
+}
+
+function checkPasswordLocal(password, salt, derived) {
+  try {
+    const test = crypto.scryptSync(String(password), String(salt), 32);
+    const known = Buffer.from(String(derived), "hex");
+    if (test.length !== known.length) return false;
+    return crypto.timingSafeEqual(test, known);
+  } catch (_) { return false; }
+}
+
 function verifyClient(clientDataJSON, expectedType, challenge, origin) {
   let data;
   try {
@@ -146,14 +168,7 @@ async function pwReset(req, res, url, ctx) {
   // No email round-trip: the session cookie proves identity.
   if (method === "POST" && route === "/api/auth/password/set") {
     if (limited(ip, "pwset", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
-    const jar = {};
-    for (const part of String(req.headers.cookie || "").split(";")) {
-      const i = part.indexOf("=");
-      if (i > 0) { try { jar[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim()); } catch {} }
-    }
-    const sid = jar.hkl_sid;
-    const sess = sid && (store.sessions || []).find((s) => s.id === sid && s.exp > Date.now());
-    const u = sess && store.users.find((x) => x.id === sess.userId);
+    const u = sessionUserFromCookie(req, store);
     if (!u) return send(401, { error: "auth" });
     let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
     const pw = String(body.password || "");
@@ -162,8 +177,60 @@ async function pwReset(req, res, url, ctx) {
     u.salt = h.salt; u.derived = h.derived;
     if (u.provider === "magic") u.provider = "password";
     u.providers = Array.from(new Set([].concat(u.providers || [], ["password"])));
+    u.mustChangePassword = false;
     saveStore(store);
     return send(200, { ok: true, user: publicUser(u) });
+  }
+  // Ops: reset a customer's password to a one-time temporary password.
+  // The customer is logged out everywhere and must choose a new password on next sign-in.
+  // The temp password is returned once — share it with the customer, it is never shown again.
+  if (method === "POST" && route === "/api/ops/users/password-reset") {
+    if (limited(ip, "ops-pwreset", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
+    const me = sessionUserFromCookie(req, store);
+    if (!me || !publicUser(me).isOps) return send(403, { error: "ops_only" });
+    let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
+    const id = String(body.id || "").trim();
+    const email = String(body.email || "").toLowerCase().trim();
+    const target = (store.users || []).find((u) => (id && u.id === id) || (email && String(u.email || "").toLowerCase() === email));
+    if (!target) return send(404, { error: "not_found" });
+    if (target.id === me.id) return send(400, { error: "cannot_reset_self" });
+    if (publicUser(target).isOps) return send(400, { error: "cannot_reset_ops" });
+    const temp = crypto.randomBytes(9).toString("base64url");
+    const h = hashPassword(temp);
+    target.salt = h.salt; target.derived = h.derived;
+    if (target.provider === "magic") target.provider = "password";
+    target.providers = Array.from(new Set([].concat(target.providers || [], ["password"])));
+    target.mustChangePassword = true;
+    store.sessions = (store.sessions || []).filter((s) => s.userId !== target.id);
+    saveStore(store);
+    return send(200, { ok: true, email: target.email, tempPassword: temp });
+  }
+  // Logged-in: security flags for the frontend (password set? forced change pending?).
+  if (method === "GET" && route === "/api/auth/security") {
+    const me = sessionUserFromCookie(req, store);
+    if (!me) return send(401, { error: "auth" });
+    return send(200, { ok: true, hasPassword: !!(me.salt && me.derived), mustChangePassword: !!me.mustChangePassword });
+  }
+  // Logged-in: change password. Forced resets (mustChangePassword) don't need the
+  // current password — the fresh login with the temp password already proved identity.
+  // Voluntary changes require the current password.
+  if (method === "POST" && route === "/api/auth/password/change") {
+    if (limited(ip, "pwchange", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
+    const me = sessionUserFromCookie(req, store);
+    if (!me) return send(401, { error: "auth" });
+    let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
+    const pw = String(body.password || "");
+    if (pw.length < 8 || pw.length > 72) return send(400, { error: "password_length" });
+    if (!me.mustChangePassword) {
+      if (!checkPasswordLocal(body.currentPassword, me.salt, me.derived)) return send(401, { error: "credentials" });
+    }
+    const h = hashPassword(pw);
+    me.salt = h.salt; me.derived = h.derived;
+    me.mustChangePassword = false;
+    if (me.provider === "magic") me.provider = "password";
+    me.providers = Array.from(new Set([].concat(me.providers || [], ["password"])));
+    saveStore(store);
+    return send(200, { ok: true });
   }
   return false;
 }
