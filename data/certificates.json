@@ -5,7 +5,7 @@
   "disclaimer": "Example lot records for the Helix King Labs storefront shell. Replace with live laboratory PDFs before any real release.",
   "records": [
     {
-      "lot": "HK-2701",
+      "lot": "HKL-2701",
       "productId": "RT10",
       "sku": "RT10",
       "product": "PGL-GIC1 10 mg",
@@ -23,7 +23,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2702",
+      "lot": "HKL-2702",
       "productId": "RT20",
       "sku": "RT20",
       "product": "PGL-GIC1 20 mg",
@@ -41,7 +41,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2703",
+      "lot": "HKL-2703",
       "productId": "RT30",
       "sku": "RT30",
       "product": "PGL-GIC1 30 mg",
@@ -59,7 +59,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2704",
+      "lot": "HKL-2704",
       "productId": "TR10",
       "sku": "TR10",
       "product": "PGL-GI1 10 mg",
@@ -77,7 +77,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2705",
+      "lot": "HKL-2705",
       "productId": "TR20",
       "sku": "TR20",
       "product": "PGL-GI1 20 mg",
@@ -95,7 +95,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2706",
+      "lot": "HKL-2706",
       "productId": "TR30",
       "sku": "TR30",
       "product": "PGL-GI1 30 mg",
@@ -113,7 +113,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2707",
+      "lot": "HKL-2707",
       "productId": "SM10",
       "sku": "SM10",
       "product": "PGL-G1 10 mg",
@@ -131,7 +131,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2708",
+      "lot": "HKL-2708",
       "productId": "SM20",
       "sku": "SM20",
       "product": "PGL-G1 20 mg",
@@ -149,7 +149,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2709",
+      "lot": "HKL-2709",
       "productId": "SM30",
       "sku": "SM30",
       "product": "PGL-G1 30 mg",
@@ -167,7 +167,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2710",
+      "lot": "HKL-2710",
       "productId": "5AM",
       "sku": "5AM",
       "product": "5-Amino-1MQ 5 mg",
@@ -185,7 +185,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2711",
+      "lot": "HKL-2711",
       "productId": "10AM",
       "sku": "10AM",
       "product": "5-Amino-1MQ 10 mg",
@@ -203,7 +203,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2712",
+      "lot": "HKL-2712",
       "productId": "2S10",
       "sku": "2S10",
       "product": "SS-31 10 mg",
@@ -221,7 +221,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2713",
+      "lot": "HKL-2713",
       "productId": "2S50",
       "sku": "2S50",
       "product": "SS-31 50 mg",
@@ -239,7 +239,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2611",
+      "lot": "HKL-2611",
       "productId": "BPC5",
       "sku": "BPC5",
       "product": "BPC-157 5 mg",
@@ -257,7 +257,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2714",
+      "lot": "HKL-2714",
       "productId": "BPC10",
       "sku": "BPC10",
       "product": "BPC-157 10 mg",
@@ -275,7 +275,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2715",
+      "lot": "HKL-2715",
       "productId": "TSM10",
       "sku": "TSM10",
       "product": "Tesamorelin 10 mg",
@@ -293,7 +293,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2716",
+      "lot": "HKL-2716",
       "productId": "TSM20",
       "sku": "TSM20",
       "product": "Tesamorelin 20 mg",
@@ -311,7 +311,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2607",
+      "lot": "HKL-2607",
       "productId": "NJ500",
       "sku": "NJ500",
       "product": "NAD+ 500 mg",
@@ -329,7 +329,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2717",
+      "lot": "HKL-2717",
       "productId": "NJ1000",
       "sku": "NJ1000",
       "product": "NAD+ 1000 mg",
@@ -347,7 +347,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2718",
+      "lot": "HKL-2718",
       "productId": "CGL5",
       "sku": "CGL5",
       "product": "CGL-1 5 mg",
@@ -365,7 +365,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2719",
+      "lot": "HKL-2719",
       "productId": "CGL10",
       "sku": "CGL10",
       "product": "CGL-1 10 mg",
@@ -383,15 +383,15 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2720",
+      "lot": "HKL-2720",
       "productId": "CU100",
       "sku": "CU100",
-      "product": "GHK-Cu 100 mg",
+      "product": "GHKL-Cu 100 mg",
       "tested": "2026-09-12",
       "released": "2026-09-14",
       "vialsTested": 12,
       "purity": 99.42,
-      "identity": "Consistent with GHK-Cu",
+      "identity": "Consistent with GHKL-Cu",
       "endotoxin": "Pass",
       "sterility": "Pass",
       "metals": "Pass",
@@ -401,7 +401,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2721",
+      "lot": "HKL-2721",
       "productId": "KPV5",
       "sku": "KPV5",
       "product": "KPV 5 mg",
@@ -419,7 +419,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2722",
+      "lot": "HKL-2722",
       "productId": "KPV10",
       "sku": "KPV10",
       "product": "KPV 10 mg",
@@ -437,7 +437,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2723",
+      "lot": "HKL-2723",
       "productId": "KLOW",
       "sku": "KLOW",
       "product": "KLOW 80 mg",
@@ -455,7 +455,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2724",
+      "lot": "HKL-2724",
       "productId": "GLOW",
       "sku": "GLOW",
       "product": "GLOW 70 mg",
@@ -473,7 +473,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2725",
+      "lot": "HKL-2725",
       "productId": "BB20",
       "sku": "BB20",
       "product": "Wolverine \u00b7 BPC-157 10 mg + TB-500 10 mg",
@@ -491,7 +491,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2726",
+      "lot": "HKL-2726",
       "productId": "MS10",
       "sku": "MS10",
       "product": "MOTS-c 10 mg",
@@ -509,7 +509,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2727",
+      "lot": "HKL-2727",
       "productId": "MS20",
       "sku": "MS20",
       "product": "MOTS-c 20 mg",
@@ -527,7 +527,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2728",
+      "lot": "HKL-2728",
       "productId": "H12",
       "sku": "H12",
       "product": "PGL-SR1 12 IU",
@@ -545,7 +545,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2729",
+      "lot": "HKL-2729",
       "productId": "H24",
       "sku": "H24",
       "product": "PGL-SR1 24 IU",
@@ -563,7 +563,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2730",
+      "lot": "HKL-2730",
       "productId": "H36",
       "sku": "H36",
       "product": "PGL-SR1 36 IU",
@@ -581,7 +581,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2731",
+      "lot": "HKL-2731",
       "productId": "BAC3",
       "sku": "BAC3",
       "product": "Bacteriostatic Water 3 mL",
@@ -599,7 +599,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2732",
+      "lot": "HKL-2732",
       "productId": "BAC10",
       "sku": "BAC10",
       "product": "Bacteriostatic Water 10 mL",
@@ -617,7 +617,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-S-201",
+      "lot": "HKL-S-201",
       "productId": "ALK30",
       "sku": "ALK30",
       "product": "AL-Kemi 3GHK Facial Serum 30 mL",
@@ -635,7 +635,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-S-208",
+      "lot": "HKL-S-208",
       "productId": "H7",
       "sku": "H7",
       "product": "H7 GHK/AHK Hair Serum 30 mL",
@@ -653,7 +653,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-S-214",
+      "lot": "HKL-S-214",
       "productId": "FSS30",
       "sku": "FSS30",
       "product": "Facial Snake Serum 30 mL",
@@ -671,7 +671,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-T-041",
+      "lot": "HKL-T-041",
       "productId": "T25",
       "sku": "T25",
       "product": "T2.5 GHK Infused Bio-Tallow 60 mL",
@@ -689,7 +689,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2733",
+      "lot": "HKL-2733",
       "productId": "SEL10",
       "sku": "SEL10",
       "product": "Selank Nasal Spray 10 mg / 10 mL",
@@ -707,7 +707,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2734",
+      "lot": "HKL-2734",
       "productId": "SMX10",
       "sku": "SMX10",
       "product": "Semax Nasal Spray 10 mg / 10 mL",
@@ -725,7 +725,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-N-011",
+      "lot": "HKL-N-011",
       "productId": "LO25",
       "sku": "LO25",
       "product": "Lights Out 2.5 mg melatonin complex",
@@ -743,7 +743,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-N-018",
+      "lot": "HKL-N-018",
       "productId": "JJ1",
       "sku": "JJ1",
       "product": "Joint Juice 30 mL",
@@ -761,7 +761,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-N-022",
+      "lot": "HKL-N-022",
       "productId": "LC30",
       "sku": "LC30",
       "product": "Lipo C+ 30 mL",
@@ -779,7 +779,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-N-023",
+      "lot": "HKL-N-023",
       "productId": "CRN30",
       "sku": "CRN30",
       "product": "L-Carnitine 30 mL",
@@ -797,7 +797,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-N-030",
+      "lot": "HKL-N-030",
       "productId": "SCBD",
       "sku": "SCBD",
       "product": "Sleepy CBD 30 mL",
@@ -815,7 +815,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-N-031",
+      "lot": "HKL-N-031",
       "productId": "CBD30",
       "sku": "CBD30",
       "product": "CBD 30 mL",
@@ -833,15 +833,15 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2740",
+      "lot": "HKL-2740",
       "productId": "CU50",
       "sku": "CU50",
-      "product": "GHK-Cu 50 mg",
+      "product": "GHKL-Cu 50 mg",
       "tested": "2026-09-12",
       "released": "2026-09-14",
       "vialsTested": 12,
       "purity": 99.38,
-      "identity": "Consistent with GHK-Cu",
+      "identity": "Consistent with GHKL-Cu",
       "endotoxin": "Pass",
       "sterility": "Pass",
       "metals": "Pass",
@@ -851,7 +851,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2741",
+      "lot": "HKL-2741",
       "productId": "IPA10",
       "sku": "IPA10",
       "product": "Ipamorelin 10 mg",
@@ -869,7 +869,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2742",
+      "lot": "HKL-2742",
       "productId": "IPA20",
       "sku": "IPA20",
       "product": "Ipamorelin 20 mg",
@@ -887,7 +887,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2743",
+      "lot": "HKL-2743",
       "productId": "SER5",
       "sku": "SER5",
       "product": "Sermorelin 5 mg",
@@ -905,7 +905,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2744",
+      "lot": "HKL-2744",
       "productId": "SER10",
       "sku": "SER10",
       "product": "Sermorelin 10 mg",
@@ -923,7 +923,7 @@
       "status": "Released"
     },
     {
-      "lot": "HK-2745",
+      "lot": "HKL-2745",
       "productId": "SER20",
       "sku": "SER20",
       "product": "Sermorelin 20 mg",

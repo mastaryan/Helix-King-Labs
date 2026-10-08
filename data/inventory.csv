@@ -1,69 +1,69 @@
 sku,family,name,size,lot,on_hand,reserved,available,threshold,status,notes
-RT10,pgl-gic1,PGL-GIC1,10 mg,HK-2701,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-RT15,pgl-gic1,PGL-GIC1,15 mg,HK-2748,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-RT20,pgl-gic1,PGL-GIC1,20 mg,HK-2702,10,0,10,5,in,Launch hold. On hand stays 0 until a lot is accepted.
-RT30,pgl-gic1,PGL-GIC1,30 mg,HK-2703,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-TR10,pgl-gi1,PGL-GI1,10 mg,HK-2704,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-TR15,pgl-gi1,PGL-GI1,15 mg,HK-2749,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-TR20,pgl-gi1,PGL-GI1,20 mg,HK-2705,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-TR30,pgl-gi1,PGL-GI1,30 mg,HK-2706,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-SM5,pgl-g1,PGL-G1,5 mg,HK-2750,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-SM10,pgl-g1,PGL-G1,10 mg,HK-2707,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-SM20,pgl-g1,PGL-G1,20 mg,HK-2708,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-SM30,pgl-g1,PGL-G1,30 mg,HK-2709,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-CGL5,cgl-1,CGL-1,5 mg,HK-2718,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-CGL10,cgl-1,CGL-1,10 mg,HK-2719,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-BPC5,bpc-157,BPC-157,5 mg,HK-2611,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-BPC10,bpc-157,BPC-157,10 mg,HK-2714,0,0,0,5,out,Cart test fill. Not a launch lot.
-BPC20,bpc-157,BPC-157,20 mg,HK-2751,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-TB5,tb-500,TB-500,5 mg,HK-2720,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-TB10,tb-500,TB-500,10 mg,HK-2721,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-CU50,ghk-cu,GHK-Cu,50 mg,HK-2740,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-CU100,ghk-cu,GHK-Cu,100 mg,HK-2720,0,0,0,5,out,Cart test fill. Not a launch lot.
-IPA5,ipamorelin,Ipamorelin,5 mg,HK-2752,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-IPA10,ipamorelin,Ipamorelin,10 mg,HK-2741,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-SER5,sermorelin,Sermorelin,5 mg,HK-2743,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-SER10,sermorelin,Sermorelin,10 mg,HK-2744,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-TSM5,tesamorelin,Tesamorelin,5 mg,HK-2753,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-TSM10,tesamorelin,Tesamorelin,10 mg,HK-2715,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-MS10,mots-c,MOTS-c,10 mg,HK-2726,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-MS20,mots-c,MOTS-c,20 mg,HK-2727,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-MS40,mots-c,MOTS-c,40 mg,HK-2757,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-NJ100,nad,NAD+,100 mg,HK-2754,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-NJ500,nad,NAD+,500 mg,HK-2607,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-NJ1000,nad,NAD+,1000 mg,HK-2717,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-5AM,5-amino-1mq,5-Amino-1MQ,5 mg,HK-2710,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-10AM,5-amino-1mq,5-Amino-1MQ,10 mg,HK-2711,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-50AM,5-amino-1mq,5-Amino-1MQ,50 mg,HK-2758,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-2S10,ss-31,SS-31,10 mg,HK-2712,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-2S50,ss-31,SS-31,50 mg,HK-2713,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-KPV5,kpv,KPV,5 mg,HK-2721,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-KPV10,kpv,KPV,10 mg,HK-2722,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-KPV20,kpv,KPV,20 mg,HK-2755,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-H12,pgl-sr1,PGL-SR1,12 IU,HK-2728,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-H24,pgl-sr1,PGL-SR1,24 IU,HK-2729,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-H36,pgl-sr1,PGL-SR1,36 IU,HK-2730,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-BB10,bpc-tb,Wolverine,BPC-157 5 mg + TB-500 5 mg,HK-2756,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-BB20,bpc-tb,Wolverine,BPC-157 10 mg + TB-500 10 mg,HK-2725,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-GLOW,glow,GLOW,70 mg,HK-2724,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-KLOW,klow,KLOW,80 mg,HK-2723,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-BAC3,bac-water,Bacteriostatic Water,3 mL,HK-2731,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-BAC10,bac-water,Bacteriostatic Water,10 mL,HK-2732,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-ALK30,al-kemi,AL-Kemi 3GHK Facial Serum,30 mL,HK-S-201,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-H7,h7-hair,H7 GHK/AHK Hair Serum,30 mL,HK-S-208,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-FSS30,snake-serum,Facial Snake Serum,30 mL,HK-S-214,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-SEL10,selank-ns,Selank Nasal Spray,10 mg / 10 mL,HK-2733,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-SMX10,semax-ns,Semax Nasal Spray,10 mg / 10 mL,HK-2734,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-T25,t25-tallow,T2.5 GHK Infused Bio-Tallow,60 mL,HK-T-041,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-LO25,lights-out,Lights Out,2.5 mg melatonin complex,HK-N-011,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-JJ1,joint-juice,Joint Juice,30 mL,HK-N-018,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-LC30,lipo-c,Lipo C+,30 mL,HK-N-022,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-CRN30,l-carnitine,L-Carnitine,30 mL,HK-N-023,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-SCBD,sleepy-cbd,Sleepy CBD,30 mL,HK-N-030,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-CBD30,cbd,CBD,30 mL,HK-N-031,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
-ELR5,pgl-el1,PGL-EL1,5 mg,HK-EL05,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-ELR10,pgl-el1,PGL-EL1,10 mg,HK-EL10,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-ELR5-TR10,pgl-el1-pair,PGL-EL1 + PGL-GI1,10 mg + 5 mg,HK-PR15,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-ELR5-TR20,pgl-el1-pair,PGL-EL1 + PGL-GI1,20 mg + 5 mg,HK-PR25,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-ELR10-TR20,pgl-el1-pair,PGL-EL1 + PGL-GI1,20 mg + 10 mg,HK-PR210,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
-ELR10-TR30,pgl-el1-pair,PGL-EL1 + PGL-GI1,30 mg + 10 mg,HK-PR310,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+RT10,pgl-gic1,PGL-GIC1,10 mg,HKL-2701,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+RT15,pgl-gic1,PGL-GIC1,15 mg,HKL-2748,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+RT20,pgl-gic1,PGL-GIC1,20 mg,HKL-2702,10,0,10,5,in,Launch hold. On hand stays 0 until a lot is accepted.
+RT30,pgl-gic1,PGL-GIC1,30 mg,HKL-2703,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+TR10,pgl-gi1,PGL-GI1,10 mg,HKL-2704,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+TR15,pgl-gi1,PGL-GI1,15 mg,HKL-2749,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+TR20,pgl-gi1,PGL-GI1,20 mg,HKL-2705,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+TR30,pgl-gi1,PGL-GI1,30 mg,HKL-2706,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+SM5,pgl-g1,PGL-G1,5 mg,HKL-2750,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+SM10,pgl-g1,PGL-G1,10 mg,HKL-2707,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+SM20,pgl-g1,PGL-G1,20 mg,HKL-2708,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+SM30,pgl-g1,PGL-G1,30 mg,HKL-2709,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+CGL5,cgl-1,CGL-1,5 mg,HKL-2718,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+CGL10,cgl-1,CGL-1,10 mg,HKL-2719,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+BPC5,bpc-157,BPC-157,5 mg,HKL-2611,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+BPC10,bpc-157,BPC-157,10 mg,HKL-2714,0,0,0,5,out,Cart test fill. Not a launch lot.
+BPC20,bpc-157,BPC-157,20 mg,HKL-2751,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+TB5,tb-500,TB-500,5 mg,HKL-2720,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+TB10,tb-500,TB-500,10 mg,HKL-2721,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+CU50,ghk-cu,GHKL-Cu,50 mg,HKL-2740,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+CU100,ghk-cu,GHKL-Cu,100 mg,HKL-2720,0,0,0,5,out,Cart test fill. Not a launch lot.
+IPA5,ipamorelin,Ipamorelin,5 mg,HKL-2752,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+IPA10,ipamorelin,Ipamorelin,10 mg,HKL-2741,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+SER5,sermorelin,Sermorelin,5 mg,HKL-2743,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+SER10,sermorelin,Sermorelin,10 mg,HKL-2744,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+TSM5,tesamorelin,Tesamorelin,5 mg,HKL-2753,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+TSM10,tesamorelin,Tesamorelin,10 mg,HKL-2715,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+MS10,mots-c,MOTS-c,10 mg,HKL-2726,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+MS20,mots-c,MOTS-c,20 mg,HKL-2727,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+MS40,mots-c,MOTS-c,40 mg,HKL-2757,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+NJ100,nad,NAD+,100 mg,HKL-2754,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+NJ500,nad,NAD+,500 mg,HKL-2607,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+NJ1000,nad,NAD+,1000 mg,HKL-2717,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+5AM,5-amino-1mq,5-Amino-1MQ,5 mg,HKL-2710,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+10AM,5-amino-1mq,5-Amino-1MQ,10 mg,HKL-2711,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+50AM,5-amino-1mq,5-Amino-1MQ,50 mg,HKL-2758,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+2S10,ss-31,SS-31,10 mg,HKL-2712,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+2S50,ss-31,SS-31,50 mg,HKL-2713,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+KPV5,kpv,KPV,5 mg,HKL-2721,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+KPV10,kpv,KPV,10 mg,HKL-2722,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+KPV20,kpv,KPV,20 mg,HKL-2755,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+H12,pgl-sr1,PGL-SR1,12 IU,HKL-2728,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+H24,pgl-sr1,PGL-SR1,24 IU,HKL-2729,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+H36,pgl-sr1,PGL-SR1,36 IU,HKL-2730,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+BB10,bpc-tb,Wolverine,BPC-157 5 mg + TB-500 5 mg,HKL-2756,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+BB20,bpc-tb,Wolverine,BPC-157 10 mg + TB-500 10 mg,HKL-2725,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+GLOW,glow,GLOW,70 mg,HKL-2724,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+KLOW,klow,KLOW,80 mg,HKL-2723,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+BAC3,bac-water,Bacteriostatic Water,3 mL,HKL-2731,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+BAC10,bac-water,Bacteriostatic Water,10 mL,HKL-2732,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+ALK30,al-kemi,AL-Kemi 3GHK Facial Serum,30 mL,HKL-S-201,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+H7,h7-hair,H7 GHK/AHK Hair Serum,30 mL,HKL-S-208,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+FSS30,snake-serum,Facial Snake Serum,30 mL,HKL-S-214,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+SEL10,selank-ns,Selank Nasal Spray,10 mg / 10 mL,HKL-2733,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+SMX10,semax-ns,Semax Nasal Spray,10 mg / 10 mL,HKL-2734,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+T25,t25-tallow,T2.5 GHK Infused Bio-Tallow,60 mL,HKL-T-041,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+LO25,lights-out,Lights Out,2.5 mg melatonin complex,HKL-N-011,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+JJ1,joint-juice,Joint Juice,30 mL,HKL-N-018,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+LC30,lipo-c,Lipo C+,30 mL,HKL-N-022,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+CRN30,l-carnitine,L-Carnitine,30 mL,HKL-N-023,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+SCBD,sleepy-cbd,Sleepy CBD,30 mL,HKL-N-030,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+CBD30,cbd,CBD,30 mL,HKL-N-031,0,0,0,3,out,Edit on_hand. Status recalculates on save / order.
+ELR5,pgl-el1,PGL-EL1,5 mg,HKL-EL05,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+ELR10,pgl-el1,PGL-EL1,10 mg,HKL-EL10,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+ELR5-TR10,pgl-el1-pair,PGL-EL1 + PGL-GI1,10 mg + 5 mg,HKL-PR15,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+ELR5-TR20,pgl-el1-pair,PGL-EL1 + PGL-GI1,20 mg + 5 mg,HKL-PR25,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+ELR10-TR20,pgl-el1-pair,PGL-EL1 + PGL-GI1,20 mg + 10 mg,HKL-PR210,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.
+ELR10-TR30,pgl-el1-pair,PGL-EL1 + PGL-GI1,30 mg + 10 mg,HKL-PR310,0,0,0,5,out,Launch hold. On hand stays 0 until a lot is accepted.

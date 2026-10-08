@@ -30,6 +30,7 @@
       <p><a href="/ops/catalog" data-link>← Back to orders</a></p>
       <h2>Order ${esc(o.id)}</h2>
       <p class="lede">${esc(o.email)}${o.company ? " · " + esc(o.company) : ""} · ${esc(o.paymentMethod || "")} · ${money(q.total)}</p>
+      ${o.paymentProof ? `<div class="paybox" style="border-color:#c80"><h3>Payment proof uploaded</h3><p class="muted">Uploaded ${esc((o.paymentProof.uploadedAt || "").slice(0, 16))}. Review it below, then set the status to settled.</p><p><a href="/api/ops/proofs/${encodeURIComponent(o.id)}" target="_blank" rel="noopener"><img src="/api/ops/proofs/${encodeURIComponent(o.id)}" alt="Payment proof" style="max-width:100%;border:1px solid var(--line-2);border-radius:6px" /></a></p></div>` : ""}
       <div class="grid2">
         <div>
           <h3>Line items</h3>
@@ -92,7 +93,7 @@
   function intakeHtml() {
     return `<div class="ops-intake">
       <h2>Receive lot</h2>
-      <p class="lede">One save: stock, lot, price, cost. If the SKU was out of stock, everyone on the notify list is emailed automatically.</p>
+      <p class="lede">One save: adds a lot with stock, price, cost — history is kept, nothing is overwritten. If the SKU was out of stock, everyone on the notify list is emailed automatically.</p>
       <form id="intakeForm" class="tool-form">
         <label>SKU <input name="sku" placeholder="BPC10" required /></label>
         <label>Lot <input name="lot" placeholder="Lot code" /></label>
@@ -365,6 +366,7 @@
       ["Coupons", "coupons"],
       ["Affiliates", "affiliates"],
       ["Email list", "email"],
+      ["Payment channels", "channelDesk"],
     ];
     var aside = document.createElement("aside");
     aside.id = "opsSidebar";
