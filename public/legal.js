@@ -56,7 +56,7 @@
         {
           id: "eligibility",
           title: "Eligibility",
-          body: `<p>You must be 21 or older. The age gate is required before the catalog is shown. We may refuse or close an account that fails that standard, that is used by a minor, or that refuses the research-use acknowledgment.</p>
+          body: `<p>You must be 18 or older. The age gate is required before the catalog is shown. We may refuse or close an account that fails that standard, that is used by a minor, or that refuses the research-use acknowledgment.</p>
             <p>You represent that you are requesting documented research materials for laboratory, academic, or institutional research. You are not requesting a treatment, a clinic service, or a product for human or animal consumption.</p>`,
         },
         {
@@ -194,7 +194,7 @@
           id: "choices",
           title: "Your choices",
           body: `<p>Request access, correction, or deletion of account and list data at ${mail()}. You may close an account. You may refuse analytics cookies. You may opt out of promotional mail. Order and receipt mail for a placed order is transactional and is not the promotional list.</p>
-            <p>We do not knowingly collect information from anyone under 21. This site is 21+.</p>`,
+            <p>We do not knowingly collect information from anyone under 18. This site is 18+.</p>`,
         },
       ],
     },
@@ -313,7 +313,7 @@
         {
           id: "standard",
           title: "Standard",
-          body: `<p>You must be 21 or older. Materials are for laboratory, academic, or institutional research and identification. They are not for human dosing, injection, or ingestion. They are not for animal consumption. They are not a drug, not a dietary supplement, and not a clinic service.</p>
+          body: `<p>You must be 18 or older. Materials are for laboratory, academic, or institutional research and identification. They are not for human dosing, injection, or ingestion. They are not for animal consumption. They are not a drug, not a dietary supplement, and not a clinic service.</p>
             <p>Helix King Labs is not a clinic, not a med spa, not a pharmacy, and not a 503A or 503B facility. We do not publish protocols, doses, cycles, or stacks.</p>`,
         },
         {
