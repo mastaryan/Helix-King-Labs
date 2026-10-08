@@ -220,7 +220,11 @@ function createWholesale(deps) {
       if ("wholesalePrice" in body) p.wholesalePrice = body.wholesalePrice === null ? null : Math.max(0, Number(body.wholesalePrice) || 0);
       if ("wholesaleGroupMin" in body) p.wholesaleGroupMin = body.wholesaleGroupMin === null ? null : Math.max(1, Math.floor(Number(body.wholesaleGroupMin) || 5));
       if ("wholesaleVisible" in body) p.wholesaleVisible = body.wholesaleVisible === true;
-      if (deps.saveProducts) deps.saveProducts();
+      try {
+        if (deps.saveProducts) deps.saveProducts();
+      } catch (e) {
+        console.error("saveProducts failed:", e.message);
+      }
       return send(res, 200, { ok: true });
     }
 
