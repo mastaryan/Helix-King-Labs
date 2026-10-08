@@ -2456,8 +2456,14 @@ async function api(req, res, url) {
     const b = Buffer.from(expect);
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return send(res, 401, { error: "bad_signature" });
     const orderId = String(body.order_id || "");
-    const order = (store.orders || []).find((o) => o.id === orderId);
+    let order=null;
+    for (const id of [String(body.order_id||""),String(body.invoice_id||""),String(body.payment_id||"")].filter(Boolean)) {
+      order=(store.orders||[]).find((o)=>o.id===id||(o.payment&&(o.payment.invoiceId===id||o.payment.paymentId===id)));
+      if(order)break;
+    }
     if (!order) return send(res, 200, { ok: true, matched: false });
+    const invId = String(body.invoice_id||"");
+    if (invId && order.payment && !order.payment.invoiceId) order.payment.invoiceId = invId;
     const result = applyPaymentStatus(order, String(body.payment_status || ""), body);
     return send(res, 200, { ok: true, status: result.status, skipped: result.skipped || null });
   }
@@ -2533,6 +2539,7 @@ function createNowPayment(order, network) {
               payCurrency: "USD",
               network: network === "solana" ? "Solana" : "Ethereum",
               message: data.message || data.code || null,
+              invoiceId: data.id || null,
             });
           } catch {
             resolve({ provider: "nowpayments", status: "invoice_pending" });
@@ -3058,6 +3065,8 @@ function sweepStaleOrders() {
   let released = 0;
   for (const order of store.orders || []) {
     if (order.status !== "awaiting_settlement" || !staleAge(order)) continue;
+    if (order.wholesale) continue;
+    if (order.payment && order.payment.underpaidAt && Date.now() - new Date(order.payment.underpaidAt).getTime() < 7200000) continue;
     restoreStock(order);
     order.stockDecremented = false;
     order.status = "voided";
@@ -3066,7 +3075,7 @@ function sweepStaleOrders() {
     order.events = order.events || [];
     order.events.push({ at: new Date().toISOString(), kind: "voided", by: "sweep" });
     audit({ email: "sweep" }, "order", order.id + " stale void");
-    queueMail(mailer.orderMail(order, "voided", {origin: (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", deliveredText: fulfillHandle.deliveredText}));
+    queueMail(mailer.abandonmentMail(order, {origin: PUBLIC_ORIGIN || "https://helixkinglabs.com"}, !hasOrdered(order.userId)));
     released += 1;
   }
   if (released) saveStore(store);
@@ -3076,14 +3085,26 @@ function applyPaymentStatus(order, status, body) {
   body = body || {};
   order.payment = Object.assign({}, order.payment, {
     provider: "nowpayments",
-    paymentId: body.payment_id || (order.payment && order.payment.paymentId) || null,
+    paymentId: body.payment_id || body.invoice_id || (order.payment && order.payment.paymentId) || null,
+    invoiceId: body.invoice_id || (order.payment && order.payment.invoiceId) || null,
     paymentStatus: status,
     status: status || (order.payment && order.payment.status) || "",
     payCurrency: body.pay_currency || (order.payment && order.payment.payCurrency) || null,
     actuallyPaid: body.actually_paid != null ? body.actually_paid : order.payment && order.payment.actuallyPaid,
+    expectedAmount: body.price_amount != null ? body.price_amount : order.payment && order.payment.expectedAmount,
   });
   if (order.status === "voided") return { ok: true, skipped: "voided", status: order.status };
   const paid = status === "finished" || status === "confirmed";
+  const partial = status === "partially_paid";
+
+  if (partial && !paid) {
+    const p = order.payment;
+    p.underpaidAt=p.underpaidAt||new Date().toISOString();
+    p.shortBy=Math.max(0,(p.expectedAmount||order.quote.total)-(Number(body.actually_paid)||0));
+    saveStore(store);
+    return { ok: true, status: order.status, partial: true };
+  }
+
   if (paid && order.status !== "settled" && order.status !== "shipped") {
     order.status = "settled";
     order.fulfillment = "ready";
@@ -3148,7 +3169,7 @@ async function recheckPendingCrypto() {
 sweepStaleOrders();
 dailyAffiliateMaintenance();
 drainOutbox().catch(() => {});
-setInterval(() => sweepStaleOrders(), 60 * 60 * 1000);
+setInterval(() => sweepStaleOrders(), 5 * 60 * 1000);
 setInterval(() => dailyAffiliateMaintenance(), 24 * 60 * 60 * 1000);
 setInterval(() => drainOutbox().catch(() => {}), 5 * 60 * 1000);
 setInterval(() => recheckPendingCrypto().catch(() => {}), 3 * 60 * 1000);
