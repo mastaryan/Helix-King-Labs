@@ -1010,7 +1010,7 @@ function publicOrder(o) {
 }
 
 async function api(req, res, url) {
-  const ip = req.socket.remoteAddress || "0";
+  const ip=req.headers["cf-connecting-ip"]||req.socket.remoteAddress||"0";
   const user = sessionUser(req);
   const method = req.method;
   const route = url.pathname;
