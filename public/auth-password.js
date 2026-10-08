@@ -21,8 +21,8 @@
   var cardPending = false;
   async function injectAccountCard() {
     if (document.getElementById("setPwCard") || cardPending) return;
-    var profile = document.getElementById("profileForm");
-    if (!profile) return;
+    var slot = document.getElementById("pwSlot") || document.getElementById("profileForm");
+    if (!slot) return;
     if (!window.HKL.state || !window.HKL.state.user) return;
     cardPending = true;
     try {
@@ -49,7 +49,7 @@
       '<button class="btn" type="submit">' + (sec.hasPassword ? "Change password" : "Set password") + "</button>" +
       '<p class="hard" id="setPwNote" style="margin:0"></p>' +
       "</form>";
-    profile.after(card);
+    slot.appendChild(card);
     cardPending = false;
     card.querySelector("#setPwForm").addEventListener("submit", async function (e) {
       e.preventDefault();

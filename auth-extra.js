@@ -9,6 +9,46 @@ function b64url(buf) {
   return Buffer.from(buf).toString("base64url");
 }
 
+// ---- Customer TOTP (2FA) helpers — same algorithm as ops 2FA ----
+function b32encode(buf) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = "";
+  for (const b of buf) bits += b.toString(2).padStart(8, "0");
+  let out = "";
+  for (let i = 0; i < bits.length; i += 5) {
+    out += alphabet[parseInt(bits.slice(i, i + 5).padEnd(5, "0"), 2)];
+  }
+  return out;
+}
+function b32decode(s) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = "";
+  for (const ch of String(s).toUpperCase().replace(/=+$/, "")) {
+    const i = alphabet.indexOf(ch);
+    if (i < 0) continue;
+    bits += i.toString(2).padStart(5, "0");
+  }
+  const bytes = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+  return Buffer.from(bytes);
+}
+function totpAt(secret, when) {
+  const counter = Math.floor(when / 30000);
+  const buf = Buffer.alloc(8);
+  buf.writeUInt32BE(Math.floor(counter / 0x100000000), 0);
+  buf.writeUInt32BE(counter >>> 0, 4);
+  const hmac = crypto.createHmac("sha1", b32decode(secret)).update(buf).digest();
+  const offset = hmac[hmac.length - 1] & 0xf;
+  const code = (hmac.readUInt32BE(offset) & 0x7fffffff) % 1000000;
+  return String(code).padStart(6, "0");
+}
+function totpOk(secret, code) {
+  const want = String(code || "").replace(/\s/g, "");
+  if (!/^\d{6}$/.test(want)) return false;
+  const now = Date.now();
+  return [-1, 0, 1].some((w) => totpAt(secret, now + w * 30000) === want);
+}
+
 // Queue the message, then attempt an immediate send through the shared
 // mailer (Resend HTTPS API when RESEND_API_KEY is set, else SMTP).
 // The queued copy is marked sent on success so the 5-minute drain
@@ -232,6 +272,54 @@ async function pwReset(req, res, url, ctx) {
     saveStore(store);
     return send(200, { ok: true });
   }
+  // ---- Customer 2FA (TOTP) ----
+  // GET /api/auth/2fa/status -> { enabled }
+  if (method === "GET" && route === "/api/auth/2fa/status") {
+    const me = sessionUserFromCookie(req, store);
+    if (!me) return send(401, { error: "auth" });
+    return send(200, { enabled: !!me.totpEnabled });
+  }
+  // POST /api/auth/2fa/setup -> { secret, qr, uri } (does not enable yet)
+  if (method === "POST" && route === "/api/auth/2fa/setup") {
+    if (limited(ip, "2fa", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
+    const me = sessionUserFromCookie(req, store);
+    if (!me) return send(401, { error: "auth" });
+    me.totpPending = b32encode(crypto.randomBytes(20));
+    saveStore(store);
+    const uri = `otpauth://totp/Helix%20King%20Labs:${encodeURIComponent(me.email)}?secret=${me.totpPending}&issuer=Helix%20King%20Labs`;
+    let qr = null;
+    try {
+      const QRCode = require("qrcode");
+      qr = await QRCode.toDataURL(uri, { margin: 1, width: 220, color: { dark: "#111111", light: "#ffffff" } });
+    } catch {}
+    return send(200, { secret: me.totpPending, qr, uri });
+  }
+  // POST /api/auth/2fa/confirm { code } -> enables 2FA
+  if (method === "POST" && route === "/api/auth/2fa/confirm") {
+    if (limited(ip, "2fa", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
+    const me = sessionUserFromCookie(req, store);
+    if (!me) return send(401, { error: "auth" });
+    let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
+    if (!me.totpPending || !totpOk(me.totpPending, body.code)) return send(401, { error: "code" });
+    me.totpSecret = me.totpPending;
+    me.totpEnabled = true;
+    delete me.totpPending;
+    // Recovery codes: 8 single-use, shown once
+    me.totpRecovery = Array.from({ length: 8 }, () => crypto.randomBytes(5).toString("hex").toUpperCase());
+    saveStore(store);
+    return send(200, { ok: true, recovery: me.totpRecovery });
+  }
+  // POST /api/auth/2fa/disable { password } -> disables 2FA
+  if (method === "POST" && route === "/api/auth/2fa/disable") {
+    if (limited(ip, "2fa", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
+    const me = sessionUserFromCookie(req, store);
+    if (!me) return send(401, { error: "auth" });
+    let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
+    if (me.derived && !checkPasswordLocal(body.password, me.salt, me.derived)) return send(401, { error: "credentials" });
+    delete me.totpSecret; delete me.totpEnabled; delete me.totpPending; delete me.totpRecovery;
+    saveStore(store);
+    return send(200, { ok: true });
+  }
   return false;
 }
 
@@ -249,4 +337,5 @@ module.exports = {
   rpId,
   b64url,
   pwReset,
+  totpOk,
 };
