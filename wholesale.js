@@ -1,6 +1,9 @@
 // Wholesale: request/approve flow, gated pricing, order windows, minimums.
 function createWholesale(deps) {
-  const { store, saveStore, send, readBody, isOpsUser, products } = deps;
+  const { store, saveStore, send, readBody, isOpsUser, products, getPayments } = deps;
+  // Wholesale payment rules (Ryan 2026-10-08): orders under $500 can use
+  // Cash App, Venmo, or crypto. Orders $500+ are crypto only.
+  const WHOLESALE_CASHAPP_LIMIT = 500;
   // SKUs excluded from wholesale (non-peptide / topical / CBD lines) — Ryan 2026-10-08
   const WHOLESALE_HIDDEN_SKUS = new Set(["ALK30","H7","FSS30","SEL10","SMX10","T25","LO25","JJ1","LC30","CRN30","SCBD","CBD30"]);
   function getRequests() {
@@ -132,6 +135,11 @@ function createWholesale(deps) {
       if ((cfg.orderMinimum || 0) > 0 && total < cfg.orderMinimum) {
         return send(res, 400, { error: "below_order_minimum", minimum: cfg.orderMinimum, total: Math.round(total * 100) / 100 });
       }
+      // Payment method: cashapp/venmo only allowed under $500; $500+ is crypto only
+      const paymentMethod = ["venmo", "cashapp", "crypto"].includes(body.paymentMethod) ? body.paymentMethod : "crypto";
+      if (total >= WHOLESALE_CASHAPP_LIMIT && paymentMethod !== "crypto") {
+        return send(res, 400, { error: "crypto_only_over_limit", limit: WHOLESALE_CASHAPP_LIMIT, total: Math.round(total * 100) / 100 });
+      }
       // Create commitment (group buy style)
       const order = {
         id: "WS-" + Date.now().toString(36).toUpperCase(),
@@ -141,13 +149,40 @@ function createWholesale(deps) {
         lines: validated,
         total: Math.round(total * 100) / 100,
         status: "committed",
-        paymentMethod: body.paymentMethod || "crypto",
+        paymentMethod,
         at: now,
       };
+      if (paymentMethod === "venmo" || paymentMethod === "cashapp") {
+        order.payment = {
+          provider: paymentMethod,
+          handle: paymentMethod === "venmo" ? "fibkingpeps" : "FibKingPep",
+          status: "awaiting_confirmation",
+          surcharge: 0,
+          amount: order.total,
+          note: order.id,
+        };
+      } else {
+        // Crypto: create NOWPayments invoice immediately
+        try {
+          const payments = getPayments ? getPayments() : null;
+          if (payments && payments.createNowPayment) {
+            const inv = await payments.createNowPayment({ id: order.id, quote: { total: order.total } }, body.network);
+            order.payment = inv;
+            if (["payment_failed", "key_missing"].includes(inv.status)) {
+              return send(res, 400, { error: "payment_unavailable", message: inv.message || "Crypto payment is not available right now." });
+            }
+          }
+        } catch (err) {
+          return send(res, 400, { error: "payment_unavailable", message: "Crypto payment is not available right now." });
+        }
+      }
       if (!Array.isArray(store.orders)) store.orders = [];
       store.orders.push(order);
       saveStore(store);
-      return send(res, 200, { ok: true, order: { id: order.id, total: order.total } });
+      const out = { id: order.id, total: order.total, paymentMethod };
+      if (order.payment && order.payment.invoiceUrl) out.invoiceUrl = order.payment.invoiceUrl;
+      if (order.payment && order.payment.handle) out.paymentHandle = order.payment.handle;
+      return send(res, 200, { ok: true, order: out });
     }
 
     // Ops: list wholesale requests
