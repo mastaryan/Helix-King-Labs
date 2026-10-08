@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HKL Vial Label — Front &amp; Back</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #111; color: #eee; padding: 32px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: #999; font-size: 13px; margin-bottom: 28px; max-width: 640px; line-height: 1.6; }
+  .row { display: flex; gap: 56px; flex-wrap: wrap; align-items: flex-start; }
+  .label-wrap { text-align: center; }
+  .label-wrap p { font-size: 12px; color: #999; margin: 10px 0 0; }
+  .label-wrap p b { color: #eee; }
+  .vial-label {
+    width: 150px; height: 300px; background: #000; color: #e8e8e8;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 8px 10px; box-sizing: border-box; text-align: center;
+    border: 1px solid #333; margin: 0 auto;
+  }
+  /* FRONT — matches the website photo */
+  .vial-label.front .logo {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: #1a1a1a; border: 1px solid #444;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #888; margin-bottom: 10px; margin-top: 18px;
+  }
+  .vial-label.front .pname { font-size: 20px; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+  .vial-label.front .amt { font-size: 14px; color: #ccc; margin-bottom: 12px; }
+  .vial-label.front .ruo { font-size: 10px; letter-spacing: 1px; color: #aaa; margin-top: auto; margin-bottom: 18px; }
+  /* BACK — new functional elements */
+  .vial-label.back .qr {
+    width: 96px; height: 96px; background: #fff; margin: 22px 0 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #666;
+  }
+  .vial-label.back .lot { font-size: 11px; font-family: monospace; color: #ddd; margin-bottom: 6px; }
+  .vial-label.back .site { font-size: 9px; color: #999; margin-bottom: 10px; }
+  .vial-label.back .scan { font-size: 8px; color: #777; margin-bottom: 4px; }
+  .vial-label.back .ruo { font-size: 8px; color: #666; margin-top: auto; margin-bottom: 8px; }
+  .note { margin-top: 32px; font-size: 13px; color: #999; max-width: 660px; line-height: 1.7; }
+  .note b { color: #eee; }
+</style>
+</head>
+<body>
+  <h1>Vial Label — Front &amp; Back (20 × 40 mm)</h1>
+  <p class="sub">The label wraps ~80% around a 3mL vial. Front keeps your existing branding identical to the website photos. Back carries the new functional elements.</p>
+  <div class="row">
+    <div class="label-wrap">
+      <div class="vial-label front">
+        <div class="logo">GORILLA</div>
+        <div class="pname">BPC-157</div>
+        <div class="amt">10 mg</div>
+        <div class="ruo">RESEARCH USE ONLY</div>
+      </div>
+      <p><b>FRONT</b> — unchanged from your photos</p>
+    </div>
+    <div class="label-wrap">
+      <div class="vial-label back">
+        <div class="qr">[ QR ]</div>
+        <div class="scan">SCAN FOR COA</div>
+        <div class="lot">LOT HKL-2701</div>
+        <div class="site">helixkinglabs.com</div>
+        <div class="ruo">Research use only · 21+</div>
+      </div>
+      <p><b>BACK</b> — new: QR, lot, website</p>
+    </div>
+  </div>
+  <div class="note">
+    <b>QR size:</b> yes, it has to be that large — phone cameras need roughly 15mm square minimum to scan reliably. Any smaller and customers will struggle.<br><br>
+    <b>Wrap:</b> at 20×40mm on a 3mL vial (~50mm circumference), the label covers about 80% — nearly all the way around with a small gap at the seam, which is where the back panel sits.<br><br>
+    <b>What changed vs. your photos:</b> nothing on the front. The back is new space for the QR (→ that lot's COA page), lot code, and website.
+  </div>
+</body>
+</html>
