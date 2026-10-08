@@ -14,7 +14,7 @@ function createWholesale(deps) {
     return c;
   }
   function isWholesale(user) {
-    return !!(user && (user.wholesale === true || user.role === "wholesale"));
+    return !!(user && (user.wholesale === true || user.role === "wholesale" || isOpsUser(user)));
   }
 
   // Total committed qty per SKU across all wholesale orders in the current window
