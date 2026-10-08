@@ -101,7 +101,7 @@ function table(rows, compact) {
   return `<table><thead><tr><th>Order</th><th>Buyer</th><th>Ship</th><th>Pay</th><th>Status</th><th>Total</th></tr></thead><tbody>
     ${rows.map((o) => `<tr class="pick ${state.order && state.order.id === o.id ? "on" : ""}" data-id="${o.id}">
       <td>${o.id}<div class="muted">${when(o.created)}${o.channel === "group_buy" ? " · group" : ""}</div></td>
-      <td>${o.email}<div class="muted">${o.company || o.name || ""}</div></td>
+      <td>${esc(o.email)}<div class="muted">${esc(o.company || o.name || "")}</div></td>
       <td>${shipLine(o)}</td>
       <td>${o.paymentMethod || "—"}${o.paymentStatus ? `<div class="muted">${o.paymentStatus}</div>` : ""}</td>
       <td>${pill(o.status)} ${pill(o.fulfillment)}</td>
@@ -221,8 +221,8 @@ function detail(o) {
     <p class="muted">${when(o.created)} · ${o.channel || "shop"} · ${o.email}</p>
     <div class="kv">
       <span>Status</span><div>${pill(o.status)} ${pill(o.fulfillment)}</div>
-      <span>Buyer</span><div>${o.name || "—"} · ${o.phone || "no phone"}<br>${o.company || "—"} · ${o.researchField || "—"} · ${o.researchAck ? "research ack" : "no ack"}</div>
-      <span>Ship-to</span><div>${s.line1 ? `${s.name || ""}<br>${s.line1}${s.line2 ? "<br>" + s.line2 : ""}<br>${s.city}, ${s.region} ${s.postal}` : "Missing — do not ship."}</div>
+      <span>Buyer</span><div>${esc(o.name || "—")} · ${esc(o.phone || "no phone")}<br>${esc(o.company || "—")} · ${esc(o.researchField || "—")} · ${o.researchAck ? "research ack" : "no ack"}</div>
+      <span>Ship-to</span><div>${s.line1 ? `${esc(s.name || "")}<br>${s.line1}${s.line2 ? "<br>" + s.line2 : ""}<br>${s.city}, ${s.region} ${s.postal}` : "Missing — do not ship."}</div>
       <span>Pay</span><div>${o.paymentMethod || "—"} · ${o.paymentStatus || "—"}<br>${pay.payAddress ? pay.payAmount + " " + pay.payCurrency + " · " + pay.payAddress : pay.handle ? "@" + pay.handle + " note " + o.id : ""}</div>
       <span>Money</span><div>Merch ${money(o.merchandise)} · ship ${money(o.shipping)} · code ${o.coupon || "—"} ${o.couponOff ? "−" + money(o.couponOff) : ""}<br>Total ${money(o.total)}${o.affiliateCode ? " · affiliate " + o.affiliateCode + " " + money(o.affiliatePayout) : ""}</div>
       <span>Track</span><div>${o.carrier || "—"} ${o.tracking || ""}</div>
