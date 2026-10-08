@@ -231,7 +231,7 @@ function createWholesale(deps) {
     return null;
   }
 
-  return { handle, isWholesale };
+  return handle;
 }
 
 module.exports = { createWholesale };

@@ -60,7 +60,7 @@ function createSuggestions({ store, saveStore, send, readBody, isOpsUser }) {
     return null;
   }
 
-  return { handle };
+  return handle;
 }
 
 module.exports = { createSuggestions };
