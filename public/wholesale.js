@@ -114,7 +114,8 @@
     const committed = cat.committed || {};
     const groupMinDefault = win.groupMinDefault || 5;
 
-    // Group progress bar
+    // Group progress bar — red when empty, yellow when one away, green when hit
+    const barColor = (n, t) => (n >= t ? "#2a7" : n === t - 1 ? "#eab308" : "#dc2626");
     let groupHtml = "";
     const totalCommitted = Object.values(committed).reduce((a, b) => a + b, 0);
     if (win.groupTotalTarget) {
@@ -122,7 +123,7 @@
       groupHtml = `<div class="card" style="padding:20px;margin-bottom:24px">
         <div class="kicker">Group total</div>
         <div style="font-size:24px;font-weight:700">${totalCommitted} / ${win.groupTotalTarget} vials committed</div>
-        <div style="background:#eee;border-radius:8px;height:12px;margin-top:8px"><div style="background:#2a7;width:${pct}%;height:12px;border-radius:8px"></div></div>
+        <div style="background:#eee;border-radius:8px;height:12px;margin-top:8px"><div style="background:${barColor(totalCommitted, win.groupTotalTarget)};width:${pct}%;height:12px;border-radius:8px;transition:width .3s,background .3s"></div></div>
       </div>`;
     }
 
@@ -199,7 +200,7 @@
     box.innerHTML = `
       <div style="margin:12px 0">
         <div style="font-size:13px;margin-bottom:4px">Group progress: <b>${got}/${gmin}</b> ${met ? "✓ filled" : ""}</div>
-        <div style="background:#eee;border-radius:6px;height:10px"><div style="background:${met ? "#2a7" : "#fa0"};width:${pct}%;height:10px;border-radius:6px;transition:width .3s"></div></div>
+        <div style="background:#eee;border-radius:6px;height:10px"><div style="background:${barColor(got, gmin)};width:${pct}%;height:10px;border-radius:6px;transition:width .3s,background .3s"></div></div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="font-size:18px;font-weight:700">${money(item.price)} <small class="muted">/ box of 10</small></span>
