@@ -422,14 +422,14 @@ input:focus, select:focus { border-color: var(--silver-2); }
   .grid.cats, .product, .capture, .footer-grid, .account-grid { grid-template-columns: 1fr; }
   .header { padding: 0 16px; }
 }
-#wholesaleForm, #gbGate, #gbOrder {
+#wholesaleForm, #wsRequestForm, #gbGate, #gbOrder {
   display: grid;
   gap: 16px;
   width: 100%;
   max-width: 480px;
   margin-top: 22px;
 }
-#wholesaleForm label, #gbOrder label {
+#wholesaleForm label, #wsRequestForm label, #gbOrder label {
   display: grid;
   gap: 8px;
   width: 100%;
@@ -439,7 +439,7 @@ input:focus, select:focus { border-color: var(--silver-2); }
   text-transform: uppercase;
   color: var(--muted);
 }
-#wholesaleForm input, #wholesaleForm textarea, #wholesaleForm select, #gbGate input, #gbOrder input {
+#wholesaleForm input, #wholesaleForm textarea, #wholesaleForm select, #wsRequestForm input, #wsRequestForm textarea, #wsRequestForm select, #gbGate input, #gbOrder input {
   display: block;
   width: 100%;
   min-width: 0;
