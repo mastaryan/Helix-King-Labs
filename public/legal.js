@@ -160,9 +160,11 @@
           title: "Cookies and measurement",
           body: `<ul>
               <li>Strictly necessary: session cookie, age-gate confirmation, cart. These run without an analytics opt-in.</li>
-              <li>Measurement: Google Tag Manager container GTM-KZDZHCKC loads on pages and fires Google Analytics 4 (G-6HZJNLG29P) for page views. The Meta Pixel is not installed. TikTok Pixel is not installed. A tag added later in Tag Manager will be named on this page.</li>
+              <li>Measurement: Google Tag Manager container GTM-KZDZHCKC loads on pages and fires Google Analytics 4 (G-6HZJNLG29P) for page views, checkout funnel steps (cart viewed, checkout started, shipping entered, payment selected, payment attempted, purchase completed), scroll depth milestones, and time on page. The Meta Pixel is not installed. TikTok Pixel is not installed. A tag added later in Tag Manager will be named on this page.</li>
+              <li>Session analytics: Hotjar may record anonymized session replays, heatmaps, and scroll maps to understand how visitors use the checkout. Hotjar does not capture payment details, passwords, or form field contents. You can opt out of Hotjar at <a href="https://www.hotjar.com/legal/compliance/opt-out" target="_blank" rel="noopener">hotjar.com/legal/compliance/opt-out</a>.</li>
+              <li>Exit signal: when you leave a page, a lightweight signal records the page, time spent, and cart item count (no personal data) to help us understand where visitors drop off.</li>
             </ul>
-            <p>A Global Privacy Control signal is treated as a refusal of analytics cookies.</p>`,
+            <p>A Global Privacy Control signal is treated as a refusal of analytics cookies. We do not sell personal information. Analytics data is used only to improve the site experience.</p>`,
         },
         {
           id: "why",

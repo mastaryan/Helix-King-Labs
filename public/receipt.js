@@ -73,7 +73,14 @@ function receiptView(o) {
       <p class="muted" id="restoreMsg"></p></div>`
     : `<ol class="steps">${steps.map((label, i) => `<li class="${stepDone(i) ? "done" : ""}">${label}</li>`).join("")}</ol>`;
   let payBox = "";
-  if (unpaid && o.paymentMethod === "crypto" && pay.payAddress) {
+  const underpaid = pay.paymentStatus === "partially_paid" && unpaid;
+  if (underpaid) {
+    const shortBy = Number(pay.shortBy || 0).toFixed(2);
+    const paidAmt = Number(pay.actuallyPaid || 0).toFixed(2);
+    payBox = `<div class="paybox" style="border-color:#c80"><h3>Payment short by $${shortBy}</h3>
+      <p>We received $${paidAmt} but the order total is ${HKL.money(q.total)}. Send the remaining <b>$${shortBy}</b> to the same address within 120 minutes or the order will be cancelled.</p>
+      <p class="muted">This usually happens when a wallet deducts the network fee from the payment. Network fees are always on the buyer — add a little extra to cover it.</p></div>`;
+  } else if (unpaid && o.paymentMethod === "crypto" && pay.payAddress) {
     payBox = `<div class="paybox"><h3>Complete your payment</h3>
       <p>Send <b>${esc(pay.payAmount)} ${esc(pay.payCurrency)}</b>${pay.network ? " on " + esc(pay.network) : ""} to:</p>
       <p class="codeaddr">${esc(pay.payAddress)} <button class="btn ghost" type="button" id="copyAddr">Copy</button></p>
@@ -85,7 +92,17 @@ function receiptView(o) {
       <p>Send <b>${HKL.money(q.total)}</b> on ${app} to <b>${handle}</b> and put <b>${esc(o.id)}</b> in the note.</p>
       <p class="muted">Mark the note exactly — it is how the payment is matched. Nothing ships until it is confirmed.</p></div>`;
   } else if (st === "settled") {
-    payBox = `<div class="paybox"><h3>Payment received</h3><p class="muted">The order is being prepared. Tracking posts here when the label is booked.</p></div>`;
+    payBox = `<div class="paybox" style="border-color:#2a7"><h3>✓ Thank you — payment received!</h3>
+      <p>Order <b>${esc(o.id)}</b> is confirmed and being prepared. A receipt has been emailed to you.</p>
+      <p><button class="btn ghost" type="button" onclick="window.print()">Print receipt</button>
+      <a class="btn" href="/account" data-link>Track in my account</a></p>
+      <p class="muted">Tracking posts here when the label is booked.</p></div>`;
+  } else if (st === "payment_failed") {
+    payBox = `<div class="paybox" style="border-color:#c00"><h3>Payment didn't go through</h3>
+      <p>Something went wrong with the payment for order <b>${esc(o.id)}</b>. Your items are still reserved — try again below.</p>
+      <p><button class="btn" type="button" id="retryPay">Try payment again</button></p>
+      <p class="muted" id="retryMsg"></p>
+      <p class="muted">Questions? Contact support@helixkinglabs.com with order ${esc(o.id)}.</p></div>`;
   }
   const shipView = ship.line1
     ? `${esc(ship.name || "")}<br>${esc(ship.line1)}${ship.line2 ? "<br>" + esc(ship.line2) : ""}<br>${esc(ship.city)}, ${esc(ship.region)} ${esc(ship.postal)}`

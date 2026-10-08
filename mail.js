@@ -115,4 +115,38 @@ function orderMail(order, kind, deps) {
     attempts: 0,
   };
 }
-module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml, orderMail };
+function underpaymentMail(order, deps) {
+  const origin = (deps && deps.origin) || "https://helixkinglabs.com";
+  const shortBy = Number(order.payment && order.payment.shortBy || 0).toFixed(2);
+  const paid = Number(order.payment && order.payment.actuallyPaid || 0).toFixed(2);
+  const expected = Number(order.payment && order.payment.expectedAmount || order.quote && order.quote.total || 0).toFixed(2);
+  return {
+    to: order.email,
+    subject: `Action needed: $${shortBy} short on order ${order.id} — Helix King Labs`,
+    text: `Hi there,\n\nWe received $${paid} of the $${expected} owed for order ${order.id} — you're $${shortBy} short.\n\nThis usually happens when a wallet deducts the network (gas) fee from the payment instead of adding it on top. The network fee is always on the buyer.\n\nTo fix it, send $${shortBy} to the same payment address within 120 minutes:\n${origin}/account/receipt/${order.id}\n\nIf we don't receive the rest within 120 minutes, the order will be cancelled and the items released. Any partial payment can be refunded — just reply to this email (refunds may differ by network fees).\n\n— Helix King Labs`,
+    html: `<p>Hi there,</p><p>We received <b>$${paid}</b> of the <b>$${expected}</b> owed for order <b>${order.id}</b> — you're <b>$${shortBy}</b> short.</p><p>This usually happens when a wallet deducts the network (gas) fee from the payment instead of adding it on top. The network fee is always on the buyer.</p><p>To fix it, send <b>$${shortBy}</b> to the same payment address within <b>120 minutes</b>:<br><a href="${origin}/account/receipt/${order.id}">${origin}/account/receipt/${order.id}</a></p><p>If we don't receive the rest in time, the order will be cancelled and the items released. Any partial payment can be refunded — just reply to this email (refunds may differ by network fees).</p><p>— Helix King Labs</p>`,
+    kind: "underpayment",
+    orderId: order.id,
+    created: new Date().toISOString(),
+    status: "queued",
+    attempts: 0,
+  };
+}
+
+function abandonmentMail(order, deps, isFirstOrder) {
+  const origin = (deps && deps.origin) || "https://helixkinglabs.com";
+  const total = "$" + Number(order.quote && order.quote.total || 0).toFixed(2);
+  const couponLine = isFirstOrder ? `\n\nPsst — as a first-time customer, use code HELIX10 for 10% off your first order.` : "";
+  return {
+    to: order.email,
+    subject: `Still thinking it over? Your cart is waiting — Helix King Labs`,
+    text: `Hi there,\n\nYou started checkout for ${order.id} (${total}) but didn't finish. Your items are still in your cart:\n${origin}/cart${couponLine}\n\nStock is held for 60 minutes after checkout starts — after that, items go back on the shelf.\n\n— Helix King Labs`,
+    html: `<p>Hi there,</p><p>You started checkout for <b>${order.id}</b> (${total}) but didn't finish. Your items are still waiting:</p><p><a href="${origin}/cart">Return to your cart</a>${isFirstOrder ? `</p><p>Psst — as a first-time customer, use code <b>HELIX10</b> for 10% off your first order.` : ""}</p><p><small>Stock is held for 60 minutes after checkout starts — after that, items go back on the shelf.</small></p><p>— Helix King Labs</p>`,
+    kind: "abandonment",
+    orderId: order.id,
+    created: new Date().toISOString(),
+    status: "queued",
+    attempts: 0,
+  };
+}
+module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml, orderMail, underpaymentMail, abandonmentMail };
