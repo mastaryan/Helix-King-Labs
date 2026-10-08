@@ -168,7 +168,8 @@
         <div id="wsLines"><p class="muted">Select a strength and quantity to commit.</p></div>
         <div style="font-size:20px;margin-top:12px">Total: <b id="wsGrandTotal">$0.00</b></div>
         <form id="wsOrderForm" style="margin-top:12px">
-          <p class="muted" style="margin:0 0 8px">Crypto only — payment is due immediately on commit.</p>
+          <div id="wsPayMethods" style="margin:0 0 8px"></div>
+          <p class="muted" id="wsPayNote" style="margin:0 0 8px">Crypto only — payment is due immediately on commit.</p>
           <button class="btn" type="submit" style="margin-top:4px">Commit and pay now</button>
           <p id="wsOrderNote" class="hard"></p>
         </form>
@@ -227,6 +228,34 @@
     wsPaintSummary();
   }
 
+  // Wholesale payment methods: cashapp/venmo allowed under $500, crypto only at $500+
+  const WS_CASHAPP_LIMIT = 500;
+  function wsCartTotal() {
+    let grand = 0;
+    for (const sku of Object.keys(wsCart)) {
+      const item = wsCatalog && wsCatalog.itemBySku[sku];
+      grand += (wsCart[sku] || 0) * (item ? item.price : 0);
+    }
+    return grand;
+  }
+  function wsPaintPayMethods() {
+    const box = document.getElementById("wsPayMethods");
+    const note = document.getElementById("wsPayNote");
+    if (!box) return;
+    const total = wsCartTotal();
+    const allowManual = total < WS_CASHAPP_LIMIT;
+    const prev = (document.querySelector('input[name="wsPay"]:checked') || {}).value;
+    const sel = allowManual ? (["cashapp", "venmo", "crypto"].includes(prev) ? prev : "crypto") : "crypto";
+    box.innerHTML = allowManual
+      ? `<label style="display:block;margin:4px 0"><input type="radio" name="wsPay" value="crypto" ${sel === "crypto" ? "checked" : ""}> Crypto (NOWPayments)</label>
+         <label style="display:block;margin:4px 0"><input type="radio" name="wsPay" value="cashapp" ${sel === "cashapp" ? "checked" : ""}> Cash App</label>
+         <label style="display:block;margin:4px 0"><input type="radio" name="wsPay" value="venmo" ${sel === "venmo" ? "checked" : ""}> Venmo</label>`
+      : `<p class="muted" style="margin:0">Orders $500+ are crypto only.</p><input type="hidden" name="wsPay" value="crypto">`;
+    if (note) note.textContent = allowManual
+      ? "Payment is due immediately on commit."
+      : "Crypto only on orders $500+ — payment is due immediately on commit.";
+  }
+
   function wsPaintSummary() {
     const linesBox = document.getElementById("wsLines");
     const totalBox = document.getElementById("wsGrandTotal");
@@ -251,6 +280,7 @@
       </div>`;
     }).join("");
     totalBox.textContent = money(grand);
+    wsPaintPayMethods();
   }
 
   function mountWholesalePage() {
@@ -276,16 +306,25 @@
         e.preventDefault();
         const lines = Object.keys(wsCart).map((sku) => ({ sku, qty: wsCart[sku] })).filter((l) => l.qty > 0);
         if (!lines.length) { toast("Add at least one item."); return; }
+        const paySel = document.querySelector('input[name="wsPay"]:checked');
+        const paymentMethod = paySel ? paySel.value : "crypto";
         try {
-          const r = await api("/api/wholesale/order", { method: "POST", body: { lines, paymentMethod: "crypto" } });
+          const r = await api("/api/wholesale/order", { method: "POST", body: { lines, paymentMethod } });
           ga4("wholesale_purchase", { order_id: r.order.id, value: r.order.total, currency: "USD" });
-          // Pay immediately — redirect to crypto invoice
+          // Crypto: redirect to NOWPayments invoice. Cash App/Venmo: show payment instructions.
           if (r.order && r.order.invoiceUrl) {
             location.href = r.order.invoiceUrl;
             return;
           }
-          toast("Committed — " + money(r.order.total));
-          document.getElementById("wsOrderNote").textContent = "Commitment " + r.order.id + " recorded. Complete payment to finalize.";
+          if (r.order && r.order.paymentHandle) {
+            const label = paymentMethod === "venmo" ? "Venmo" : "Cash App";
+            document.getElementById("wsOrderNote").innerHTML =
+              `Commitment <b>${escapeHtml(r.order.id)}</b> recorded (${money(r.order.total)}). ` +
+              `Send payment via ${label} to <b>${escapeHtml(r.order.paymentHandle)}</b> with note <b>${escapeHtml(r.order.id)}</b>.`;
+          } else {
+            toast("Committed — " + money(r.order.total));
+            document.getElementById("wsOrderNote").textContent = "Commitment " + r.order.id + " recorded. Complete payment to finalize.";
+          }
           Object.keys(wsCart).forEach((k) => delete wsCart[k]);
           wsPaintSummary();
           // Reset qty displays
@@ -293,6 +332,7 @@
           document.querySelectorAll(".ws-line-total").forEach((el) => { el.textContent = money(0); });
         } catch (err) {
           const msg = err.error === "below_order_minimum" ? `Order minimum is ${money(err.minimum)} — your total is ${money(err.total)}.`
+            : err.error === "crypto_only_over_limit" ? `Orders $500+ are crypto only — your total is ${money(err.total)}.`
             : err.error === "window_closed" ? "The order window is closed."
             : "Commit failed — try again.";
           document.getElementById("wsOrderNote").textContent = msg;
