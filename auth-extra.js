@@ -142,6 +142,29 @@ async function pwReset(req, res, url, ctx) {
     setSession(res, u.id);
     return send(200, { user: publicUser(u) });
   }
+  // Set (or change) a password for the currently logged-in user.
+  // No email round-trip: the session cookie proves identity.
+  if (method === "POST" && route === "/api/auth/password/set") {
+    if (limited(ip, "pwset", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
+    const jar = {};
+    for (const part of String(req.headers.cookie || "").split(";")) {
+      const i = part.indexOf("=");
+      if (i > 0) { try { jar[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim()); } catch {} }
+    }
+    const sid = jar.hkl_sid;
+    const sess = sid && (store.sessions || []).find((s) => s.id === sid && s.exp > Date.now());
+    const u = sess && store.users.find((x) => x.id === sess.userId);
+    if (!u) return send(401, { error: "auth" });
+    let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
+    const pw = String(body.password || "");
+    if (pw.length < 8 || pw.length > 72) return send(400, { error: "password_length" });
+    const h = hashPassword(pw);
+    u.salt = h.salt; u.derived = h.derived;
+    if (u.provider === "magic") u.provider = "password";
+    u.providers = Array.from(new Set([].concat(u.providers || [], ["password"])));
+    saveStore(store);
+    return send(200, { ok: true, user: publicUser(u) });
+  }
   return false;
 }
 
