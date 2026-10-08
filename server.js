@@ -1380,7 +1380,7 @@ async function api(req, res, url) {
     const sent = await authx.deliver(loadOutbox, saveOutbox, mailer.sendMail, {
       to: email,
       subject: "Helix King Labs sign-in link",
-      text: "Sign in to Helix King Labs.\n\n" + link + "\n\nThis link expires in 20 minutes. Research use only.",
+      text: "Sign in to Helix King Labs.\n\n" + link + "\n\nThis link expires in 20 minutes. Research use only." + mailer.emailFooter("research").text,
     });
     return send(res, 200, { ok: true, sent: !!sent.sent });
   }
