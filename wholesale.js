@@ -218,6 +218,14 @@ function createWholesale(deps) {
       const p = items.find((x) => x.sku === body.sku);
       if (!p) return send(res, 404, { error: "not_found", sku: body.sku });
       if ("wholesalePrice" in body) p.wholesalePrice = body.wholesalePrice === null ? null : Math.max(0, Number(body.wholesalePrice) || 0);
+      if ("rosyBoxCost" in body && body.rosyBoxCost !== "" && body.rosyBoxCost != null) {
+        const rc = Number(body.rosyBoxCost);
+        if (Number.isFinite(rc) && rc >= 0) p.rosyBoxCost = Math.round(rc * 100) / 100;
+      }
+      // First wholesale price set bootstraps the Rosy box cost (model: wholesale = Rosy + $10).
+      if (p.rosyBoxCost == null && p.wholesalePrice != null) {
+        p.rosyBoxCost = Math.round((Number(p.wholesalePrice) - 10) * 100) / 100;
+      }
       if ("wholesaleGroupMin" in body) p.wholesaleGroupMin = body.wholesaleGroupMin === null ? null : Math.max(1, Math.floor(Number(body.wholesaleGroupMin) || 5));
       if ("wholesaleVisible" in body) p.wholesaleVisible = body.wholesaleVisible === true;
       try {
