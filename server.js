@@ -1209,6 +1209,19 @@ async function api(req, res, url) {
     if (!u || !u.derived || !checkPassword(password, u.salt, u.derived)) {
       return send(res, 401, { error: "credentials" });
     }
+    // 2FA: if enabled, require TOTP code (or recovery code) before session
+    if (u.totpEnabled && u.totpSecret) {
+      const code = String(body.totp || "").replace(/\s/g, "");
+      const rec = (u.totpRecovery || []).indexOf(code.toUpperCase());
+      const ok = /^\d{6}$/.test(code) && authx.totpOk(u.totpSecret, code);
+      if (!ok && rec < 0) {
+        return send(res, 401, { error: "totp_required" });
+      }
+      if (rec >= 0) {
+        u.totpRecovery.splice(rec, 1);
+        saveStore(store);
+      }
+    }
     setSession(res, u.id);
     return send(res, 200, { user: publicUser(u) });
   }
