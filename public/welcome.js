@@ -103,7 +103,7 @@
             <a class="btn" href="/shop" data-link>Browse the catalog</a>
             <a class="btn ghost" href="/account" data-link>Create an account</a>
           </div>
-          <p class="welcome-note">21+. Research use only. An account is required to purchase. First orders over $99 take HELIX10.</p>
+          <p class="welcome-note">18+. Research use only. An account is required to purchase. First orders over $99 take HELIX10.</p>
         </div>
 
         <h2>Featured research compounds</h2>
@@ -121,7 +121,7 @@
         <h2>How ordering works</h2>
         <ol class="welcome-steps">
           <li><strong>Browse the catalog.</strong> List prices show after the age gate. Filter by category or search a compound.</li>
-          <li><strong>Create an account.</strong> Email sign-in, magic link, or passkey. 21+ and permitted-use terms required.</li>
+          <li><strong>Create an account.</strong> Email sign-in, magic link, or passkey. 18+ and permitted-use terms required.</li>
           <li><strong>Check out.</strong> Crypto via NOWPayments, or manual Venmo / Cash App. Tracking posts to your account.</li>
         </ol>
 
@@ -129,7 +129,7 @@
         <div class="welcome-faq">
           <div><h3>Are your peptides lab-tested?</h3><p>Yes. Every lot clears a written testing panel and its certificate of analysis publishes on this site before the lot ships.</p></div>
           <div><h3>How do I verify my vial?</h3><p>Scan the QR code on the vial. It opens the lot record on helixkinglabs.com with the compound, fill, and COA.</p></div>
-          <div><h3>Do I need an account to see prices?</h3><p>List prices show after the 21+ age gate. An account is required to purchase.</p></div>
+          <div><h3>Do I need an account to see prices?</h3><p>List prices show after the 18+ age gate. An account is required to purchase.</p></div>
           <div><h3>How fast is shipping?</h3><p>Orders ship dried research vials only. Tracking posts to your account when the label is created.</p></div>
           <div><h3>What is the email list for?</h3><p>Lot alerts, restocks, and group buys. One-click unsubscribe in every email. We do not sell the list.</p></div>
         </div>
@@ -143,7 +143,7 @@
           </div>
         </div>
 
-        <p class="welcome-fine">All products sold on this website are intended for research and identification purposes only. These products are not intended for human dosing, injection, or ingestion. 21+ only. Helix King Labs is not a clinic and not a pharmacy.</p>
+        <p class="welcome-fine">All products sold on this website are intended for research and identification purposes only. These products are not intended for human dosing, injection, or ingestion. 18+ only. Helix King Labs is not a clinic and not a pharmacy.</p>
       </div>
     </section>`;
   }
