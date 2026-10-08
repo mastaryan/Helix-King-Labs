@@ -4,6 +4,9 @@
 // Factory pattern matches ops-catalog.js — dependencies are injected so
 // server.js stays under the GitHub push size limit.
 
+const { emailFooter } = require("./mail");
+const LIST_FOOTER = emailFooter("research").text;
+
 function libraryEmail(email, origin, unsubToken) {
   const base = (origin || "https://helixkinglabs.com").replace(/\/$/, "");
   const unsubUrl = base + "/unsubscribe?token=" + encodeURIComponent(unsubToken || "");
@@ -35,6 +38,7 @@ function libraryEmail(email, origin, unsubToken) {
       "Not a clinic. Not a pharmacy.",
       "",
       "Unsubscribe anytime: " + unsubUrl,
+      LIST_FOOTER,
     ].join("\n"),
   };
 }
@@ -153,7 +157,8 @@ function createEmailList(deps) {
             "\n\n—\nHelix King Labs · lot alerts and promotions\nUnsubscribe anytime: " +
             origin +
             "/unsubscribe?token=" +
-            encodeURIComponent(c.unsub),
+            encodeURIComponent(c.unsub) +
+            LIST_FOOTER,
           source: "broadcast",
           created: new Date().toISOString(),
           status: "queued",
@@ -198,7 +203,7 @@ function createEmailList(deps) {
         box.messages.push({
           to: email,
           subject: `You're on the notify list — Helix King Labs`,
-          text: `Helix King Labs\n\nYou're signed up to get one email when ${sku} is back in stock.\n\nNo marketing list — just this one notification.\n\nDon't want it? Unsubscribe here:\nhttps://helixkinglabs.com/api/waitlist/unsubscribe?token=${unsubToken}\n\nResearch use only.`,
+          text: `Helix King Labs\n\nYou're signed up to get one email when ${sku} is back in stock.\n\nNo marketing list — just this one notification.\n\nDon't want it? Unsubscribe here:\nhttps://helixkinglabs.com/api/waitlist/unsubscribe?token=${unsubToken}\n\nResearch use only.${LIST_FOOTER}`,
           source: "waitlist-confirm",
           created: new Date().toISOString(),
           status: "queued",
@@ -238,6 +243,7 @@ function createEmailList(deps) {
           "Shop: " + (origin || "https://helixkinglabs.com") + "/shop",
           "",
           "You asked to be notified. Research use only.",
+          LIST_FOOTER,
         ].join("\n"),
         source: "waitlist",
         created: new Date().toISOString(),
