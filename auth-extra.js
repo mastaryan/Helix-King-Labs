@@ -184,7 +184,7 @@ async function pwReset(req, res, url, ctx) {
       const link = requestOrigin(req) + "/reset?token=" + encodeURIComponent(token);
       await deliver(loadOutbox, saveOutbox, mailer.sendMail, {
         to: email, subject: "Reset your Helix King Labs password",
-        text: "Reset your password:\n\n" + link + "\n\nThis link expires in 20 minutes. If you did not request it, ignore this email.",
+        text: "Reset your password:\n\n" + link + "\n\nThis link expires in 20 minutes. If you did not request it, ignore this email." + mailer.emailFooter("research").text,
       });
     }
     return send(200, { ok: true });
