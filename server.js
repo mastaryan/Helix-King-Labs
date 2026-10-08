@@ -498,6 +498,7 @@ suggestHandle = createSuggestions({ store, saveStore, send, readBody, isOpsUser 
 wholesaleHandle = createWholesale({
   store, saveStore, send, readBody, isOpsUser, products,
   saveProducts: () => { fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2)); },
+  getPayments: () => paymentsHandle,
 });
 paymentsHandle=createPayments({store,saveStore,send,readBody,queueMail,orderMail:(o,k)=>mailer.orderMail(o,k),audit,getPublicOrigin:()=>PUBLIC_ORIGIN||"https://helixkinglabs.com"});
 
