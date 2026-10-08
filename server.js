@@ -1035,6 +1035,14 @@ async function api(req, res, url) {
   const method = req.method;
   const route = url.pathname;
 
+  // Redirect www to apex for SEO (avoid duplicate content)
+  const host = req.headers.host || "";
+  if (host.startsWith("www.")) {
+    const apex = host.slice(4);
+    res.writeHead(301, { Location: "https://" + apex + req.url });
+    return res.end();
+  }
+
   if (method === "GET" && route === "/api/health") {
     return send(res, 200, { ok: true, brand: "Helix King Labs" });
   }
