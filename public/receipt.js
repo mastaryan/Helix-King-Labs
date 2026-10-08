@@ -58,11 +58,12 @@ function copyText(t, btn) {
 }
 
 function receiptView(o) {
-  const q = o.quote || {};
+  const isWs = !!o.wholesale;
+  const q = o.quote || (isWs ? { lines: o.lines || [], total: o.total } : {});
   const pay = o.payment || {};
   const st = o.status || "";
   const ship = o.ship || {};
-  const unpaid = st === "awaiting_settlement";
+  const unpaid = st === "awaiting_settlement" || (isWs && st === "committed" && !pay.invoiceUrl);
   const voided = st === "voided";
   const steps = ["Placed", "Paid", "Shipped", "Delivered"];
   const stepDone = (n) => (n === 0 ? true : n === 1 ? ["settled", "shipped", "delivered"].includes(st) : n === 2 ? ["shipped", "delivered"].includes(st) : st === "delivered");
@@ -104,7 +105,9 @@ function receiptView(o) {
       <p class="muted" id="retryMsg"></p>
       <p class="muted">Questions? Contact support@helixkinglabs.com with order ${esc(o.id)}.</p></div>`;
   }
-  const shipView = ship.line1
+  const shipView = isWs
+    ? `<span class="muted">Ships to your account address on file. Update it in <a href="/account" data-link>My account</a> if needed.</span>`
+    : ship.line1
     ? `${esc(ship.name || "")}<br>${esc(ship.line1)}${ship.line2 ? "<br>" + esc(ship.line2) : ""}<br>${esc(ship.city)}, ${esc(ship.region)} ${esc(ship.postal)}`
     : "Missing — the order cannot ship without it.";
   const tUrl = typeof trackUrl === "function" ? trackUrl(o.carrier, o.tracking) : null;
@@ -118,7 +121,7 @@ function receiptView(o) {
   return `<section class="page wrap">
     <div class="kicker">Order</div>
     <h1>${esc(o.id)}</h1>
-    <p class="lede">${orderWhen(o.created)} · ${orderStatusLabel(st)} · ${HKL.money(q.total)}</p>
+    <p class="lede">${orderWhen(o.created || o.at)} · ${orderStatusLabel(st)} · ${HKL.money(q.total)}</p>
     ${timeline}
     ${payBox}
     ${trackBox}

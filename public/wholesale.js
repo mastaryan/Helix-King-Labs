@@ -162,13 +162,13 @@
           </div>
         </article>`).join("")}
       </div>
-      <div class="card" id="wsSummary" style="margin-top:24px;padding:20px;position:sticky;bottom:16px;background:var(--bg-2);border:2px solid var(--line-2)">
+      <div class="card" id="wsSummary" style="margin-top:24px;padding:16px;position:sticky;bottom:16px;background:var(--bg-2);border:2px solid var(--line-2);max-height:40vh;overflow:auto" hidden>
         <h3 style="margin-top:0">Order summary</h3>
         <div id="wsLines"><p class="muted">Select a strength and quantity to commit.</p></div>
         <div style="font-size:20px;margin-top:12px">Total: <b id="wsGrandTotal">$0.00</b></div>
         <form id="wsOrderForm" style="margin-top:12px">
-          <label>Payment method <select name="wspay"><option value="crypto">Crypto (NOWPayments)</option><option value="wire">Wire / ACH</option></select></label>
-          <button class="btn" type="submit" style="margin-top:12px">Commit to group order</button>
+          <p class="muted" style="margin:0 0 8px">Crypto only — payment is due immediately on commit.</p>
+          <button class="btn" type="submit" style="margin-top:4px">Commit and pay now</button>
           <p id="wsOrderNote" class="hard"></p>
         </form>
       </div>` : ""}
@@ -229,8 +229,10 @@
   function wsPaintSummary() {
     const linesBox = document.getElementById("wsLines");
     const totalBox = document.getElementById("wsGrandTotal");
+    const summary = document.getElementById("wsSummary");
     if (!linesBox || !totalBox) return;
-    const skus = Object.keys(wsCart);
+    const skus = Object.keys(wsCart).filter((k) => wsCart[k] > 0);
+    if (summary) summary.hidden = !skus.length;
     if (!skus.length) {
       linesBox.innerHTML = `<p class="muted">Select a strength and quantity to commit.</p>`;
       totalBox.textContent = money(0);
@@ -273,12 +275,16 @@
         e.preventDefault();
         const lines = Object.keys(wsCart).map((sku) => ({ sku, qty: wsCart[sku] })).filter((l) => l.qty > 0);
         if (!lines.length) { toast("Add at least one item."); return; }
-        const fd = new FormData(form);
         try {
-          const r = await api("/api/wholesale/order", { method: "POST", body: { lines, paymentMethod: fd.get("wspay") } });
+          const r = await api("/api/wholesale/order", { method: "POST", body: { lines, paymentMethod: "crypto" } });
           ga4("wholesale_purchase", { order_id: r.order.id, value: r.order.total, currency: "USD" });
+          // Pay immediately — redirect to crypto invoice
+          if (r.order && r.order.invoiceUrl) {
+            location.href = r.order.invoiceUrl;
+            return;
+          }
           toast("Committed — " + money(r.order.total));
-          document.getElementById("wsOrderNote").textContent = "Commitment " + r.order.id + " recorded. We'll confirm once group minimums are met.";
+          document.getElementById("wsOrderNote").textContent = "Commitment " + r.order.id + " recorded. Complete payment to finalize.";
           Object.keys(wsCart).forEach((k) => delete wsCart[k]);
           wsPaintSummary();
           // Reset qty displays

@@ -13,10 +13,10 @@
       <div class="card" style="max-width:560px;margin:0 auto;padding:28px">
         <h2 style="margin-top:0">Can't find what you're looking for?</h2>
         <p class="lede">Tell us which research compound you'd like us to stock. The most requested products get priority.</p>
-        <form id="suggestForm">
-          <label>Product name<input name="sname" required placeholder="e.g. Epitalon" maxlength="120" /></label>
-          <label>Email <span class="muted">(optional — we'll notify you if we stock it)</span><input name="semail" type="email" placeholder="you@example.com" maxlength="120" /></label>
-          <label>Note <span class="muted">(optional)</span><input name="snote" placeholder="Strength, size, anything else" maxlength="500" /></label>
+        <form id="suggestForm" class="stack" style="display:grid;gap:16px">
+          <label style="display:block"><span style="display:block;margin-bottom:6px;font-weight:600">Product name</span><input name="sname" required placeholder="e.g. Epitalon" maxlength="120" style="width:100%" /></label>
+          <label style="display:block"><span style="display:block;margin-bottom:6px;font-weight:600">Email <span class="muted" style="font-weight:400">(optional — we'll notify you if we stock it)</span></span><input name="semail" type="email" placeholder="you@example.com" maxlength="120" style="width:100%" /></label>
+          <label style="display:block"><span style="display:block;margin-bottom:6px;font-weight:600">Note <span class="muted" style="font-weight:400">(optional)</span></span><input name="snote" placeholder="Strength, size, anything else" maxlength="500" style="width:100%" /></label>
           <button class="btn" type="submit">Request product</button>
           <p id="suggestNote" class="hard"></p>
         </form>
