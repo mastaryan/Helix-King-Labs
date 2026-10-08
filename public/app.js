@@ -141,7 +141,7 @@
   function ticker() {
     const lines = (state.copy && state.copy.ticker) || [
       "Certificate on every lot",
-      "21+ only",
+      "18+ only",
       "Not a clinic. Not a pharmacy.",
     ];
     const doubled = lines.concat(lines);
@@ -650,7 +650,7 @@
       <p>Lot files, use terms, and cart rules. Certificates publish when a lot clears the panel.</p>
       <h2>On file</h2>
       <ul>
-        <li><a href="/use" data-link>Permitted use</a> — 21+, research vs cosmetic, not a clinic.</li>
+        <li><a href="/use" data-link>Permitted use</a> — 18+, research vs cosmetic, not a clinic.</li>
         <li><a href="/testing" data-link>Testing methods</a> — intended 12-point panel.</li>
         <li><a href="/certificates" data-link>Certificates</a> — lot PDFs when a lot clears.</li>
         <li><a href="/terms" data-link>Terms</a> — use, purchase, and payment rails.</li>
@@ -956,7 +956,7 @@
               <option>Academic Research</option>
               <option>Pharmacology</option>
             </select>
-            <label class="check"><input type="checkbox" name="age" required /> I am 21 or older.</label>
+            <label class="check"><input type="checkbox" name="age" required /> I am 18 or older.</label>
             <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms and the refund policy. All sales are final. Documented compounds are research-only. This is not a clinic or pharmacy.</label>
             <label class="check"><input type="checkbox" name="researchAck" required /> Chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</label>
             <button class="btn" type="submit">Create account</button>
@@ -1090,9 +1090,9 @@
         <img src="/img/logo.jpg" alt="Helix King Labs" />
         <div class="kicker">Door</div>
         <p class="gate-title" id="gateTitle">Confirm before the catalog.</p>
-        <p>21+ and permitted use. Email optional. List prices are shown after this gate. An account is required to purchase.</p>
+        <p>18+ and permitted use. Email optional. List prices are shown after this gate. An account is required to purchase.</p>
         <form id="gateForm">
-          <label class="check"><input type="checkbox" name="age" required /> I am 21 or older.</label>
+          <label class="check"><input type="checkbox" name="age" required /> I am 18 or older.</label>
           <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms. Research materials stay in the lab. This is not a clinic or a pharmacy.</label>
           <input type="email" name="email" placeholder="Email (optional)" />
           <label class="check"><input type="checkbox" name="consent" /> Email me lot alerts, restocks, and group buys. Optional — uncheck to skip the list.</label>
@@ -1886,7 +1886,7 @@
       "/refunds": ["Refund and returns — Helix King Labs", "All sales final. Seven-day window for missing, incorrect, or damaged shipments."],
       "/chargebacks": ["Chargeback policy — Helix King Labs", "Contact Helix King Labs before a payment dispute. Crypto and Venmo rails."],
       "/shipping": ["Shipping policy — Helix King Labs", "Shipping $9.95. Free at $199 merchandise after discounts. Dried research vials only."],
-      "/use": ["Permitted use — Helix King Labs", "21+. Research materials only. Not for human or animal consumption."],
+      "/use": ["Permitted use — Helix King Labs", "18+. Research materials only. Not for human or animal consumption."],
       "/welcome": ["Welcome — Lab-Tested Research Peptides | Helix King Labs", "New to Helix King Labs? Browse lab-tested research peptides with lot QR codes and certificates of analysis. BPC-157, TB-500, GHK-Cu and more. Research use only."],
     };
     const row = map[p] || ["Helix King Labs", "Premium research peptides. Research use only."];
