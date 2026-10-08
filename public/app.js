@@ -1919,6 +1919,13 @@
       window.gtag("js", new Date());
       window.gtag("config", ga, { anonymize_ip: true });
     }
+    if (!document.getElementById("hkl-cs")) {
+      const s = document.createElement("script");
+      s.id = "hkl-cs";
+      s.defer = true;
+      s.src = "https://t.contentsquare.net/uxa/d9b45ed974805.js";
+      document.head.appendChild(s);
+    }
     if (pixel && !document.getElementById("hkl-meta")) {
       const s = document.createElement("script");
       s.id = "hkl-meta";
