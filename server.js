@@ -323,6 +323,16 @@ const SHOP_VISIBLE_FAMILIES = new Set([
 const TRACKING_IP_BLOCKLIST = new Set([
   "12.75.226.77", // Ryan mobile
 ]);
+// Compound names for coded product families (used as schema.org alternateName)
+const COMPOUND_NAMES = {
+  "pgl-gic1": "Retatrutide",
+  "pgl-gi1": "Tirzepatide",
+  "pgl-g1": "Semaglutide",
+  "pgl-el1": "Eloralintide",
+  "cgl-1": "Cagrilintide",
+  "pgl-el1-pair": "Eloralintide + Tirzepatide",
+  "pgl-sr1": "Semaglutide",
+};
 const INCOMING_INDEX = path.join(DATA, "coas", "incoming-index.json");
 const INCOMING_DIR = path.join(DATA, "coas", "incoming");
 const CHANNELS = path.join(DATA, "channels.json");
@@ -2756,6 +2766,7 @@ function pageModel(pathname) {
         "@context": "https://schema.org",
         "@type": "Product",
         name: fam.name,
+        ...(COMPOUND_NAMES[fam.id] ? { alternateName: COMPOUND_NAMES[fam.id] } : {}),
         brand: { "@type": "Brand", name: "Helix King Labs" },
         description: desc,
         offers: offers,
