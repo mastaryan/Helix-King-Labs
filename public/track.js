@@ -8,6 +8,8 @@
   function ga4(event, params) {
     if (trackingExcluded) return;
     try {
+      var c = window.HKL_CONSENT && window.HKL_CONSENT.get();
+      if (!c || !c.analytics) return;
       if (window.dataLayer) window.dataLayer.push(Object.assign({ event }, params || {}));
       if (window.gtag) window.gtag("event", event, params || {});
     } catch (e) {}
