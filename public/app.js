@@ -899,9 +899,10 @@
         }
         const conc = mg / ml;
         const draw = amt > 0 ? amt / conc : 0;
+        const units = draw * 100;
         out.innerHTML = `<p>Material strength</p><strong>${conc.toFixed(2)} mg/mL</strong>
-          ${amt > 0 ? `<p>Volume for ${amt} mg</p><strong>${draw.toFixed(3)} mL</strong>` : ""}
-          <p>Concentration = milligrams on the vial ÷ milliliters of diluent. Research arithmetic only. Nothing on this page is a use instruction.</p>`;
+          ${amt > 0 ? `<p>Volume for ${amt} mg</p><strong>${draw.toFixed(3)} mL</strong><p>Syringe units (U-100)</p><strong>${units.toFixed(1)} units</strong>` : ""}
+          <p>Concentration = milligrams on the vial ÷ milliliters of diluent. Units assume a U-100 insulin syringe (100 units per mL). Research arithmetic only. Nothing on this page is a use instruction.</p>`;
       };
       ["cMg", "cMl", "cAmt"].forEach((id) => {
         const el = $("#" + id);
@@ -923,8 +924,26 @@
     }
     return `<section class="page wrap account-grid">
       <div>
-        <div class="kicker">Create account</div>
-        <h1>Open the catalog.</h1>
+        <div class="kicker">Returning</div>
+        <h1>Sign in.</h1>
+        <form id="loginForm">
+          <div class="row-form" style="flex-direction:column;align-items:stretch">
+            <input name="email" type="email" placeholder="Email" required />
+            <input name="password" type="password" placeholder="Password" required />
+            <button class="btn" type="submit">Sign in</button>
+            <a href="/reset" data-link>Forgot password?</a>
+            <a href="#" id="tfaResetLink">Locked out of 2FA?</a>
+            <button class="btn ghost" type="button" id="magicBtn">Email me a link</button>
+            <button class="btn ghost" type="button" id="passkeyBtn">Passkey</button>
+            ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleLoginBtn">Continue with Google</button>` : ""}
+            ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleLoginBtn">Continue with Apple</button>` : ""}
+          </div>
+          <div class="err" id="loginErr"></div>
+        </form>
+      </div>
+      <div>
+        <div class="kicker">New here</div>
+        <h1>Create account.</h1>
         <p class="lede">List prices are on the catalog. An account is required to purchase. HELIX10 applies on a first order over $99.</p>
         <form id="regForm">
           <div class="row-form col">
@@ -950,23 +969,6 @@
             ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleBtn">Continue with Apple</button>` : ""}
           </div>
           <div class="err" id="regErr"></div>
-        </form>
-      </div>
-      <div>
-        <div class="kicker">Returning</div>
-        <h1>Sign in.</h1>
-        <form id="loginForm">
-          <div class="row-form" style="flex-direction:column;align-items:stretch">
-            <input name="email" type="email" placeholder="Email" required />
-            <input name="password" type="password" placeholder="Password" required />
-            <button class="btn" type="submit">Sign in</button>
-            <a href="/reset" data-link>Forgot password?</a>
-            <button class="btn ghost" type="button" id="magicBtn">Email me a link</button>
-            <button class="btn ghost" type="button" id="passkeyBtn">Passkey</button>
-            ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleLoginBtn">Continue with Google</button>` : ""}
-            ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleLoginBtn">Continue with Apple</button>` : ""}
-          </div>
-          <div class="err" id="loginErr"></div>
         </form>
       </div>
     </section>`;
@@ -1570,6 +1572,8 @@
       } else if (p === "/reset") { window.HKL_RESET?.();
     } else if (p === "/magic") {
         window.HKL_OPS_2FA.magicPage(app, { api, state, loadBase, go, $ });
+      } else if (p === "/reset-2fa") {
+        window.HKL_OPS_2FA.resetPage(app, { api, $ });
       } else if (p.startsWith("/account/receipt/")) {
         const id = decodeURIComponent(p.split("/")[3] || "");
         const d = await api("/api/orders");
@@ -2302,6 +2306,19 @@
         }
       };
     }
+    const tfaResetLink = $("#tfaResetLink");
+    if (tfaResetLink) tfaResetLink.onclick = async (e) => {
+      e.preventDefault();
+      const email = (document.querySelector("#loginForm input[name=email]") || {}).value || "";
+      if (!email) return toast("Enter your ops email first, then click this.");
+      if (!confirm("Email a 2FA reset link to " + email + "? It expires in 15 minutes.")) return;
+      try {
+        await api("/api/auth/ops-2fa/reset-request", { method: "POST", body: { email } });
+        toast("If that email belongs to an ops account, a reset link is on its way.");
+      } catch {
+        toast("Couldn't send it — try again in a bit.");
+      }
+    };
     async function passkeyLogin() {
       if (!window.PublicKeyCredential) return toast("This browser has no passkey.");
       const opts = await api("/api/auth/passkey/login/options", { method: "POST", body: {} });
