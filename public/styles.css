@@ -381,6 +381,10 @@ input:focus, select:focus { border-color: var(--silver-2); }
 }
 .consent p { color: var(--silver-2); font-size: 13px; line-height: 1.55; margin-bottom: 12px; }
 .consent-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.consent-toggles { display: flex; flex-direction: column; gap: 10px; margin: 0 0 12px; }
+.consent-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--silver-2); cursor: pointer; }
+.consent-row small { color: var(--muted); }
+.consent-row input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--gold, #c9a227); flex-shrink: 0; }
 .muted { color: var(--muted); }
 .hidden { display: none !important; }
 .badge.stock.low { color: #c4a15c; border-color: #c4a15c; }
