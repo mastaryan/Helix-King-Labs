@@ -93,6 +93,7 @@
     if (!res.ok) {
       const err = new Error(data.error || "request_failed");
       err.status = res.status;
+      err.data = data;
       throw err;
     }
     return data;
@@ -2257,6 +2258,9 @@
             errEl.textContent = "Enter your 2FA code to finish signing in.";
             const ci = wrap.querySelector("input[name=totp]");
             if (ci) ci.focus();
+          } else if (err.message === "totp_setup_required" && err.data && err.data.setupToken) {
+            // Ops account with no TOTP yet: walk through enrollment, then sign in again.
+            window.HKL_OPS_2FA.enroll(login, errEl, err.data.setupToken);
           } else {
             errEl.textContent = "Check the email and password.";
           }
