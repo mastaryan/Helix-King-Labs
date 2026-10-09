@@ -338,4 +338,5 @@ module.exports = {
   b64url,
   pwReset,
   totpOk,
+  b32encode,
 };
