@@ -1191,6 +1191,7 @@
       api("/api/site").catch(() => ({ channels: state.site.channels })),
     ]);
     state.user = sess.user;
+    if (window.HKL_CONSENT && sess.user && sess.user.email) window.HKL_CONSENT.identify(sess.user.email);
     loadUserCart();
     state.auth = sess.auth || state.auth;
     state.copy = copy;
@@ -1843,7 +1844,7 @@
     bindGlobal();
     bindTools();
     applyPageMeta(p);
-    renderConsent();
+    if (window.HKL_CONSENT) window.HKL_CONSENT.render();
     maybePopup();
   }
 
@@ -1868,82 +1869,6 @@
     };
     const row = map[p] || ["Helix King Labs", "Premium research peptides. Research use only."];
     setPageMeta(row[0], row[1], p === "/" ? "/" : p);
-  }
-
-  function consentState() {
-    try {
-      return JSON.parse(localStorage.getItem("hkl_consent") || "null");
-    } catch {
-      return null;
-    }
-  }
-
-  function gpcRefused() {
-    return typeof navigator !== "undefined" && navigator.globalPrivacyControl === true;
-  }
-
-  function loadMeasurement() {
-    const ga = window.HKL_GA_MEASUREMENT_ID || "";
-    const pixel = window.HKL_META_PIXEL_ID || "";
-    if (ga && !document.getElementById("hkl-ga")) {
-      const s = document.createElement("script");
-      s.id = "hkl-ga";
-      s.async = true;
-      s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(ga);
-      document.head.appendChild(s);
-      window.dataLayer = window.dataLayer || [];
-      window.gtag = function () { window.dataLayer.push(arguments); };
-      window.gtag("js", new Date());
-      window.gtag("config", ga, { anonymize_ip: true });
-    }
-    if (!document.getElementById("hkl-cs")) {
-      const s = document.createElement("script");
-      s.id = "hkl-cs";
-      s.defer = true;
-      s.src = "https://t.contentsquare.net/uxa/d9b45ed974805.js";
-      document.head.appendChild(s);
-    }
-    if (pixel && !document.getElementById("hkl-meta")) {
-      const s = document.createElement("script");
-      s.id = "hkl-meta";
-      s.text = "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','" + pixel + "');fbq('track','PageView');";
-      document.head.appendChild(s);
-    }
-  }
-
-  function renderConsent() {
-    const box = $("#consent");
-    if (!box) return;
-    let pref = consentState();
-    if (gpcRefused()) {
-      pref = { analytics: false, at: new Date().toISOString(), gpc: true };
-      localStorage.setItem("hkl_consent", JSON.stringify(pref));
-    }
-    if (pref && pref.analytics) loadMeasurement();
-    if (pref) {
-      box.classList.add("hidden");
-      box.innerHTML = "";
-      return;
-    }
-    box.classList.remove("hidden");
-    box.innerHTML = `<p>A necessary cookie keeps the gate, the cart, and the account. Optional measurement is off until you allow it. <a href="/privacy" data-link>Privacy notice</a>.</p>
-      <div class="consent-actions">
-        <button class="btn" type="button" id="cAccept">Accept analytics</button>
-        <button class="btn ghost" type="button" id="cReject">Necessary only</button>
-      </div>`;
-    if ($("#cAccept")) {
-      $("#cAccept").onclick = () => {
-        localStorage.setItem("hkl_consent", JSON.stringify({ analytics: true, at: new Date().toISOString() }));
-        loadMeasurement();
-        box.classList.add("hidden");
-      };
-    }
-    if ($("#cReject")) {
-      $("#cReject").onclick = () => {
-        localStorage.setItem("hkl_consent", JSON.stringify({ analytics: false, at: new Date().toISOString() }));
-        box.classList.add("hidden");
-      };
-    }
   }
 
   function bindGlobal() {
