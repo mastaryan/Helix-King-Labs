@@ -12,6 +12,9 @@
 
   function countdownHtml(endIso) {
     if (!endIso) return "";
+
+  // Group progress bar color — red when empty, yellow when one away, green when hit
+  function barColor(n, t) { return n >= t ? "#2a7" : n === t - 1 ? "#eab308" : "#dc2626"; }
     return `<div class="card" style="text-align:center;padding:20px;margin-bottom:24px">
       <div class="kicker">Order window closes in</div>
       <div id="wsCountdown" style="font-size:32px;font-weight:700" data-end="${endIso}">—</div>
@@ -114,8 +117,6 @@
     const committed = cat.committed || {};
     const groupMinDefault = win.groupMinDefault || 5;
 
-    // Group progress bar — red when empty, yellow when one away, green when hit
-    const barColor = (n, t) => (n >= t ? "#2a7" : n === t - 1 ? "#eab308" : "#dc2626");
     let groupHtml = "";
     const totalCommitted = Object.values(committed).reduce((a, b) => a + b, 0);
     if (win.groupTotalTarget) {
