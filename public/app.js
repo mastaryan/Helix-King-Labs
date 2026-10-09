@@ -1005,10 +1005,14 @@
           })
           .join("")
       : "";
+    const shipBar = window.HKL_CART_UI.shipBar(quote);
+    const upsell = window.HKL_CART_UI.upsell(state);
     return `<section class="page wrap">
       <div class="kicker">Cart rules</div>
       <h1>Review</h1>
+      ${shipBar}
       <div class="cart-lines">${lines}</div>
+      ${upsell}
       <div class="totals">
         <div><span>Subtotal</span><span>${money(quote.subtotal)}</span></div>
         <div><span>${
@@ -1565,24 +1569,7 @@
         app.innerHTML = policy("affiliates");
       } else if (p === "/reset") { window.HKL_RESET?.();
     } else if (p === "/magic") {
-        const token = new URLSearchParams(location.search).get("token") || "";
-        app.innerHTML = `<section class="page wrap"><h1>Signing in</h1><p class="lede" id="magicMsg">Checking the link.</p></section>`;
-        if (!token) {
-          $("#magicMsg").textContent = "This link is missing a token.";
-        } else {
-          api("/api/auth/magic/consume", { method: "POST", body: { token } })
-            .then(async (out) => {
-              state.user = out.user;
-              state.gateOk = true;
-              localStorage.setItem("hkl_gate", "1");
-              await loadBase();
-              go("/account");
-            })
-            .catch(() => {
-              const msg = $("#magicMsg");
-              if (msg) msg.textContent = "This link is expired or already used.";
-            });
-        }
+        window.HKL_OPS_2FA.magicPage(app, { api, state, loadBase, go, $ });
       } else if (p.startsWith("/account/receipt/")) {
         const id = decodeURIComponent(p.split("/")[3] || "");
         const d = await api("/api/orders");
@@ -1603,7 +1590,7 @@
               };
               const card = (o, timeline) => `<div class="order-card">
                 <div class="order-card-head"><a href="/account/receipt/${escA(o.id)}" data-link><b>${escA(o.id)}</b></a><span class="status-pill st-${escA(o.status || "na")}">${orderStatusLabel(o.status)}</span></div>
-                <div class="muted">${escA((o.created || "").slice(0, 10))} · ${money(o.quote && o.quote.total)}</div>
+                <div class="muted">${escA((o.created || "").slice(0, 10)) || "—"} · ${money(o.quote && o.quote.total) || "—"}</div>
                 ${o.tracking ? `<div class="order-track">Tracking ${tLink(o)}</div>` : ""}
                 ${timeline ? orderTimeline(o) : ""}
               </div>`;
@@ -2325,12 +2312,18 @@
         userVerification: opts.userVerification,
       }});
       const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-      const out = await api("/api/auth/passkey/login", { method: "POST", body: {
-        id: cred.id,
-        clientDataJSON: b64(cred.response.clientDataJSON),
-        authenticatorData: b64(cred.response.authenticatorData),
-        signature: b64(cred.response.signature),
-      }});
+      let out;
+      try {
+        out = await api("/api/auth/passkey/login", { method: "POST", body: {
+          id: cred.id, clientDataJSON: b64(cred.response.clientDataJSON),
+          authenticatorData: b64(cred.response.authenticatorData), signature: b64(cred.response.signature) }});
+      } catch (err) {
+        if (err.data && err.data.error === "totp_required") {
+          const code = window.prompt("Enter the 6-digit code from your authenticator app:");
+          if (!code) throw err;
+          out = await api("/api/auth/ops-2fa/verify", { method: "POST", body: { pendingToken: err.data.pendingToken, code } });
+        } else throw err;
+      }
       state.user = out.user;
       state.gateOk = true;
       localStorage.setItem("hkl_gate", "1");
@@ -2373,6 +2366,7 @@
         render();
       };
     });
+    if (window.HKL_CART_UI) window.HKL_CART_UI.bindUpsell(state, saveCart, toast, render);
     document.querySelectorAll("[data-qty-delta]").forEach((btn) => {
       btn.onclick = () => {
         const id = btn.getAttribute("data-qty-delta");
