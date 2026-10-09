@@ -101,7 +101,6 @@ const SECURE_COOKIES =
   process.env.HKL_SECURE_COOKIES === "1" ||
   String(PUBLIC_ORIGIN).startsWith("https://");
 
-const jwksCache = { google: null, apple: null };
 
 let products = JSON.parse(fs.readFileSync(path.join(DATA, "products.json"), "utf8"));
 const certificates = JSON.parse(fs.readFileSync(path.join(DATA, "certificates.json"), "utf8"));
@@ -487,7 +486,7 @@ function saveStore(s) {
 }
 
 let store = loadStore();
-const { hashPassword, checkPassword, token, cookieOf, sessionOf, sessionUser, isOpsUser, hasOrdered, affiliateOf, referredOrders, publicUser, setSession, clearSession, b64urlJson, decodeJwt, verifyGoogleIdToken, verifyAppleIdToken, authProviders, upsertSocialUser } = createAuthSession({ store, saveStore, validEmail });
+const { hashPassword, checkPassword, token, cookieOf, sessionOf, sessionUser, isOpsUser, hasOrdered, affiliateOf, referredOrders, publicUser, setSession, clearSession, b64urlJson, decodeJwt, verifyGoogleIdToken, verifyAppleIdToken, authProviders, upsertSocialUser } = createAuthSession({ store, saveStore, validEmail, SESSION_HOURS, SECURE_COOKIES, GOOGLE_CLIENT_ID, APPLE_CLIENT_ID, APPLE_ENABLED, AUTH_DEMO, PUBLIC_ORIGIN });
 
 opsCatalogHandle = createOpsCatalog({ products, store, saveStore, send, readBody, isOpsUser, findProduct, writeInventoryCsv, writePricingCsv, attachCertificates, audit, PUBLIC, DATA, QRCode, sessionOf });
 emailListHandle = createEmailList({ store, saveStore, send, readBody, validEmail, token, requestOrigin: authx.requestOrigin, loadOutbox, saveOutbox, writeSubscribersCsv, audit, isOpsUser });
