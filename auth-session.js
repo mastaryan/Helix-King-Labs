@@ -8,6 +8,7 @@ const crypto = require("node:crypto");
 const https = require("node:https");
 
 function createAuthSession({ store, saveStore, validEmail, SESSION_HOURS, SECURE_COOKIES, GOOGLE_CLIENT_ID, APPLE_CLIENT_ID, APPLE_ENABLED, AUTH_DEMO, PUBLIC_ORIGIN }) {
+  const jwksCache = { google: null, apple: null };
   function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
     const derived = crypto.scryptSync(password, salt, 32).toString("hex");
     return { salt, derived };
