@@ -43,6 +43,111 @@ function libraryEmail(email, origin, unsubToken) {
   };
 }
 
+// Welcome drip series (Phase 1 funnel). Day 0 on popup subscribe,
+// then day 2 / day 4 / day 7. Research framing only — no dosing,
+// no medical claims. Each mail carries the one-click unsubscribe.
+var DRIP_STEPS = [2, 2, 3]; // days after the previous mail: day 0, 2, 4, 7
+function dripEmail(step, email, origin, unsubToken) {
+  var base = (origin || "https://helixkinglabs.com").replace(/\/$/, "");
+  var unsubUrl = base + "/unsubscribe?token=" + encodeURIComponent(unsubToken || "");
+  var tail = [
+    "",
+    "Unsubscribe anytime: " + unsubUrl,
+    LIST_FOOTER,
+  ].join("\n");
+  var bodies = {
+    1: {
+      subject: "Your research starter kit — Helix King Labs",
+      text: [
+        "Helix King Labs",
+        "",
+        "Welcome — here's your starter kit.",
+        "",
+        "Start with the guides library: " + base + "/guides",
+        "Three good first reads:",
+        "- BPC-157 research guide: " + base + "/guides/bpc-157",
+        "- Retatrutide research guide: " + base + "/guides/retatrutide",
+        "- Reconstitution calculator: " + base + "/tools/calculator",
+        "",
+        "Over the next week I'll send three short emails: how our lots",
+        "are documented, where most researchers start, and 10% off your",
+        "first order.",
+        "",
+        "Research materials are for laboratory use only.",
+        "Not a clinic. Not a pharmacy.",
+      ].join("\n") + tail,
+    },
+    2: {
+      subject: "Every vial has a paper trail — here's why it matters",
+      text: [
+        "Helix King Labs",
+        "",
+        "Most peptide vials arrive with a purity number and nothing else.",
+        "Here's what we attach to every lot before it can sell:",
+        "",
+        "- Third-party certificate of analysis, published per lot: " + base + "/certificates",
+        "- Lot number printed on the label, matched to the COA",
+        "- Chain of custody from intake to label — nothing ships",
+        "  without an accepted COA",
+        "",
+        "A purity percentage tells you how uniform the material is.",
+        "It doesn't tell you what it is, or how much is in the vial.",
+        "Identity and net content complete the picture — that's what",
+        "our certificates show.",
+        "",
+        "Research materials are for laboratory use only.",
+      ].join("\n") + tail,
+    },
+    3: {
+      subject: "Where most researchers start",
+      text: [
+        "Helix King Labs",
+        "",
+        "The three compounds researchers ask about most:",
+        "",
+        "- BPC-157 — from $25 — " + base + "/product/bpc-157",
+        "- TB-500 — from $39 — " + base + "/product/tb-500",
+        "- GHK-Cu — from $25 — " + base + "/product/ghk-cu",
+        "",
+        "How ordering works: create an account, check out with crypto,",
+        "Cash App, or Venmo. Nothing ships until payment is confirmed,",
+        "and every order carries its lot number.",
+        "",
+        "Full catalog: " + base + "/shop",
+        "",
+        "Research materials are for laboratory use only.",
+        "Not a clinic. Not a pharmacy.",
+      ].join("\n") + tail,
+    },
+    4: {
+      subject: "10% off your first order — HELIX10",
+      text: [
+        "Helix King Labs",
+        "",
+        "Last email in this series — thanks for reading.",
+        "",
+        "Use code HELIX10 for 10% off your first order: " + base + "/shop",
+        "",
+        "Two places researchers hang out:",
+        "- Telegram: https://t.me/HKL_RESEARCH",
+        "- WhatsApp: https://wa.me/12026424575 (order + shipping questions)",
+        "",
+        "Reply to any email if you need a hand — a human reads them.",
+        "",
+        "You'll still get lot alerts, restocks, and group-buy notices.",
+        "Research materials are for laboratory use only.",
+      ].join("\n") + tail,
+    },
+  };
+  var b = bodies[step];
+  if (!b) return null;
+  return { to: email, subject: b.subject, text: b.text };
+}
+
+function dripDue(row) {
+  return row && row.drip && row.drip.nextAt && new Date(row.drip.nextAt).getTime() <= Date.now();
+}
+
 function createEmailList(deps) {
   const {
     store,
@@ -93,14 +198,29 @@ function createEmailList(deps) {
         store.captures.push(row);
       }
       if (!row.unsub) row.unsub = token();
-      const mail = libraryEmail(email, origin, row.unsub);
       const box = loadOutbox();
-      box.messages.push({
-        ...mail,
-        source,
-        created: new Date().toISOString(),
-        status: "queued",
-      });
+      const series = String(body.series || "").slice(0, 20);
+      if (series === "welcome" && !row.dripDone && !row.drip) {
+        // Welcome drip: mail #1 now, #2-4 on the drip schedule.
+        const mail = dripEmail(1, email, origin, row.unsub);
+        if (mail) {
+          box.messages.push({
+            ...mail,
+            source: source + ":drip1",
+            created: new Date().toISOString(),
+            status: "queued",
+          });
+        }
+        row.drip = { step: 1, nextAt: new Date(Date.now() + DRIP_STEPS[0] * 864e5).toISOString() };
+      } else {
+        const mail = libraryEmail(email, origin, row.unsub);
+        box.messages.push({
+          ...mail,
+          source,
+          created: new Date().toISOString(),
+          status: "queued",
+        });
+      }
       saveOutbox(box);
       saveStore(store);
       writeSubscribersCsv();
@@ -109,6 +229,7 @@ function createEmailList(deps) {
         subscribed: true,
         library: "/library",
         queued: true,
+        series: series === "welcome" ? "welcome" : undefined,
       });
     }
 
@@ -256,6 +377,47 @@ function createEmailList(deps) {
     return waiting.length;
   }
 
+  // Welcome drip scheduler — call hourly. Queues the next drip mail
+  // for every subscriber whose nextAt has passed. Unsubscribed rows are
+  // gone from store.captures, so the drip stops with them.
+  function dripWelcome() {
+    const now = Date.now();
+    let queued = 0;
+    for (const row of store.captures || []) {
+      if (!dripDue(row)) continue;
+      const nextStep = row.drip.step + 1;
+      const mail = dripEmail(nextStep, row.email, "https://helixkinglabs.com", row.unsub);
+      if (!mail) {
+        delete row.drip;
+        row.dripDone = true;
+        continue;
+      }
+      const box = loadOutbox();
+      box.messages.push({
+        ...mail,
+        source: (row.source || "unknown") + ":drip" + nextStep,
+        created: new Date().toISOString(),
+        status: "queued",
+      });
+      saveOutbox(box);
+      queued++;
+      if (nextStep >= 4) {
+        delete row.drip;
+        row.dripDone = true;
+      } else {
+        row.drip = {
+          step: nextStep,
+          nextAt: new Date(now + DRIP_STEPS[nextStep - 1] * 864e5).toISOString(),
+        };
+      }
+    }
+    if (queued) {
+      saveStore(store);
+      writeSubscribersCsv();
+    }
+    return queued;
+  }
+
   waitlistHandle.deps = deps;
 
   // Route both handlers
@@ -265,6 +427,7 @@ function createEmailList(deps) {
     return false;
   }
   combined.checkWaitlist = checkWaitlist;
+  combined.dripWelcome = dripWelcome;
   return combined;
 }
 
