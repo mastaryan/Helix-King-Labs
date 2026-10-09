@@ -926,7 +926,7 @@
       <div class="auth-card">
         <div class="auth-tabs" role="tablist">
           <button class="auth-tab active" type="button" id="tabSignin" role="tab">Sign In</button>
-          <button class="auth-tab" type="button" id="tabRegister" role="tab">Register</button>
+          <button class="auth-tab" type="button" id="tabRegister" role="tab">Create Account</button>
         </div>
         <div id="paneSignin" role="tabpanel">
           ${state.auth.google || state.auth.demo ? `<button class="btn ghost auth-wide" type="button" id="googleLoginBtn"><span class="g-mark">G</span> Continue with Google</button>` : ""}
