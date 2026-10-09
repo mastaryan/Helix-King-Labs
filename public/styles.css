@@ -385,6 +385,23 @@ input:focus, select:focus { border-color: var(--silver-2); }
 .consent-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--silver-2); cursor: pointer; }
 .consent-row small { color: var(--muted); }
 .consent-row input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--gold, #c9a227); flex-shrink: 0; }
+.auth-card { max-width: 460px; margin: 24px auto; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); }
+.auth-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.auth-tab { flex: 1; padding: 12px; border: 1px solid var(--line-2); border-radius: 10px; background: transparent; color: var(--silver-2); font-size: 15px; font-weight: 600; cursor: pointer; }
+.auth-tab.active { background: var(--gold, #c9a227); border-color: var(--gold, #c9a227); color: #111; }
+.auth-wide { width: 100%; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.auth-div { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; margin: 14px 0; }
+.auth-div::before, .auth-div::after { content: ""; flex: 1; height: 1px; background: var(--line-2); }
+.auth-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--silver-2); }
+.auth-label input { display: block; width: 100%; margin-top: 6px; font-weight: 400; }
+.pw-wrap { position: relative; display: block; }
+.pw-wrap input { padding-right: 44px; }
+.pw-eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px; }
+.auth-row { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 14px; font-size: 13px; }
+.auth-alt { display: flex; gap: 8px; margin-top: 10px; }
+.auth-alt .btn { flex: 1; }
+.auth-fine { text-align: center; font-size: 13px; margin-top: 10px; }
+.g-mark { font-weight: 800; font-size: 16px; }
 .muted { color: var(--muted); }
 .hidden { display: none !important; }
 .badge.stock.low { color: #c4a15c; border-color: #c4a15c; }
