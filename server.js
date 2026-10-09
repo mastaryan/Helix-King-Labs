@@ -1046,14 +1046,6 @@ async function api(req, res, url) {
   const method = req.method;
   const route = url.pathname;
 
-  // Redirect www to apex for SEO (avoid duplicate content)
-  const host = req.headers.host || "";
-  if (host.startsWith("www.")) {
-    const apex = host.slice(4);
-    res.writeHead(301, { Location: "https://" + apex + req.url });
-    return res.end();
-  }
-
   if (method === "GET" && route === "/api/health") {
     return send(res, 200, { ok: true, brand: "Helix King Labs" });
   }
@@ -2838,7 +2830,12 @@ function injectDocument(buf, pathname, status) {
 
 function sitemapXml() {
   const origin = "https://helixkinglabs.com";
+  const guidesDir = path.join(PUBLIC, "guides");
+  const guides = fs.existsSync(guidesDir)
+    ? fs.readdirSync(guidesDir).filter(f => f.endsWith(".html") && f !== "label-mockups.html").sort().map(f => "/guides/" + f)
+    : [];
   const urls = ["/", "/shop", "/about", "/certificates", "/testing", "/tools/calculator", "/terms", "/privacy", "/do-not-sell", "/shipping", "/refunds", "/chargebacks", "/use"]
+    .concat(guides)
     .concat(shopFamilies().map((f) => "/product/" + (f.slug || f.id)));
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
     .map((u) => `  <url><loc>${origin}${u}</loc></url>`)
@@ -2867,14 +2864,20 @@ function serveStatic(req, res, urlPath) {
   const pathname = decodeURIComponent(urlPath.split("?")[0] || "/");
   const rel = pathname === "/" ? "/index.html" : pathname;
   const file = safePublic(rel.replace(/^\/+/, ""));
-  const isAsset = file && fs.existsSync(file) && fs.statSync(file).isFile() && !rel.endsWith(".html");
+  const fileExists = file && fs.existsSync(file) && fs.statSync(file).isFile();
+  // Serve real .html files on disk (e.g. /guides/*.html); /index.html stays the SPA shell.
+  const isStaticHtml = rel.endsWith(".html") && rel !== "/index.html" && fileExists;
+  const isAsset = fileExists && (!rel.endsWith(".html") || isStaticHtml);
   if (isAsset) {
     const ext = path.extname(file).toLowerCase();
-    res.writeHead(200, {
-      "Content-Type": MIME[ext] || "application/octet-stream",
-      "X-Content-Type-Options": "nosniff",
-      "Cache-Control": "public, max-age=86400",
-    });
+    const headers = ext === ".html"
+      ? { ...htmlHeaders(200), "Cache-Control": "public, max-age=86400" }
+      : {
+          "Content-Type": MIME[ext] || "application/octet-stream",
+          "X-Content-Type-Options": "nosniff",
+          "Cache-Control": "public, max-age=86400",
+        };
+    res.writeHead(200, headers);
     return fs.createReadStream(file).pipe(res);
   }
   if (!file && pathname.includes("..")) {
@@ -2897,6 +2900,12 @@ function serveStatic(req, res, urlPath) {
 
 const server = http.createServer(async (req, res) => {
   try {
+    // Redirect www to apex for SEO (avoid duplicate content) — applies to every request.
+    const reqHost = req.headers.host || "";
+    if (reqHost.startsWith("www.")) {
+      res.writeHead(301, { Location: "https://" + reqHost.slice(4) + req.url });
+      return res.end();
+    }
     const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
     if (url.pathname === "/sitemap.xml") {
       res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8" });

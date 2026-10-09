@@ -9,7 +9,7 @@
   "ticker": [
     "Research use only",
     "Premium research peptides",
-    "21+ only",
+    "18+ only",
     "Free shipping on orders over $199",
     "First order: HELIX10 after you sign in \u2014 unless an affiliate code is on the cart",
     "Not a clinic. Not a pharmacy."
@@ -29,7 +29,7 @@
     "research peptide"
   ],
   "gateFooterOnly": [
-    "Age line (21+)",
+    "Age line (18+)",
     "Permitted-use sentence",
     "Not a clinic / not a pharmacy"
   ],
@@ -56,7 +56,7 @@
   "faq": [
     {
       "q": "Why do I need an account?",
-      "a": "The catalog is 21+ and research-use only. Registering states that you are requesting documented research materials, not a treatment. Pricing and checkout sit on the account so the lot can be tied to the order. First recorded order: HELIX10."
+      "a": "The catalog is 18+ and research-use only. Registering states that you are requesting documented research materials, not a treatment. Pricing and checkout sit on the account so the lot can be tied to the order. First recorded order: HELIX10."
     },
     {
       "q": "Where are the certificates?",
