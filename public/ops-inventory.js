@@ -90,7 +90,7 @@
 
   function tableHtml() {
     return `<h2>Inventory, lots &amp; margins</h2>
-      <p class="lede">One table: lot, stock, and cost per lot; retail and wholesale pricing per SKU. Retail is per vial, wholesale is per box. Margins compute per lot — multi-lot SKUs show a blended row. Save writes the lot row and any changed SKU prices.</p>
+      <p class="lede">One table: lot, stock, and cost per lot; retail and wholesale pricing per SKU. Retail is per vial, wholesale is per box. Margins compute per lot — multi-lot SKUs show a blended row. Save writes the lot row and any changed SKU prices. <button type="button" class="btn" id="mSaveAll" style="margin-left:8px">Save all</button></p>
       ${alertStrip()}
       <div style="overflow:auto"><table class="table" id="mergedTable"><thead>
         <tr><th colspan="5"></th><th colspan="3" style="text-align:center;border-bottom:1px solid var(--line-2)">Retail — per vial</th><th colspan="2" style="text-align:center;border-bottom:1px solid var(--line-2)">Wholesale — per box</th><th></th></tr>
@@ -132,6 +132,96 @@
 
   async function saveRow(btn) {
     var tr = btn.closest("tr");
+    // Snapshot every other row's unsaved inputs so the reload doesn't wipe them.
+    var snap = snapshotEdits(tr);
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    try {
+      var changes = await saveRowData(tr);
+      var sku = tr.getAttribute("data-sku");
+      toast("Saved " + sku + (changes.length ? ": " + changes.join(", ") + "." : " (no changes)."));
+      await load();
+      restoreEdits(snap);
+      refreshMargins();
+    } catch (err) {
+      toast("Save failed: " + ((err && err.error) || "error"));
+    }
+    btn.disabled = false;
+    btn.textContent = "Save";
+  }
+
+  // Capture all row inputs except the one being saved.
+  function snapshotEdits(exceptTr) {
+    var snap = {};
+    document.querySelectorAll("#mergedTable tbody tr[data-sku]").forEach(function (tr) {
+      if (tr === exceptTr) return;
+      snap[rowKey(tr)] = readRowInputs(tr);
+    });
+    return snap;
+  }
+  function rowKey(tr) {
+    return tr.getAttribute("data-sku") + "|" + tr.getAttribute("data-lotindex");
+  }
+  function readRowInputs(tr) {
+    var v = function (sel) { var el = tr.querySelector(sel); return el ? el.value : ""; };
+    return { lot: v(".m-lot"), onHand: v(".m-hand"), cost: v(".m-cost"), cert: v(".m-cert"), retail: v(".m-retail"), wholesale: v(".m-wholesale") };
+  }
+  function restoreEdits(snap) {
+    document.querySelectorAll("#mergedTable tbody tr[data-sku]").forEach(function (tr) {
+      var s = snap[rowKey(tr)];
+      if (!s) return;
+      var set = function (sel, val) { var el = tr.querySelector(sel); if (el) el.value = val; };
+      set(".m-lot", s.lot); set(".m-hand", s.onHand); set(".m-cost", s.cost);
+      set(".m-cert", s.cert); set(".m-retail", s.retail); set(".m-wholesale", s.wholesale);
+      // Re-sync price state so a later save picks up the restored values.
+      var sku = tr.getAttribute("data-sku");
+      var st = prices[sku];
+      if (st) {
+        if (s.retail !== "" && String(st.retail) !== String(s.retail)) { st.retail = num(s.retail); st.retailChanged = true; }
+        if (s.wholesale !== "" && String(st.wholesale) !== String(s.wholesale)) { st.wholesale = num(s.wholesale); st.wholesaleChanged = true; }
+      }
+    });
+  }
+
+  // True if the row's inputs differ from loaded state.
+  function rowDirty(tr) {
+    var sku = tr.getAttribute("data-sku");
+    var lotIndex = tr.getAttribute("data-lotindex");
+    var s = skus.find(function (x) { return x.sku === sku; });
+    var st = prices[sku];
+    if (!s || !st) return false;
+    var vals = readRowInputs(tr);
+    var origLot = lotIndex === "new" ? null : (s.lots || []).find(function (l) { return String(l.index) === String(lotIndex); });
+    if (String(vals.lot || "") !== String(origLot ? origLot.lot || "" : "")) return true;
+    if (String(vals.onHand) !== String(origLot ? origLot.onHand : 0)) return true;
+    if (String(vals.cost || "") !== String(origLot && origLot.unitCost != null ? origLot.unitCost : "")) return true;
+    if (vals.cert !== (origLot ? origLot.certificate || "pending" : "pending")) return true;
+    if (st.retailChanged || st.wholesaleChanged) return true;
+    return false;
+  }
+
+  async function saveAll(btn) {
+    var rows = Array.prototype.filter.call(
+      document.querySelectorAll("#mergedTable tbody tr[data-sku]"),
+      function (tr) { return rowDirty(tr); }
+    );
+    if (!rows.length) { toast("No changes to save."); return; }
+    btn.disabled = true;
+    btn.textContent = "Saving " + rows.length + "…";
+    var ok = 0, failed = [];
+    for (var i = 0; i < rows.length; i++) {
+      try { await saveRowData(rows[i]); ok++; }
+      catch (err) { failed.push(rows[i].getAttribute("data-sku")); }
+    }
+    await load();
+    refreshMargins();
+    btn.disabled = false;
+    btn.textContent = "Save all";
+    toast("Saved " + ok + " row" + (ok === 1 ? "" : "s") + (failed.length ? ". Failed: " + failed.join(", ") : "."));
+  }
+
+  // Core save: API calls + change list. No reload, no toast.
+  async function saveRowData(tr) {
     var sku = tr.getAttribute("data-sku");
     var lotIndex = tr.getAttribute("data-lotindex");
     var s = skus.find(function (x) { return x.sku === sku; });
@@ -154,42 +244,33 @@
       retail: (tr.querySelector(".m-retail") || {}).value,
       wholesale: (tr.querySelector(".m-wholesale") || {}).value,
     };
-    btn.disabled = true;
-    btn.textContent = "Saving…";
-    try {
-      await api("/api/ops/lots/save", {
-        method: "POST",
-        body: {
-          sku: sku,
-          lotIndex: lotIndex === "new" ? "new" : Number(lotIndex),
-          lot: vals.lot,
-          onHand: vals.onHand,
-          unitCost: vals.cost,
-          certificate: vals.cert,
-        },
-      });
-      if (st.retailChanged) {
-        await api("/api/ops/pricing", { method: "POST", body: { rows: [{ sku: sku, customer_price: st.retail }] } });
-        st.retailChanged = false;
-      }
-      if (st.wholesaleChanged) {
-        await api("/api/ops/wholesale/pricing", { method: "POST", body: { sku: sku, wholesalePrice: st.wholesale } });
-        st.wholesaleChanged = false;
-      }
-      var changes = [];
-      if (String(vals.lot || "") !== String(orig.lot || "")) changes.push("lot " + (orig.lot || "—") + "→" + (vals.lot || "—"));
-      if (String(vals.onHand) !== String(orig.onHand)) changes.push("on-hand " + orig.onHand + "→" + vals.onHand);
-      if (String(vals.cost || "") !== String(orig.cost == null ? "" : orig.cost)) changes.push("cost " + fmt(orig.cost) + "→" + fmt(num(vals.cost)));
-      if (vals.cert !== orig.cert) changes.push("COA " + orig.cert + "→" + vals.cert);
-      if (String(vals.retail || "") !== String(orig.retail == null ? "" : orig.retail)) changes.push("retail " + fmt(orig.retail) + "→" + fmt(num(vals.retail)));
-      if (String(vals.wholesale || "") !== String(orig.wholesale == null ? "" : orig.wholesale)) changes.push("wholesale " + fmt(orig.wholesale) + "→" + fmt(num(vals.wholesale)));
-      toast("Saved " + sku + (changes.length ? ": " + changes.join(", ") + "." : " (no changes)."));
-      await load();
-    } catch (err) {
-      toast("Save failed: " + ((err && err.error) || "error"));
-      btn.disabled = false;
-      btn.textContent = "Save";
+    await api("/api/ops/lots/save", {
+      method: "POST",
+      body: {
+        sku: sku,
+        lotIndex: lotIndex === "new" ? "new" : Number(lotIndex),
+        lot: vals.lot,
+        onHand: vals.onHand,
+        unitCost: vals.cost,
+        certificate: vals.cert,
+      },
+    });
+    if (st.retailChanged) {
+      await api("/api/ops/pricing", { method: "POST", body: { rows: [{ sku: sku, customer_price: st.retail }] } });
+      st.retailChanged = false;
     }
+    if (st.wholesaleChanged) {
+      await api("/api/ops/wholesale/pricing", { method: "POST", body: { sku: sku, wholesalePrice: st.wholesale } });
+      st.wholesaleChanged = false;
+    }
+    var changes = [];
+    if (String(vals.lot || "") !== String(orig.lot || "")) changes.push("lot " + (orig.lot || "—") + "→" + (vals.lot || "—"));
+    if (String(vals.onHand) !== String(orig.onHand)) changes.push("on-hand " + orig.onHand + "→" + vals.onHand);
+    if (String(vals.cost || "") !== String(orig.cost == null ? "" : orig.cost)) changes.push("cost " + fmt(orig.cost) + "→" + fmt(num(vals.cost)));
+    if (vals.cert !== orig.cert) changes.push("COA " + orig.cert + "→" + vals.cert);
+    if (String(vals.retail || "") !== String(orig.retail == null ? "" : orig.retail)) changes.push("retail " + fmt(orig.retail) + "→" + fmt(num(vals.retail)));
+    if (String(vals.wholesale || "") !== String(orig.wholesale == null ? "" : orig.wholesale)) changes.push("wholesale " + fmt(orig.wholesale) + "→" + fmt(num(vals.wholesale)));
+    return changes;
   }
 
   async function load() {
@@ -229,6 +310,8 @@
       var btn = e.target.closest(".m-save");
       if (btn) saveRow(btn);
     });
+    var saveAll = document.getElementById("mSaveAll");
+    if (saveAll) saveAll.onclick = function () { saveAll(this); };
   }
 
   function hideOldPricing() {
