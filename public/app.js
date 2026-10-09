@@ -922,54 +922,61 @@
       if (window.HKL_ACCOUNT) return window.HKL_ACCOUNT.accountHtml(state.user);
       return `<section class="page wrap"><div class="kicker">Account</div><h1>${state.user.email}</h1><p class="lede">Loading…</p></section>`;
     }
-    return `<section class="page wrap account-grid">
-      <div>
-        <div class="kicker">Returning</div>
-        <h1>Sign in.</h1>
-        <form id="loginForm">
-          <div class="row-form" style="flex-direction:column;align-items:stretch">
-            <input name="email" type="email" placeholder="Email" required />
-            <input name="password" type="password" placeholder="Password" required />
-            <button class="btn" type="submit">Sign in</button>
-            <a href="/reset" data-link>Forgot password?</a>
-            <a href="#" id="tfaResetLink">Locked out of 2FA?</a>
-            <button class="btn ghost" type="button" id="magicBtn">Email me a link</button>
-            <button class="btn ghost" type="button" id="passkeyBtn">Passkey</button>
-            ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleLoginBtn">Continue with Google</button>` : ""}
-            ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleLoginBtn">Continue with Apple</button>` : ""}
-          </div>
-          <div class="err" id="loginErr"></div>
-        </form>
-      </div>
-      <div>
-        <div class="kicker">New here</div>
-        <h1>Create account.</h1>
-        <p class="lede">List prices are on the catalog. An account is required to purchase. HELIX10 applies on a first order over $99.</p>
-        <form id="regForm">
-          <div class="row-form col">
-            <input name="name" type="text" placeholder="Name" />
-            <input name="email" type="email" placeholder="Email" required />
-            <input name="password" type="password" placeholder="Password (8+)" required minlength="8" />
-            <input name="company" type="text" placeholder="Company name" />
-            <select name="researchField" required>
-              <option selected>Independent Researcher</option>
-              <option>Molecular Biology</option>
-              <option>Biochemistry</option>
-              <option>Peptide Chemistry</option>
-              <option>Chemical Biology</option>
-              <option>Biotechnology Research</option>
-              <option>Academic Research</option>
-              <option>Pharmacology</option>
-            </select>
-            <label class="check"><input type="checkbox" name="age" required /> I am 18 or older.</label>
-            <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms and the refund policy. All sales are final. Documented compounds are research-only. This is not a clinic or pharmacy.</label>
-            <label class="check"><input type="checkbox" name="researchAck" required /> Chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</label>
-            <button class="btn" type="submit">Create account</button>
-            ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleBtn">Continue with Google</button>` : ""}
-            ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleBtn">Continue with Apple</button>` : ""}
-          </div>
-          <div class="err" id="regErr"></div>
-        </form>
+    return `<section class="page wrap">
+      <div class="auth-card">
+        <div class="auth-tabs" role="tablist">
+          <button class="auth-tab active" type="button" id="tabSignin" role="tab">Sign In</button>
+          <button class="auth-tab" type="button" id="tabRegister" role="tab">Register</button>
+        </div>
+        <div id="paneSignin" role="tabpanel">
+          ${state.auth.google || state.auth.demo ? `<button class="btn ghost auth-wide" type="button" id="googleLoginBtn"><span class="g-mark">G</span> Continue with Google</button>` : ""}
+          ${state.auth.apple ? `<button class="btn ghost auth-wide" type="button" id="appleLoginBtn">Continue with Apple</button>` : ""}
+          <div class="auth-div"><span>or sign in with email</span></div>
+          <form id="loginForm">
+            <label class="auth-label">Email address *
+              <input name="email" type="email" placeholder="Enter your email" required autocomplete="email" />
+            </label>
+            <label class="auth-label">Password *
+              <span class="pw-wrap"><input name="password" type="password" placeholder="Enter your password" required autocomplete="current-password" id="loginPw" /><button type="button" class="pw-eye" id="pwEye" aria-label="Show password">👁</button></span>
+            </label>
+            <div class="auth-row"><span></span><a href="/reset" data-link>Forgot password?</a></div>
+            <button class="btn auth-wide" type="submit">Sign in →</button>
+            <div class="auth-alt">
+              <button class="btn ghost" type="button" id="magicBtn">Email me a link</button>
+              <button class="btn ghost" type="button" id="passkeyBtn">Passkey</button>
+            </div>
+            <p class="auth-fine"><a href="#" id="tfaResetLink">Locked out of 2FA?</a></p>
+            <div class="err" id="loginErr"></div>
+          </form>
+        </div>
+        <div id="paneRegister" role="tabpanel" class="hidden">
+          <p class="lede">List prices are on the catalog. An account is required to purchase. HELIX10 applies on a first order over $99.</p>
+          <form id="regForm">
+            <div class="row-form col">
+              <input name="name" type="text" placeholder="Name" autocomplete="name" />
+              <input name="email" type="email" placeholder="Email" required autocomplete="email" />
+              <input name="password" type="password" placeholder="Password (8+)" required minlength="8" autocomplete="new-password" />
+              <input name="company" type="text" placeholder="Company name" autocomplete="organization" />
+              <select name="researchField" required>
+                <option selected>Independent Researcher</option>
+                <option>Molecular Biology</option>
+                <option>Biochemistry</option>
+                <option>Peptide Chemistry</option>
+                <option>Chemical Biology</option>
+                <option>Biotechnology Research</option>
+                <option>Academic Research</option>
+                <option>Pharmacology</option>
+              </select>
+              <label class="check"><input type="checkbox" name="age" required /> I am 18 or older.</label>
+              <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms and the refund policy. All sales are final. Documented compounds are research-only. This is not a clinic or pharmacy.</label>
+              <label class="check"><input type="checkbox" name="researchAck" required /> Chemicals purchased shall not be used for human therapeutic purposes, and are for research purposes only.</label>
+              <button class="btn" type="submit">Create account</button>
+              ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="googleBtn">Continue with Google</button>` : ""}
+              ${state.auth.apple ? `<button class="btn ghost" type="button" id="appleBtn">Continue with Apple</button>` : ""}
+            </div>
+            <div class="err" id="regErr"></div>
+          </form>
+        </div>
       </div>
     </section>`;
   }
@@ -2231,8 +2238,25 @@
         }
       };
     }
-    const tfaResetLink = $("#tfaResetLink");
-    if (tfaResetLink) tfaResetLink.onclick = async (e) => {
+    const tabSignin = $("#tabSignin"), tabRegister = $("#tabRegister");
+    if (tabSignin && tabRegister) {
+      const pick = (signin) => {
+        tabSignin.classList.toggle("active", signin);
+        tabRegister.classList.toggle("active", !signin);
+        $("#paneSignin").classList.toggle("hidden", !signin);
+        $("#paneRegister").classList.toggle("hidden", signin);
+      };
+      tabSignin.onclick = () => pick(true);
+      tabRegister.onclick = () => pick(false);
+    }
+    const pwEye = $("#pwEye");
+    if (pwEye) pwEye.onclick = () => {
+      const pw = $("#loginPw");
+      const show = pw.type === "password";
+      pw.type = show ? "text" : "password";
+      pwEye.textContent = show ? "🙈" : "👁";
+    };
+    const tfaResetLink = $("#tfaResetLink");    if (tfaResetLink) tfaResetLink.onclick = async (e) => {
       e.preventDefault();
       const email = (document.querySelector("#loginForm input[name=email]") || {}).value || "";
       if (!email) return toast("Enter your ops email first, then click this.");
