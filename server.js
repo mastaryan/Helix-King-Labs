@@ -28,12 +28,15 @@ const DATA = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : BUNDLED
 fs.mkdirSync(DATA, { recursive: true });
 function seedDataDir() {
   if (path.resolve(DATA) === path.resolve(BUNDLED)) return;
-  const names = ["products.json", "certificates.json", "copy-deck.json", "catalog-pricing.csv", "inventory.csv", "reviews.json", "channels.json", "group-buy.json", "supplier-cost.json"];
+  const names = ["products.json", "certificates.json", "catalog-pricing.csv", "inventory.csv", "reviews.json", "channels.json", "group-buy.json", "supplier-cost.json"];
   for (const name of names) {
     const dest = path.join(DATA, name);
     const src = path.join(BUNDLED, name);
     if (!fs.existsSync(dest) && fs.existsSync(src)) fs.copyFileSync(src, dest);
   }
+  // Site copy is content, not runtime state: always sync from the bundle so deploys update it.
+  const deckSrc = path.join(BUNDLED, "copy-deck.json");
+  if (fs.existsSync(deckSrc)) fs.copyFileSync(deckSrc, path.join(DATA, "copy-deck.json"));
   const inc = path.join(DATA, "coas");
   if (!fs.existsSync(inc) && fs.existsSync(path.join(BUNDLED, "coas"))) {
     fs.cpSync(path.join(BUNDLED, "coas"), inc, { recursive: true });
