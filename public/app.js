@@ -1467,6 +1467,9 @@
     renderGate();
 
     const p = pathOf();
+    // Directory index: /guides and /guides/ redirect to the guides index page.
+    // (Server-side 301 lives in server.js serveStatic; this covers the SPA shell.)
+    if (p === "/guides" || p === "/guides/") { location.replace("/guides/index.html"); return; }
     try {
       if (p === "/") {
         app.innerHTML = home();
