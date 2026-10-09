@@ -310,8 +310,8 @@
       var btn = e.target.closest(".m-save");
       if (btn) saveRow(btn);
     });
-    var saveAll = document.getElementById("mSaveAll");
-    if (saveAll) saveAll.onclick = function () { saveAll(this); };
+    var saveAllBtn = document.getElementById("mSaveAll");
+    if (saveAllBtn) saveAllBtn.onclick = function () { saveAll(saveAllBtn); };
   }
 
   function hideOldPricing() {

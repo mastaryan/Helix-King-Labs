@@ -271,14 +271,14 @@ function createSecurity(deps) {
     const script = nonce
       ? "script-src 'nonce-" +
         nonce +
-        "' 'strict-dynamic' 'self' https://www.googletagmanager.com https://www.google-analytics.com https://t.contentsquare.net https://connect.facebook.net"
+        "' 'strict-dynamic' 'self' https://www.googletagmanager.com https://www.google-analytics.com https://t.contentsquare.net https://connect.facebook.net https://analytics.tiktok.com"
       : "script-src 'self'";
     return [
       script,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: https:",
-      "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://t.contentsquare.net",
+      "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://t.contentsquare.net https://www.facebook.com https://analytics.tiktok.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
