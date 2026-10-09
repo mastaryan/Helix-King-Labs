@@ -18,6 +18,7 @@ const createFulfillment = require("./fulfillment");
 const { createSuggestions } = require("./suggestions");
 const { createWholesale } = require("./wholesale");
 const { createPayments } = require("./payments");
+const { createSecurity } = require("./security");
 const QRCode = require("qrcode");
 const mailer = require("./mail");
 
@@ -417,7 +418,7 @@ let opsCatalogHandle;
 let emailListHandle;
 let fulfillHandle;
 let suggestHandle;
-let wholesaleHandle,paymentsHandle;
+let wholesaleHandle,paymentsHandle,secHandle;
 
 function loadOutbox() {
   try {
@@ -504,6 +505,7 @@ wholesaleHandle = createWholesale({
   getPayments: () => paymentsHandle,
 });
 paymentsHandle=createPayments({store,saveStore,send,readBody,queueMail,orderMail:(o,k)=>mailer.orderMail(o,k),audit,getPublicOrigin:()=>PUBLIC_ORIGIN||"https://helixkinglabs.com"});
+secHandle=createSecurity({store,saveStore,send,readBody,limited,token,isOpsUser,authx,crypto,QRCode,loadOutbox,saveOutbox,mailer});
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
   const derived = crypto.scryptSync(password, salt, 32).toString("hex");
@@ -784,40 +786,6 @@ function limited(ip, key, max, windowMs) {
   row.n += 1;
   store.rate[k] = row;
   return row.n > max;
-}
-
-// ---- Failed-auth alerting ----
-// Counts failed login attempts per IP. At 5 failures inside 15 minutes,
-// queues one email alert to the ops inbox (once per window). Uses the
-// same outbox drain as everything else, so a blocked mailer degrades
-// to a queued message, never a dropped alert.
-function noteFailedAuth(ip, email, kind) {
-  const now = Date.now();
-  const k = `failauth:${ip}`;
-  const row = store.rate[k] || { n: 0, t: now, emails: [] };
-  if (now - row.t > 15 * 60 * 1000) {
-    row.n = 0;
-    row.t = now;
-    row.emails = [];
-  }
-  row.n += 1;
-  const em = String(email || "").toLowerCase().trim();
-  if (em && !row.emails.includes(em) && row.emails.length < 10) row.emails.push(em);
-  store.rate[k] = row;
-  if (row.n === 5) {
-    authx
-      .deliver(loadOutbox, saveOutbox, mailer.sendMail, {
-        to: "info@helixkinglabs.com",
-        subject: `Security alert: repeated failed ${kind} logins`,
-        text:
-          `Helix King Labs security notice.\n\n` +
-          `${row.n} failed ${kind} login attempts in the last 15 minutes from IP ${ip}.\n` +
-          `Accounts targeted: ${row.emails.join(", ") || "(none captured)"}\n\n` +
-          `No action needed unless you don't recognize this activity.`,
-      })
-      .catch(() => {});
-  }
-  return row.n;
 }
 
 function send(res, code, body, headers = {}) {
@@ -1283,8 +1251,12 @@ async function api(req, res, url) {
     const password = String(body.password || "");
     const u = store.users.find((x) => x.email === email);
     if (!u || !u.derived || !checkPassword(password, u.salt, u.derived)) {
-      noteFailedAuth(ip, email, "password");
+      secHandle.noteFailedAuth(ip, email, "password");
       return send(res, 401, { error: "credentials" });
+    }
+    // Ops accounts must enroll TOTP before they can sign in at all.
+    if (isOpsUser(u) && !u.totpEnabled) {
+      return send(res, 401, { error: "totp_setup_required", setupToken: secHandle.issueOpsTotpSetup(u.id) });
     }
     // 2FA: if enabled, require TOTP code (or recovery code) before session
     if (u.totpEnabled && u.totpSecret) {
@@ -1292,7 +1264,7 @@ async function api(req, res, url) {
       const rec = (u.totpRecovery || []).indexOf(code.toUpperCase());
       const ok = /^\d{6}$/.test(code) && authx.totpOk(u.totpSecret, code);
       if (!ok && rec < 0) {
-        noteFailedAuth(ip, email, "totp");
+        secHandle.noteFailedAuth(ip, email, "totp");
         return send(res, 401, { error: "totp_required" });
       }
       if (rec >= 0) {
@@ -1303,6 +1275,9 @@ async function api(req, res, url) {
     setSession(res, u.id);
     return send(res, 200, { user: publicUser(u) });
   }
+
+  // Ops TOTP enrollment endpoints live in security.js (pre-session).
+  if (await secHandle.handleOpsTotp(req, res, method, route, ip)) return;
 
   if (method === "POST" && route === "/api/auth/google") {
     if (limited(ip, "google", 16, 15 * 60 * 1000)) return send(res, 429, { error: "rate" });
@@ -1332,6 +1307,23 @@ async function api(req, res, url) {
           company: String(body.company || "").slice(0, 80),
           researchField,
         });
+        // Ops accounts: TOTP is mandatory, including via Google.
+        if (isOpsUser(u) && !u.totpEnabled) {
+          return send(res, 401, { error: "totp_setup_required", setupToken: secHandle.issueOpsTotpSetup(u.id) });
+        }
+        if (isOpsUser(u) && u.totpEnabled && u.totpSecret) {
+          const code = String(body.totp || "").replace(/\s/g, "");
+          const rec = (u.totpRecovery || []).indexOf(code.toUpperCase());
+          const ok = /^\d{6}$/.test(code) && authx.totpOk(u.totpSecret, code);
+          if (!ok && rec < 0) {
+            secHandle.noteFailedAuth(ip, u.email, "totp");
+            return send(res, 401, { error: "totp_required" });
+          }
+          if (rec >= 0) {
+            u.totpRecovery.splice(rec, 1);
+            saveStore(store);
+          }
+        }
         setSession(res, u.id);
         return send(res, 200, { user: publicUser(u), provider: "google" });
       } catch (err) {
@@ -2465,6 +2457,19 @@ async function api(req, res, url) {
     }
     const pub = { ...raw };
     delete pub.password;
+    // Order data is never public.
+    delete pub.orders;
+    // After close, the wholesale sheet (kit prices, kits sold) does not
+    // stay on an open GET. Status, title, and the archive summary remain.
+    if (closed) {
+      pub.items = [];
+    }
+    if (Array.isArray(pub.archive)) {
+      pub.archive = pub.archive.map((a) => {
+        const { items, orders, password, ...rest } = a;
+        return rest;
+      });
+    }
     return send(res, 200, pub);
   }
 
@@ -2897,18 +2902,6 @@ function safePublic(rel) {
   return resolved;
 }
 
-function htmlHeaders(status) {
-  return {
-    "Content-Type": "text/html; charset=utf-8",
-    "X-Content-Type-Options": "nosniff",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    "X-Frame-Options": "DENY",
-    "X-Content-Type-Options": "nosniff",
-    "Strict-Transport-Security": "max-age=15552000; includeSubDomains",
-    "Content-Security-Policy": "frame-ancestors 'none'",
-  };
-}
-
 function serveStatic(req, res, urlPath) {
   const pathname = decodeURIComponent(urlPath.split("?")[0] || "/");
   const rel = pathname === "/" ? "/index.html" : pathname;
@@ -2919,8 +2912,14 @@ function serveStatic(req, res, urlPath) {
   const isAsset = fileExists && (!rel.endsWith(".html") || isStaticHtml);
   if (isAsset) {
     const ext = path.extname(file).toLowerCase();
+    // Ops-only scripts: the API calls 403 for non-ops, but the route map
+    // and logic should not ship to every visitor's browser either.
+    if (ext === ".js" && secHandle.OPS_ONLY_SCRIPTS.has(path.basename(file)) && !isOpsUser(sessionUser(req))) {
+      res.writeHead(403, { "Content-Type": "application/json; charset=utf-8" });
+      return res.end(JSON.stringify({ error: "ops_only" }));
+    }
     const headers = ext === ".html"
-      ? { ...htmlHeaders(200), "Cache-Control": "public, max-age=86400" }
+      ? { ...secHandle.htmlHeaders(200), "Cache-Control": "public, max-age=86400" }
       : {
           "Content-Type": MIME[ext] || "application/octet-stream",
           "X-Content-Type-Options": "nosniff",
@@ -2942,8 +2941,26 @@ function serveStatic(req, res, urlPath) {
       res.end("Not found");
       return;
     }
-    res.writeHead(status, htmlHeaders(status));
-    res.end(opsDesk ? buf : injectDocument(buf, pathname, status));
+    // Ops desk shell has no inline scripts; a nonce-less policy is enough.
+    if (opsDesk) {
+      res.writeHead(status, secHandle.htmlHeaders(status));
+      return res.end(buf);
+    }
+    // Storefront shell: per-request nonce on every <script> so the CSP can
+    // forbid 'unsafe-inline' without breaking our own scripts or GTM.
+    // Non-ops visitors don't get the ops <script> tags at all (they'd 403
+    // anyway); this keeps the admin route map out of public browsers.
+    const nonce = crypto.randomBytes(16).toString("base64");
+    let html = injectDocument(buf, pathname, status);
+    html = html.replace(/<script(?=[\s>])/g, '<script nonce="' + nonce + '"');
+    if (!isOpsUser(sessionUser(req))) {
+      html = html.replace(
+        /<script nonce="[^"]*" src="\/(?:desk\.js|ops-email\.js|ops-fulfill\.js|ops-inventory\.js|ops-coupons\.js)[^"]*"><\/script>/g,
+        ""
+      );
+    }
+    res.writeHead(status, secHandle.htmlHeaders(status, nonce));
+    res.end(html);
   });
 }
 
