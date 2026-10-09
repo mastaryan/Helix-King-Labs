@@ -10,11 +10,11 @@
     } catch (e) {}
   }
 
-  function countdownHtml(endIso) {
-    if (!endIso) return "";
-
   // Group progress bar color — red when empty, yellow when one away, green when hit
   function barColor(n, t) { return n >= t ? "#2a7" : n === t - 1 ? "#eab308" : "#dc2626"; }
+
+  function countdownHtml(endIso) {
+    if (!endIso) return "";
     return `<div class="card" style="text-align:center;padding:20px;margin-bottom:24px">
       <div class="kicker">Order window closes in</div>
       <div id="wsCountdown" style="font-size:32px;font-weight:700" data-end="${endIso}">—</div>
