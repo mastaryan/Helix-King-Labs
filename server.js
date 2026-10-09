@@ -786,6 +786,40 @@ function limited(ip, key, max, windowMs) {
   return row.n > max;
 }
 
+// ---- Failed-auth alerting ----
+// Counts failed login attempts per IP. At 5 failures inside 15 minutes,
+// queues one email alert to the ops inbox (once per window). Uses the
+// same outbox drain as everything else, so a blocked mailer degrades
+// to a queued message, never a dropped alert.
+function noteFailedAuth(ip, email, kind) {
+  const now = Date.now();
+  const k = `failauth:${ip}`;
+  const row = store.rate[k] || { n: 0, t: now, emails: [] };
+  if (now - row.t > 15 * 60 * 1000) {
+    row.n = 0;
+    row.t = now;
+    row.emails = [];
+  }
+  row.n += 1;
+  const em = String(email || "").toLowerCase().trim();
+  if (em && !row.emails.includes(em) && row.emails.length < 10) row.emails.push(em);
+  store.rate[k] = row;
+  if (row.n === 5) {
+    authx
+      .deliver(loadOutbox, saveOutbox, mailer.sendMail, {
+        to: "info@helixkinglabs.com",
+        subject: `Security alert: repeated failed ${kind} logins`,
+        text:
+          `Helix King Labs security notice.\n\n` +
+          `${row.n} failed ${kind} login attempts in the last 15 minutes from IP ${ip}.\n` +
+          `Accounts targeted: ${row.emails.join(", ") || "(none captured)"}\n\n` +
+          `No action needed unless you don't recognize this activity.`,
+      })
+      .catch(() => {});
+  }
+  return row.n;
+}
+
 function send(res, code, body, headers = {}) {
   const payload = typeof body === "string" ? body : JSON.stringify(body);
   res.writeHead(code, {
@@ -1249,6 +1283,7 @@ async function api(req, res, url) {
     const password = String(body.password || "");
     const u = store.users.find((x) => x.email === email);
     if (!u || !u.derived || !checkPassword(password, u.salt, u.derived)) {
+      noteFailedAuth(ip, email, "password");
       return send(res, 401, { error: "credentials" });
     }
     // 2FA: if enabled, require TOTP code (or recovery code) before session
@@ -1257,6 +1292,7 @@ async function api(req, res, url) {
       const rec = (u.totpRecovery || []).indexOf(code.toUpperCase());
       const ok = /^\d{6}$/.test(code) && authx.totpOk(u.totpSecret, code);
       if (!ok && rec < 0) {
+        noteFailedAuth(ip, email, "totp");
         return send(res, 401, { error: "totp_required" });
       }
       if (rec >= 0) {
