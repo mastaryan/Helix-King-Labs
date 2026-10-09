@@ -420,8 +420,11 @@ function createEmailList(deps) {
 
   waitlistHandle.deps = deps;
 
-  // Route both handlers
+  // Route both handlers. dripWelcome() rides along lazily: every hit to
+  // the email endpoints also queues any due drip mail. (server.js is at
+  // the push size ceiling, so no new interval lives there.)
   async function combined(req, res, url, user) {
+    try { dripWelcome(); } catch (e) {}
     if (await emailListHandle(req, res, url, user)) return true;
     if (await waitlistHandle(req, res, url, user)) return true;
     return false;
