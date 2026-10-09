@@ -159,12 +159,12 @@
           id: "cookies",
           title: "Cookies and measurement",
           body: `<ul>
-              <li>Strictly necessary: session cookie, age-gate confirmation, cart. These run without an analytics opt-in.</li>
-              <li>Measurement: Google Tag Manager container GTM-KZDZHCKC loads on pages and fires Google Analytics 4 (G-6HZJNLG29P) for page views, checkout funnel steps (cart viewed, checkout started, shipping entered, payment selected, payment attempted, purchase completed), scroll depth milestones, and time on page. The Meta Pixel is not installed. TikTok Pixel is not installed. A tag added later in Tag Manager will be named on this page.</li>
-              <li>Session analytics: Hotjar may record anonymized session replays, heatmaps, and scroll maps to understand how visitors use the checkout. Hotjar does not capture payment details, passwords, or form field contents. You can opt out of Hotjar at <a href="https://www.hotjar.com/legal/compliance/opt-out" target="_blank" rel="noopener">hotjar.com/legal/compliance/opt-out</a>.</li>
-              <li>Exit signal: when you leave a page, a lightweight signal records the page, time spent, and cart item count (no personal data) to help us understand where visitors drop off.</li>
+              <li>Strictly necessary: session cookie, age-gate confirmation, cart. These run without opt-in and cannot be turned off.</li>
+              <li>Analytics (off until you allow it): Google Analytics 4 (G-6HZJNLG29P) for page views, checkout funnel steps, scroll depth, and time on page. Contentsquare (project 1068524) for anonymized session replays, heatmaps, and scroll maps. Both load only after you choose "Accept all" or turn on Analytics in the cookie banner. Change your mind anytime with the "Cookie settings" link in the footer.</li>
+              <li>Marketing (off until you allow it): Meta Pixel and TikTok Pixel, when installed, measure ad campaigns. If you are signed in, they may receive a SHA-256 hashed copy of your account email for matching — never your name, address, or order details. The Meta Pixel is not installed. TikTok Pixel is not installed. A tag added later will be named on this page before it loads.</li>
+              <li>Tag delivery: Google Tag Manager (GTM-KZDZHCKC) is the container that loads the above tags. It loads only after you allow Analytics, and tags inside it respect your Analytics/Marketing choices.</li>
             </ul>
-            <p>A Global Privacy Control signal is treated as a refusal of analytics cookies. We do not sell personal information. Analytics data is used only to improve the site experience.</p>`,
+            <p>Use the cookie banner or the "Cookie settings" footer link to accept or refuse. Refusing stops all optional tags from loading — nothing fires in the background. A Global Privacy Control signal is treated as a refusal of everything optional. We do not sell personal information.</p>`,
         },
         {
           id: "why",
@@ -207,16 +207,17 @@
         {
           id: "statement",
           title: "Statement",
-          body: `<p>We do not sell personal information as that word is commonly used. We do not share personal information with a data broker. We do not run a cross-context advertising pixel.</p>
-            <p>Google Analytics 4, loaded through Google Tag Manager, measures page views if measurement cookies are allowed. Some state laws treat certain analytics disclosures as a “share.” You may refuse that measurement.</p>`,
+          body: `<p>We do not sell personal information as that word is commonly used. We do not share personal information with a data broker.</p>
+            <p>Analytics (Google Analytics 4, Contentsquare) and marketing pixels (Meta, TikTok, when installed) load only if you allow them in the cookie banner. Some state laws treat analytics disclosures as a "share" — refusing in the banner prevents those tags from loading at all. No tag fires in the background after a refusal.</p>`,
         },
         {
           id: "how",
           title: "How to opt out",
           body: `<ul>
-              <li>Use the cookie bar and refuse analytics cookies.</li>
-              <li>A browser Global Privacy Control signal is treated as a refusal of analytics cookies.</li>
-              <li>Write ${mail()} with the subject line “Do not sell or share.” Include the account email. We will keep records required for an order and stop measurement tags on later visits from browsers where you refuse cookies.</li>
+              <li>Use the cookie banner — choose "Necessary only" or turn off Analytics and Marketing individually. Refused tags never load, on this visit or later ones.</li>
+              <li>Use the "Cookie settings" link in the footer to change your choice anytime.</li>
+              <li>A browser Global Privacy Control signal is treated as a refusal of everything optional.</li>
+              <li>Write ${mail()} with the subject line "Do not sell or share." Include the account email.</li>
             </ul>
             <p>We do not offer a financial incentive that requires you to accept a sale or share of personal information.</p>`,
         },
