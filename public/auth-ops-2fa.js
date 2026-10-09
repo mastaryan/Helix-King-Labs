@@ -48,5 +48,57 @@ async function opsTotpEnroll(login, errEl, setupToken) {
   if (ci) ci.focus();
 }
 
-  window.HKL_OPS_2FA = { enroll: opsTotpEnroll };
+// TOTP code prompt for completing a magic-link sign-in on an ops account.
+// Renders into `container`; calls `onSuccess(out)` with the session response.
+async function opsTotpPrompt(container, pendingToken, onSuccess) {
+  container.innerHTML = `<div class="kicker">Security check</div>
+    <h1>Enter your authenticator code</h1>
+    <p class="lede">This ops account has 2FA enabled.</p>
+    <form id="magicTotpF" class="tool-form" style="max-width:320px">
+      <input name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code" required minlength="6" maxlength="6" />
+      <button class="btn" type="submit">Verify</button>
+      <p class="hard" id="magicTotpE"></p>
+    </form>`;
+  container.querySelector("#magicTotpF").onsubmit = async (e) => {
+    e.preventDefault();
+    const code = new FormData(e.target).get("code");
+    try {
+      const out = await api("/api/auth/ops-2fa/verify", { method: "POST", body: { pendingToken, code } });
+      onSuccess(out);
+    } catch (err) {
+      container.querySelector("#magicTotpE").textContent =
+        err && err.message === "totp" ? "That code didn't match — try the current one." : "Couldn't verify — try again.";
+    }
+  };
+}
+
+  window.HKL_OPS_2FA = { enroll: opsTotpEnroll, magicPrompt: opsTotpPrompt, magicPage };
+
+// Magic-link sign-in page (with ops TOTP gating).
+async function magicPage(app, ctx) {
+  const { api, state, loadBase, go, $ } = ctx;
+  const token = new URLSearchParams(location.search).get("token") || "";
+  app.innerHTML = `<section class="page wrap"><h1>Signing in</h1><p class="lede" id="magicMsg">Checking the link.</p></section>`;
+  const finishMagic = async (out) => {
+    state.user = out.user;
+    state.gateOk = true;
+    localStorage.setItem("hkl_gate", "1");
+    await loadBase();
+    go("/account");
+  };
+  if (!token) { $("#magicMsg").textContent = "This link is missing a token."; return; }
+  try {
+    await finishMagic(await api("/api/auth/magic/consume", { method: "POST", body: { token } }));
+  } catch (err) {
+    if (err.data && err.data.error === "totp_required") {
+      opsTotpPrompt(app, err.data.pendingToken, finishMagic);
+    } else if (err.data && err.data.error === "totp_setup_required") {
+      app.innerHTML = `<section class="page wrap"><div class="kicker">Security setup</div><h1>Set up two-factor authentication</h1><p class="lede">Ops accounts require an authenticator app.</p><div id="magicEnroll"></div><p class="hard" id="magicEnrollErr"></p></section>`;
+      opsTotpEnroll(document.getElementById("magicEnroll"), document.getElementById("magicEnrollErr"), err.data.setupToken);
+    } else {
+      const msg = $("#magicMsg");
+      if (msg) msg.textContent = "This link is expired or already used.";
+    }
+  }
+}
 })();

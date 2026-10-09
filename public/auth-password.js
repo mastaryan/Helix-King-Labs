@@ -25,9 +25,18 @@
     if (!slot) return;
     if (!window.HKL.state || !window.HKL.state.user) return;
     cardPending = true;
+    // Capture the slot element: if the page re-renders mid-flight, the
+    // stale call must not append to a detached node.
+    var mySlot = slot;
     try {
       var sec = await security();
     } catch (e) {
+      cardPending = false;
+      return;
+    }
+    // Re-check after the async gap: a route change may have injected a
+    // card already, or replaced the slot. Never double-inject.
+    if (document.getElementById("setPwCard") || !mySlot.isConnected) {
       cardPending = false;
       return;
     }
@@ -49,7 +58,7 @@
       '<button class="btn" type="submit">' + (sec.hasPassword ? "Change password" : "Set password") + "</button>" +
       '<p class="hard" id="setPwNote" style="margin:0"></p>' +
       "</form>";
-    slot.appendChild(card);
+    mySlot.appendChild(card);
     cardPending = false;
     card.querySelector("#setPwForm").addEventListener("submit", async function (e) {
       e.preventDefault();

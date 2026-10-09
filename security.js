@@ -20,6 +20,8 @@ function createSecurity(deps) {
     loadOutbox,
     saveOutbox,
     mailer,
+    setSession,
+    publicUser,
   } = deps;
 
   // ---- Ops TOTP setup tokens ----
@@ -46,6 +48,40 @@ function createSecurity(deps) {
     store.opsTotpSetup = store.opsTotpSetup.filter((t) => t !== row);
     saveStore(store);
     return row;
+  }
+
+  // ---- Ops pending-TOTP tokens ----
+  // For sign-in paths that don't collect a TOTP code up front (magic link,
+  // passkey): after the primary credential verifies, an ops user with TOTP
+  // gets a 5-minute single-use pending token instead of a session. They
+  // exchange it + a TOTP code at /api/auth/ops-2fa/verify.
+  function issueOpsPendingTotp(userId) {
+    const now = Date.now();
+    store.opsPendingTotp = (store.opsPendingTotp || []).filter((t) => t.exp > now);
+    const row = { token: token(), userId, exp: now + 5 * 60 * 1000 };
+    store.opsPendingTotp.push(row);
+    saveStore(store);
+    return row.token;
+  }
+  function takeOpsPendingTotp(tok) {
+    const now = Date.now();
+    store.opsPendingTotp = (store.opsPendingTotp || []).filter((t) => t.exp > now);
+    const row = store.opsPendingTotp.find((t) => t.token === String(tok || "")) || null;
+    if (!row) return null;
+    store.opsPendingTotp = store.opsPendingTotp.filter((t) => t !== row);
+    saveStore(store);
+    return row;
+  }
+
+  // Gate for non-password sign-in paths. Returns null when the caller may
+  // proceed to create a session; otherwise returns a response descriptor
+  // the caller should send (ops users must pass TOTP).
+  function opsTotpGate(u) {
+    if (!isOpsUser(u)) return null;
+    if (!u.totpSecret) {
+      return { status: 401, body: { error: "totp_setup_required", setupToken: issueOpsTotpSetup(u.id) } };
+    }
+    return { status: 401, body: { error: "totp_required", pendingToken: issueOpsPendingTotp(u.id) } };
   }
 
   // ---- Failed-auth alerting ----
@@ -127,6 +163,40 @@ function createSecurity(deps) {
       saveStore(store);
       return send(res, 200, { ok: true, recovery: u.totpRecovery }), true;
     }
+
+    // POST /api/auth/ops-2fa/verify { pendingToken, code } -> session
+    // Completes a magic-link or passkey sign-in for an ops user after the
+    // TOTP code checks out. The pending token is single-use.
+    if (method === "POST" && route === "/api/auth/ops-2fa/verify") {
+      if (limited(ip, "ops2fav", 10, 15 * 60 * 1000)) return send(res, 429, { error: "rate" }), true;
+      let body;
+      try {
+        body = await readBody(req);
+      } catch {
+        return send(res, 400, { error: "bad_request" }), true;
+      }
+      const row = takeOpsPendingTotp(body.pendingToken);
+      const u = row && store.users.find((x) => x.id === row.userId);
+      if (!u || !isOpsUser(u) || !u.totpSecret) {
+        return send(res, 400, { error: "link" }), true;
+      }
+      const code = String(body.code || "").replace(/\D/g, "");
+      let ok = authx.totpOk(u.totpSecret, code);
+      if (!ok && Array.isArray(u.totpRecovery)) {
+        const idx = u.totpRecovery.indexOf(code.toUpperCase());
+        if (idx >= 0) {
+          u.totpRecovery.splice(idx, 1);
+          ok = true;
+        }
+      }
+      if (!ok) {
+        noteFailedAuth(ip, u.email, "totp");
+        return send(res, 401, { error: "totp" }), true;
+      }
+      saveStore(store);
+      setSession(res, u.id);
+      return send(res, 200, { user: publicUser(u) }), true;
+    }
     return false;
   }
 
@@ -181,6 +251,7 @@ function createSecurity(deps) {
   return {
     noteFailedAuth,
     issueOpsTotpSetup,
+    opsTotpGate,
     handleOpsTotp,
     htmlHeaders,
     OPS_ONLY_SCRIPTS,

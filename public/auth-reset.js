@@ -42,6 +42,13 @@
     wrap.appendChild(menu);
     link.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); menu.classList.toggle("hide"); });
     document.addEventListener("click", (e) => { if (!wrap.contains(e.target)) menu.classList.add("hide"); });
+    // On touch devices the menu otherwise sits open while scrolling ("hovering").
+    let lastY = window.scrollY;
+    window.addEventListener("scroll", () => {
+      if (Math.abs(window.scrollY - lastY) > 8) menu.classList.add("hide");
+      lastY = window.scrollY;
+    }, { passive: true });
+    window.addEventListener("hkl:route", () => menu.classList.add("hide"));
     menu.querySelector("#signOutBtn").onclick = async () => {
       try { await HKL.api("/api/auth/logout", { method: "POST" }); } catch (x) {}
       location.href = "/";
