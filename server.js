@@ -984,9 +984,19 @@ function quoteCart(items, user, opts) {
 }
 
 const SCI_NAMES={BB10:["BPC-157 + TB-500 Blend","Wolverine"],BB20:["BPC-157 + TB-500 Blend","Wolverine"],GLOW:["GHK-Cu + TB-500 + BPC-157 Blend","GLOW"],KLOW:["GHK-Cu + TB-500 + BPC-157 + KPV Blend","KLOW"]};
-function sanitizeProduct(p, authed) {
+function sanitizeProduct(p, user) {
   const out = { ...p };
+  const authed = !!user;
+  const ops = isOpsUser(user);
   delete out.cost;
+  // Supplier math is ops-only. Never leak box costs or wholesale prices
+  // on the public catalog, product pages, or related-item lists.
+  if (!ops) {
+    delete out.rosyBoxCost;
+    delete out.wholesalePrice;
+    delete out.supplierCost;
+    delete out.boxCost;
+  }
   const sci = SCI_NAMES[p.sku];
   if (sci) { out.name = sci[0]; out.aka = sci[1]; out.image = String(p.image || "").replace(/\?v=\d+/, "?v=70"); }
   const pending = p.releaseState === "pending_testing";
@@ -1079,7 +1089,7 @@ async function api(req, res, url) {
     const familyIds = new Set(families.map((f) => f.id));
     const items = products.items
       .filter((p) => shopVisibleOf(p))
-      .map((p) => sanitizeProduct(p, !!user));
+      .map((p) => sanitizeProduct(p, user));
     const categories = (products.categories || []).filter((c) =>
       families.some((f) => f.category === c.id)
     );
@@ -1110,15 +1120,15 @@ async function api(req, res, url) {
     const related = (p.related || [])
       .map((id) => findProduct(id))
       .filter(Boolean)
-      .map((x) => sanitizeProduct(x, !!user));
+      .map((x) => sanitizeProduct(x, user));
     const revFile = loadReviews();
     const reviews = (revFile.reviews || [])
       .filter((r) => r.sku === p.sku || r.family === p.family)
       .map(({ text, by, userId, ...rest }) => rest);
     return send(res, 200, {
-      product: sanitizeProduct(p, !!user),
+      product: sanitizeProduct(p, user),
       family,
-      variants: variants.map((x) => sanitizeProduct(x, !!user)),
+      variants: variants.map((x) => sanitizeProduct(x, user)),
       lots,
       related,
       reviews,
