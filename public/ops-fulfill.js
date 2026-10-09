@@ -349,6 +349,36 @@
           b.textContent = "Delivered";
           shipBtn.after(b);
         }
+        // Delete button (two-step: arm, then type the order ID).
+        if (!tr.querySelector(".op-delete")) {
+          var del = document.createElement("button");
+          del.type = "button";
+          del.className = "btn ghost op-delete";
+          del.textContent = "Delete";
+          del.style.marginLeft = "6px";
+          del.style.color = "#f28b8b";
+          var armed = null;
+          del.onclick = async function () {
+            if (!armed) {
+              armed = setTimeout(function () { armed = null; del.textContent = "Delete"; }, 10000);
+              del.textContent = "Sure?";
+              toast("Click Delete again, then type the order ID to confirm.");
+              return;
+            }
+            clearTimeout(armed); armed = null; del.textContent = "Delete";
+            var typed = window.prompt("Type " + oid + " to permanently delete this order. Stock will be restored. This cannot be undone.");
+            if (typed !== oid) { if (typed !== null) toast("ID didn't match — not deleted."); return; }
+            try {
+              await api("/api/ops/orders?id=" + encodeURIComponent(oid), { method: "DELETE" });
+              toast("Order " + oid + " deleted.");
+              location.reload();
+            } catch (err) {
+              toast(err.message === "use_void" ? "Delivered orders can't be deleted — void it instead." : "Delete failed.");
+            }
+          };
+          var lastCell = tr.querySelector("td:last-child");
+          if (lastCell) lastCell.appendChild(del);
+        }
       });
       // Delegated handler for the injected Delivered buttons
       tbl.addEventListener("click", async function (e) {

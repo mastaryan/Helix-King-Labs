@@ -93,7 +93,13 @@ function overview() {
     <li>Mark paid. Stock is already held from checkout. Void puts it back.</li>
     <li>Pick the lot printed on the line. Book the label. Paste carrier and tracking.</li>
     <li>Mark shipped. The public tracker only answers that tracking number.</li>
-  </ol>`;
+  </ol>
+  <h2>Two-factor authentication</h2>
+  <div class="card" style="max-width:560px">
+    <p class="muted" id="ops2faStatus">Checking…</p>
+    <div id="ops2faBox"></div>
+    <p><button class="btn ghost" type="button" id="ops2faBtn">Set up authenticator</button></p>
+  </div>`;
 }
 
 function table(rows, compact) {
@@ -292,6 +298,23 @@ function draw() {
     draw();
     alert((out.released || 0) + " stale orders released.");
   };
+  // Ops 2FA self-enrollment on the overview tab.
+  const tfaBtn = document.getElementById("ops2faBtn");
+  const tfaStatus = document.getElementById("ops2faStatus");
+  const tfaBox = document.getElementById("ops2faBox");
+  if (tfaBtn && tfaStatus && tfaBox) {
+    api("/api/ops/2fa/setup", { method: "POST", body: {} }).then((r) => {
+      tfaStatus.textContent = r.hasTotp
+        ? "Authenticator is enabled on your ops account."
+        : "No authenticator yet — set one up to secure ops sign-in.";
+      tfaBtn.textContent = r.hasTotp ? "Re-set authenticator" : "Set up authenticator";
+      tfaBtn.onclick = () => {
+        tfaBox.innerHTML = `<p class="hard" id="ops2faErr"></p>`;
+        if (window.HKL_OPS_2FA) window.HKL_OPS_2FA.enroll(tfaBox, document.getElementById("ops2faErr"), r.setupToken);
+        else tfaStatus.textContent = "2FA module failed to load — hard-refresh and try again.";
+      };
+    }).catch(() => { tfaStatus.textContent = "Couldn't check 2FA status."; });
+  }
   $("#view").onclick = async (e) => {
     const ab = e.target.closest("[data-aff]");
     if (ab) {

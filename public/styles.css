@@ -830,3 +830,14 @@ body.has-ops-sidebar main#app {
 .chain-prompt p{margin:6px 0}
 .chain-alert{margin:12px 0;padding:10px 14px;border:1px solid #7a5b1e;border-radius:8px;background:#2a2111}
 .chain-alert p{margin:0}
+.ship-bar{margin:0 0 18px;padding:16px 18px;border:1px solid var(--line-2);border-radius:10px;background:var(--bg-2)}
+.ship-bar p{margin:0 0 10px}
+.ship-track{height:8px;border-radius:4px;background:var(--bg-3);overflow:hidden}
+.ship-fill{height:100%;border-radius:4px;background:var(--acc,#e8e4d8);transition:width .3s}
+.ship-bar.done .ship-fill{background:#7fb069}
+.upsell{margin:0 0 18px;padding:16px 18px;border:1px solid var(--line-2);border-radius:10px;background:var(--bg-2)}
+.upsell-row{display:flex;gap:14px;align-items:center;margin-top:8px}
+.upsell-row img{width:52px;height:52px;object-fit:contain;border-radius:8px;background:var(--bg-3)}
+.upsell-row>div:nth-child(2){flex:1}
+.upsell-row p{margin:4px 0 0}
+.upsell-row>div:last-child{text-align:right;display:grid;gap:8px;justify-items:end}

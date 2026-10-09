@@ -136,17 +136,36 @@
     var lotIndex = tr.getAttribute("data-lotindex");
     var s = skus.find(function (x) { return x.sku === sku; });
     var st = prices[sku];
+    // Snapshot originals so the confirmation can say what changed.
+    var origLot = lotIndex === "new" ? null : (s.lots || []).find(function (l) { return String(l.index) === String(lotIndex); });
+    var orig = {
+      lot: origLot ? origLot.lot : "",
+      onHand: origLot ? origLot.onHand : 0,
+      cost: origLot ? origLot.unitCost : null,
+      cert: origLot ? origLot.certificate : "pending",
+      retail: st.retail,
+      wholesale: st.wholesale,
+    };
+    var vals = {
+      lot: tr.querySelector(".m-lot").value,
+      onHand: tr.querySelector(".m-hand").value,
+      cost: tr.querySelector(".m-cost").value,
+      cert: tr.querySelector(".m-cert").value,
+      retail: (tr.querySelector(".m-retail") || {}).value,
+      wholesale: (tr.querySelector(".m-wholesale") || {}).value,
+    };
     btn.disabled = true;
+    btn.textContent = "Saving…";
     try {
       await api("/api/ops/lots/save", {
         method: "POST",
         body: {
           sku: sku,
           lotIndex: lotIndex === "new" ? "new" : Number(lotIndex),
-          lot: tr.querySelector(".m-lot").value,
-          onHand: tr.querySelector(".m-hand").value,
-          unitCost: tr.querySelector(".m-cost").value,
-          certificate: tr.querySelector(".m-cert").value,
+          lot: vals.lot,
+          onHand: vals.onHand,
+          unitCost: vals.cost,
+          certificate: vals.cert,
         },
       });
       if (st.retailChanged) {
@@ -157,11 +176,19 @@
         await api("/api/ops/wholesale/pricing", { method: "POST", body: { sku: sku, wholesalePrice: st.wholesale } });
         st.wholesaleChanged = false;
       }
-      toast("Saved " + sku + ".");
+      var changes = [];
+      if (String(vals.lot || "") !== String(orig.lot || "")) changes.push("lot " + (orig.lot || "—") + "→" + (vals.lot || "—"));
+      if (String(vals.onHand) !== String(orig.onHand)) changes.push("on-hand " + orig.onHand + "→" + vals.onHand);
+      if (String(vals.cost || "") !== String(orig.cost == null ? "" : orig.cost)) changes.push("cost " + fmt(orig.cost) + "→" + fmt(num(vals.cost)));
+      if (vals.cert !== orig.cert) changes.push("COA " + orig.cert + "→" + vals.cert);
+      if (String(vals.retail || "") !== String(orig.retail == null ? "" : orig.retail)) changes.push("retail " + fmt(orig.retail) + "→" + fmt(num(vals.retail)));
+      if (String(vals.wholesale || "") !== String(orig.wholesale == null ? "" : orig.wholesale)) changes.push("wholesale " + fmt(orig.wholesale) + "→" + fmt(num(vals.wholesale)));
+      toast("Saved " + sku + (changes.length ? ": " + changes.join(", ") + "." : " (no changes)."));
       await load();
     } catch (err) {
       toast("Save failed: " + ((err && err.error) || "error"));
       btn.disabled = false;
+      btn.textContent = "Save";
     }
   }
 
