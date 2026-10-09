@@ -19,6 +19,7 @@ const { createSuggestions } = require("./suggestions");
 const { createWholesale } = require("./wholesale");
 const { createPayments } = require("./payments");
 const { createSecurity } = require("./security");
+const { createOpsActions } = require("./ops-actions");
 const QRCode = require("qrcode");
 const mailer = require("./mail");
 
@@ -418,7 +419,7 @@ let opsCatalogHandle;
 let emailListHandle;
 let fulfillHandle;
 let suggestHandle;
-let wholesaleHandle,paymentsHandle,secHandle;
+let wholesaleHandle,paymentsHandle,secHandle,opsActionsHandle;
 
 function loadOutbox() {
   try {
@@ -505,7 +506,8 @@ wholesaleHandle = createWholesale({
   getPayments: () => paymentsHandle,
 });
 paymentsHandle=createPayments({store,saveStore,send,readBody,queueMail,orderMail:(o,k)=>mailer.orderMail(o,k),audit,getPublicOrigin:()=>PUBLIC_ORIGIN||"https://helixkinglabs.com"});
-secHandle=createSecurity({store,saveStore,send,readBody,limited,token,isOpsUser,authx,crypto,QRCode,loadOutbox,saveOutbox,mailer});
+secHandle=createSecurity({store,saveStore,send,readBody,limited,token,isOpsUser,authx,crypto,QRCode,loadOutbox,saveOutbox,mailer,setSession,publicUser});
+opsActionsHandle=createOpsActions({store,saveStore,send,readBody,isOpsUser,restoreStock,audit,secHandle});
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
   const derived = crypto.scryptSync(password, salt, 32).toString("hex");
@@ -1278,6 +1280,7 @@ async function api(req, res, url) {
 
   // Ops TOTP enrollment endpoints live in security.js (pre-session).
   if (await secHandle.handleOpsTotp(req, res, method, route, ip)) return;
+  if (await opsActionsHandle.handle(req, res, method, route, url, ip, user)) return;
 
   if (method === "POST" && route === "/api/auth/google") {
     if (limited(ip, "google", 16, 15 * 60 * 1000)) return send(res, 429, { error: "rate" });
@@ -1443,6 +1446,9 @@ async function api(req, res, url) {
     }
     u.providers = Array.from(new Set([...(u.providers || []), "magic"]));
     saveStore(store);
+    // no TOTP bypass on magic-link
+    const gate = secHandle.opsTotpGate(u);
+    if (gate) return send(res, gate.status, gate.body);
     setSession(res, u.id);
     return send(res, 200, { user: publicUser(u) });
   }
@@ -1503,6 +1509,9 @@ async function api(req, res, url) {
       return send(res, 401, { error: "passkey" });
     }
     saveStore(store);
+    // no TOTP bypass on passkey
+    const pGate = secHandle.opsTotpGate(u);
+    if (pGate) return send(res, pGate.status, pGate.body);
     setSession(res, u.id);
     return send(res, 200, { user: publicUser(u) });
   }
