@@ -170,6 +170,7 @@
       write(pref);
     }
     if (pref && !forceShow) {
+      box.style.display = "none";
       box.classList.add("hidden");
       box.innerHTML = "";
       apply(pref);
@@ -181,6 +182,7 @@
     // the save handler compares against it to decide if a reload is needed
     // to truly unload already-running tags.
     var cur = pref || { analytics: false, marketing: false };
+    box.style.display = "";
     box.classList.remove("hidden");
     box.innerHTML =
       '<p><strong>Cookies, your call.</strong> Necessary cookies keep the cart, the account, and checkout working. ' +
@@ -199,6 +201,7 @@
       "</div>";
     var done = function (p, reload) {
       write(p);
+      box.style.display = "none";
       box.classList.add("hidden");
       box.innerHTML = "";
       apply(p);

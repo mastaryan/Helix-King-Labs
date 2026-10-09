@@ -38,12 +38,14 @@
     setInterval(tick, 1000);
   }
 
-  // Request form for non-wholesale visitors
-  function requestForm() {
-    return `<section class="page wrap"><div class="kicker">Wholesale</div>
+  // Request form for non-wholesale visitors. bare=true skips the
+  // heading block for when the form is embedded under another heading.
+  function requestForm(bare) {
+    const head = bare ? "" :
+      `<div class="kicker">Wholesale</div>
       <h1>Wholesale access</h1>
-      <p class="lede">Wholesale pricing is available to approved accounts. Request access below — we review every application.</p>
-      <div class="card" style="max-width:560px;padding:28px">
+      <p class="lede">Wholesale pricing is available to approved accounts. Request access below — we review every application.</p>\n      `;
+    return `${bare ? "<div>" : '<section class="page wrap">'}\n      ${head}<div class="card" style="max-width:560px;padding:28px">
         <form id="wsRequestForm">
           <label>Full name<input name="wname" required maxlength="120" /></label>
           <label>Email<input name="wemail" type="email" required maxlength="120" /></label>
@@ -53,7 +55,7 @@
           <button class="btn" type="submit">Request wholesale access</button>
           <p id="wsReqNote" class="hard"></p>
         </form>
-      </div></section>`;
+      </div>${bare ? "</div>" : "</section>"}`;
   }
 
   function mountRequestForm() {
@@ -92,7 +94,7 @@
         return `<section class="page wrap"><div class="kicker">Wholesale</div>
           <h1>Wholesale access</h1>
           <p class="lede">Wholesale pricing is for approved accounts. <a href="/account" data-link>Sign in</a> or create an account, then request access below.</p>
-          ${requestForm().replace('<section class="page wrap">', "<div>").replace("</section>", "</div>")}
+          ${requestForm(true)}
         </section>`;
       }
       if (status.requested) {
