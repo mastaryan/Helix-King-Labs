@@ -57,8 +57,7 @@ const PORT = Number(process.env.PORT || 20011);
 const SESSION_HOURS = 14 * 24;
 const SECRET = process.env.HKL_SECRET || crypto.randomBytes(32).toString("hex");
 
-// Tax ID encryption at rest (AES-256-GCM). Key from HKL_TAX_KEY (32-byte hex)
-// or derived from HKL_SECRET. Plaintext tax IDs are never stored.
+// Tax ID encryption at rest (AES-256-GCM); key from HKL_TAX_KEY or HKL_SECRET.
 function taxKey() {
   const hex = process.env.HKL_TAX_KEY;
   if (hex && /^[0-9a-fA-F]{64}$/.test(hex.trim())) return Buffer.from(hex.trim(), "hex");
@@ -2728,6 +2727,7 @@ function knownPaths() {
     "/testing",
     "/tools",
     "/tools/calculator",
+    "/reset-2fa",
     "/terms",
     "/privacy",
     "/do-not-sell",
