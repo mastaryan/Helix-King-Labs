@@ -197,6 +197,67 @@ function createSecurity(deps) {
       setSession(res, u.id);
       return send(res, 200, { user: publicUser(u) }), true;
     }
+
+    // POST /api/auth/ops-2fa/reset-request { email }
+    // Emergency "forgot my authenticator": emails a 15-min single-use
+    // reset link to the ops account's inbox. Consuming it clears TOTP so
+    // fresh enrollment can happen. Rate-limited; always returns ok to
+    // avoid account enumeration.
+    if (method === "POST" && route === "/api/auth/ops-2fa/reset-request") {
+      if (limited(ip, "ops2far", 3, 60 * 60 * 1000)) return send(res, 429, { error: "rate" }), true;
+      let body;
+      try {
+        body = await readBody(req);
+      } catch {
+        return send(res, 400, { error: "bad_request" }), true;
+      }
+      const email = String(body.email || "").toLowerCase().trim();
+      const u = store.users.find((x) => String(x.email || "").toLowerCase() === email);
+      if (u && isOpsUser(u)) {
+        const now = Date.now();
+        store.opsTotpReset = (store.opsTotpReset || []).filter((t) => t.exp > now);
+        const row = { token: token(), userId: u.id, exp: now + 15 * 60 * 1000 };
+        store.opsTotpReset.push(row);
+        saveStore(store);
+        const origin = authx.requestOrigin(req);
+        authx
+          .deliver(loadOutbox, saveOutbox, mailer.sendMail, {
+            to: u.email,
+            subject: "Reset your Helix King Labs authenticator",
+            text:
+              `Someone requested an authenticator reset for this ops account.\n\n` +
+              `Reset link (15 minutes, one use): ${origin}/reset-2fa?token=${encodeURIComponent(row.token)}\n\n` +
+              `If this wasn't you, ignore this email — your authenticator still works.`,
+          })
+          .catch(() => {});
+      }
+      return send(res, 200, { ok: true }), true;
+    }
+
+    // POST /api/auth/ops-2fa/reset-consume { token } -> { setupToken }
+    // Clears TOTP on the ops account and returns a fresh enrollment token.
+    if (method === "POST" && route === "/api/auth/ops-2fa/reset-consume") {
+      if (limited(ip, "ops2farc", 5, 15 * 60 * 1000)) return send(res, 429, { error: "rate" }), true;
+      let body;
+      try {
+        body = await readBody(req);
+      } catch {
+        return send(res, 400, { error: "bad_request" }), true;
+      }
+      const now = Date.now();
+      store.opsTotpReset = (store.opsTotpReset || []).filter((t) => t.exp > now);
+      const row = store.opsTotpReset.find((t) => t.token === String(body.token || "")) || null;
+      if (!row) return send(res, 400, { error: "link" }), true;
+      store.opsTotpReset = store.opsTotpReset.filter((t) => t !== row);
+      const u = store.users.find((x) => x.id === row.userId);
+      if (!u || !isOpsUser(u)) return send(res, 400, { error: "link" }), true;
+      delete u.totpSecret;
+      delete u.totpEnabled;
+      delete u.totpPending;
+      delete u.totpRecovery;
+      saveStore(store);
+      return send(res, 200, { setupToken: issueOpsTotpSetup(u.id) }), true;
+    }
     return false;
   }
 

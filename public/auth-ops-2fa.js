@@ -27,7 +27,14 @@ async function opsTotpEnroll(login, errEl, setupToken) {
   try {
     const out = await api("/api/auth/ops-2fa/setup", { method: "POST", body: { setupToken } });
     if (out.qr) panel.querySelector("#opsTotpQr").innerHTML = `<img src="${out.qr}" alt="2FA QR code" width="220" height="220" />`;
-    panel.querySelector("#opsTotpSecret").textContent = "Manual entry: " + out.secret;
+    const pretty = out.secret.replace(/(.{4})/g, "$1 ").trim();
+    panel.querySelector("#opsTotpSecret").innerHTML = `Manual entry (no spaces when typing):<br/><code style="font-size:15px;letter-spacing:1px">${pretty}</code><br/><button type="button" id="opsTotpCopy" class="btn ghost" style="margin-top:6px">Copy key</button>`;
+    panel.querySelector("#opsTotpCopy").onclick = () => {
+      const k = out.secret;
+      if (navigator.clipboard) navigator.clipboard.writeText(k).catch(() => {});
+      else { const t = document.createElement("textarea"); t.value = k; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); } catch (e) {} t.remove(); }
+      panel.querySelector("#opsTotpCopy").textContent = "Copied";
+    };
   } catch (e) {
     panel.querySelector("#opsTotpErr").textContent = "Setup expired — sign in again to get a fresh code.";
     return;
@@ -72,7 +79,20 @@ async function opsTotpPrompt(container, pendingToken, onSuccess) {
   };
 }
 
-  window.HKL_OPS_2FA = { enroll: opsTotpEnroll, magicPrompt: opsTotpPrompt, magicPage };
+  window.HKL_OPS_2FA = { enroll: opsTotpEnroll, magicPrompt: opsTotpPrompt, magicPage, resetPage: opsTotpResetPage };
+
+async function opsTotpResetPage(app, { api, $ }) {
+  const token = new URLSearchParams(location.search).get("token") || "";
+  app.innerHTML = `<section class="page wrap"><h1>Resetting 2FA</h1><p class="lede" id="r2faMsg">Checking the link…</p><div id="r2faBox"></div></section>`;
+  if (!token) { $("#r2faMsg").textContent = "This link is missing a token."; return; }
+  try {
+    const out = await api("/api/auth/ops-2fa/reset-consume", { method: "POST", body: { token } });
+    $("#r2faMsg").textContent = "Authenticator cleared. Set it up fresh — type the key with no spaces, or use Copy.";
+    opsTotpEnroll($("#r2faBox"), $("#r2faMsg"), out.setupToken);
+  } catch {
+    $("#r2faMsg").textContent = "This link is expired or already used.";
+  }
+}
 
 // Magic-link sign-in page (with ops TOTP gating).
 async function magicPage(app, ctx) {
