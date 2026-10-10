@@ -21,13 +21,13 @@ function configured() {
 function emailFooter(team) {
   const teamName = team === "orders" ? "Helix King Orders Team" : "Helix King Research Team";
   return {
-    text: `\n\n—\nThanks,\n${teamName}\nhelixkinglabs.com\nTelegram: https://t.me/HKL_RESEARCH\nInstagram: @HelixKingLabs\nWhatsApp: https://wa.me/12026424575`,
+    text: `\n\n—\nThanks,\n${teamName}\nHelix King Labs: https://helixkinglabs.com\nTelegram: https://t.me/HKL_RESEARCH\nDiscord: https://discord.gg/duGpW96r3a\nInstagram: @HelixKingLabs\nWhatsApp: https://wa.me/12026424575`,
     html: `<div style="margin-top:32px;padding-top:20px;border-top:2px solid #1a1a1a;text-align:center;font-family:Arial,sans-serif">
-      <p style="margin:0 0 8px;font-size:16px;font-weight:bold;color:#1a1a1a">Helix King Labs</p>
+      <p style="margin:0 0 8px;font-size:16px;font-weight:bold"><a href="https://helixkinglabs.com" style="color:#1a1a1a;text-decoration:none">Helix King Labs</a></p>
       <p style="margin:0 0 12px;font-size:13px;color:#666">Premium research peptides · Tested lots · Honest prices</p>
       <p style="margin:0;font-size:13px">Thanks,<br><strong>${teamName}</strong><br>
-      <a href="https://helixkinglabs.com" style="color:#1a1a1a">helixkinglabs.com</a> ·
       <a href="https://t.me/HKL_RESEARCH" style="color:#1a1a1a">Telegram</a> ·
+      <a href="https://discord.gg/duGpW96r3a" style="color:#1a1a1a">Discord</a> ·
       <a href="https://instagram.com/HelixKingLabs" style="color:#1a1a1a">Instagram</a> ·
       <a href="https://wa.me/12026424575" style="color:#1a1a1a">WhatsApp</a></p>
       <p style="margin:12px 0 0;font-size:11px;color:#999">Research use only. 18+.</p>
@@ -90,8 +90,7 @@ function orderHtml(order) {
   const total = "$" + Number(q.total || 0).toFixed(2);
   const origin = "https://helixkinglabs.com";
   const lines = (q.lines || []).map((l) => {
-    const img = l.image ? origin + l.image : "";
-    return "<tr><td>" + (img ? '<img src="' + img + '" width="48" style="vertical-align:middle"/>' : "") + "</td><td>" + (l.name || "") + " " + (l.size || "") + " × " + l.qty + "</td></tr>";
+    return "<tr><td>" + (l.name || "") + " " + (l.size || "") + " × " + l.qty + "</td></tr>";
   }).join("");
   return '<div style="font-family:Arial,sans-serif;max-width:600px"><h2>Helix King Labs</h2><p>Order ' + order.id + ' · Total <strong>' + total + '</strong></p><table cellpadding="6">' + lines + '</table><p style="color:#888;font-size:12px">Research use only.</p></div>';
 }
@@ -109,6 +108,7 @@ function orderMail(order, kind, deps) {
   const subjects = {
     placed: `Order ${order.id} — Helix King Labs`,
     settled: `Payment received ${order.id} — Helix King Labs`,
+    paid: `Payment received ${order.id} — Helix King Labs`,
     shipped: `Shipped ${order.id} — Helix King Labs`,
     delivered: `Delivered ${order.id} — thank you — Helix King Labs`,
     voided: `Did you miss something? ${order.id} — Helix King Labs`,
@@ -119,6 +119,7 @@ function orderMail(order, kind, deps) {
   const text = {
     placed: `Order ${order.id} is recorded.\nTotal ${total}\n\n${lines}\n\n${payText}\n\nNothing ships until payment is confirmed. Research use only.${footer.text}`,
     settled: `Payment received for ${order.id}. The order is being prepared. Nothing has shipped yet.${footer.text}`,
+    paid: `Payment received for ${order.id}. The order is being prepared. Nothing has shipped yet.${footer.text}`,
     shipped: `${order.id} is booked${order.carrier ? " with " + order.carrier : ""}. Tracking ${order.tracking || "posts on the next note"}.${footer.text}`,
     delivered: deliveredText + footer.text,
     voided: `Did you miss something? Your order ${order.id} was released before payment was confirmed, so the items are back on the shelf.\n\nRestore your cart in one tap:\n${origin + "/account/receipt/" + order.id}\n\nNothing ships until payment is confirmed. Research use only.${footer.text}`,
@@ -162,10 +163,8 @@ function abandonmentMail(order, deps, isFirstOrder) {
   const footer = emailFooter("orders");
   const lines = (order.quote && order.quote.lines) || order.lines || [];
   const productGrid = lines.map((l) => {
-    const img = l.image ? origin + l.image : "";
     const name = (l.name || "") + " " + (l.size || "");
     return `<div style="display:inline-block;width:140px;margin:8px;text-align:center;vertical-align:top">
-      ${img ? `<img src="${img}" width="120" style="border-radius:8px" alt="${name}" />` : ""}
       <p style="margin:8px 0 0;font-size:13px;font-weight:bold">${name}</p>
       <p style="margin:4px 0 0;font-size:12px;color:#666">× ${l.qty}</p>
     </div>`;
