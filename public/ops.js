@@ -26,9 +26,9 @@ function when(iso) {
 }
 function pill(status, label) {
   const map = {
-    awaiting_settlement: ["Unpaid", "wait"],
+    not_paid: ["Unpaid", "wait"],
     committed: ["Committed", "wait"],
-    settled: ["Paid", "ok"],
+    paid: ["Paid", "ok"],
     shipped: ["Shipped", "ok"],
     delivered: ["Delivered", "ok"],
     voided: ["Void", "bad"],
@@ -57,12 +57,12 @@ function shipLine(o) {
   return `${s.city || ""}, ${s.region || ""} ${s.postal || ""}`;
 }
 function openOrders(rows) {
-  return rows.filter((o) => o.status === "awaiting_settlement" || o.status === "settled");
+  return rows.filter((o) => o.status === "not_paid" || o.status === "paid");
 }
 
 function nav() {
   const orders = (state.desk && state.desk.orders) || [];
-  const unpaid = orders.filter((o) => o.status === "awaiting_settlement").length;
+  const unpaid = orders.filter((o) => o.status === "not_paid").length;
   $("#nav").innerHTML = TABS.map(([id, label]) => {
     const n = id === "orders" && unpaid ? unpaid : "";
     return `<button data-tab="${id}" class="${state.tab === id ? "on" : ""}">${label}<span>${n}</span></button>`;
@@ -79,8 +79,8 @@ function nav() {
 function overview() {
   const d = state.desk;
   const s = d.summary || {};
-  const unpaid = (d.orders || []).filter((o) => o.status === "awaiting_settlement");
-  const ready = (d.orders || []).filter((o) => o.status === "settled");
+  const unpaid = (d.orders || []).filter((o) => o.status === "not_paid");
+  const ready = (d.orders || []).filter((o) => o.status === "paid");
   return `<div class="cards">
     <div class="card"><b>${unpaid.length}</b><span>Unpaid</span></div>
     <div class="card"><b>${ready.length}</b><span>Paid, not shipped</span></div>
@@ -129,7 +129,7 @@ function orders() {
   const q = (state.orderSearch || "").toLowerCase().trim();
   const sortKey = state.orderSort || "newest";
   let rows = all.filter((o) => {
-    if (f === "open") return ["awaiting_settlement", "settled", "committed"].includes(o.status);
+    if (f === "open") return ["not_paid", "paid", "committed"].includes(o.status);
     if (f === "all") return true;
     if (f === "wholesale") return !!o.wholesale;
     if (f === "retail") return !o.wholesale;
@@ -150,9 +150,9 @@ function orders() {
   };
   rows = rows.slice().sort(sortFns[sortKey] || sortFns.newest);
   const statusLabel = (s) => ({
-    awaiting_settlement: "Awaiting payment",
+    not_paid: "Not paid",
     committed: "Committed",
-    settled: "Paid ✓",
+    paid: "Paid ✓",
     shipped: "Shipped",
     delivered: "Delivered",
     voided: "Voided",
@@ -160,7 +160,7 @@ function orders() {
   }[s] || s);
   return `<div class="ops-orders-toolbar" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
     <div class="filters" style="display:flex;gap:6px;flex-wrap:wrap">
-      ${["open", "awaiting_settlement", "committed", "settled", "shipped", "delivered", "voided", "wholesale", "retail", "all"].map((id) => {
+      ${["open", "not_paid", "committed", "paid", "shipped", "delivered", "voided", "wholesale", "retail", "all"].map((id) => {
         const label = id === "open" ? "Open" : id === "all" ? "All" :
           id === "wholesale" ? "Wholesale" : id === "retail" ? "Retail" : statusLabel(id);
         return `<button data-f="${id}" class="${f === id ? "on" : ""}">${label}</button>`;
@@ -176,7 +176,7 @@ function orders() {
     <span class="muted">${rows.length} order${rows.length === 1 ? "" : "s"}</span>
   </div>
   <div class="ops-legend" style="margin-bottom:12px;font-size:13px;color:var(--muted)">
-    <b>Status guide:</b> Awaiting payment → customer hasn't paid yet · Committed → wholesale group order locked · Paid ✓ → payment confirmed, ready to ship · Shipped → tracking sent · Delivered → complete · Voided → cancelled, stock released
+    <b>Status guide:</b> Not paid → customer hasn't paid yet · Committed → wholesale group order locked · Paid ✓ → payment confirmed, ready to ship · Shipped → tracking sent · Delivered → complete · Voided → cancelled, stock released
   </div>
   ${table(rows, statusLabel)}`;
 }
@@ -290,8 +290,8 @@ function detail(o) {
       <input id="dCarrier" placeholder="Carrier" value="${o.carrier || ""}" />
       <input id="dTrack" placeholder="Tracking number" value="${o.tracking || ""}" />
       <textarea id="dNote" rows="3" placeholder="Internal note — not on the receipt">${o.internalNote || ""}</textarea>
-      ${o.status === "awaiting_settlement" && o.paymentMethod === "crypto" ? `<button class="act" id="recheck">Re-check crypto</button><p class="muted">Opened ${when(o.created)}. Re-check asks NOWPayments if the callback was missed.</p>` : ""}
-      <button class="act" data-act="settled">Mark paid</button>
+      ${o.status === "not_paid" && o.paymentMethod === "crypto" ? `<button class="act" id="recheck">Re-check crypto</button><p class="muted">Opened ${when(o.created)}. Re-check asks NOWPayments if the callback was missed.</p>` : ""}
+      <button class="act" data-act="paid">Mark paid</button>
       <button class="act" data-act="shipped">Mark shipped</button>
       <button class="act" data-act="note">Save note</button>
       <button class="act" data-act="voided">Void and restore stock</button>
