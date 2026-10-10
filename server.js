@@ -1488,6 +1488,7 @@ async function api(req, res, url) {
     store.orders.push(order);
     saveStore(store);
     queueMail(mailer.orderMail(order, "placed", {origin: (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", deliveredText: fulfillHandle.deliveredText}));
+    queueMail(mailer.opsOrderMail(order));
     return send(res, 200, { order });
   }
 
@@ -2487,6 +2488,7 @@ async function api(req, res, url) {
     store.orders.push(stored);
     saveStore(store);
     queueMail(orderMail(stored, "placed"));
+    queueMail(mailer.opsOrderMail(stored));
     return send(res, 200, { order: stored });
   }
 
