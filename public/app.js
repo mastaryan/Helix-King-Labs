@@ -774,10 +774,7 @@
           <h2>Research calculator</h2>
           <p>Vial milligrams divided by diluent milliliters. Concentration only.</p>
         </a>
-        <a class="tool-card" href="/tools/label" data-link>
-          <h2>Label maker</h2>
-          <p>Branded vial labels with lot QR codes. 3 mL and 10 mL sizes.</p>
-        </a>
+        ${state.user&&state.user.isOps?`<a class="tool-card" href="/tools/label" data-link><h2>Label maker</h2><p>Vial labels with lot QR codes.</p></a>`:""}
       </div>
     </section>`;
   }
@@ -1537,8 +1534,7 @@
       } else if (p === "/testing") {
         app.innerHTML = testing();
       } else if (p === "/tools") {
-        go("/tools/calculator");
-        return;
+        app.innerHTML = toolsHome();
       } else if (p === "/tools/label") {
         if (!state.user || !state.user.isOps) {
           app.innerHTML = `<section class="page wrap"><h1>Not found</h1><p class="lede">This address is not a catalog page.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
