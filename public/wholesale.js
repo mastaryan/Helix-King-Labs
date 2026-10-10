@@ -91,7 +91,14 @@
         note.textContent = r.duplicate ? "You've already requested access — status: " + (r.status || "pending") + "." : "Request received. We'll review and notify you.";
         if (!r.duplicate) form.reset();
       } catch (err) {
-        note.textContent = "Couldn't submit — try again.";
+        const funny = [
+          "Math isn't your strong point? Try again.",
+          "You aren't the sharpest crayon in the box, are you? Try again.",
+          "Close — but the calculator says otherwise. Try again.",
+        ];
+        note.textContent = err.message === "captcha" || (err.message || "").includes("captcha")
+          ? funny[Math.floor(Math.random() * funny.length)]
+          : "Couldn't submit — try again.";
       }
       toast(note.textContent);
     };
