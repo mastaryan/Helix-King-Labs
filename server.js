@@ -1112,8 +1112,8 @@ async function api(req, res, url) {
       return res.end();
     }
     try {
-      const identity = await authx.verifyGoogleIdToken(credential);
-      const u = authx.upsertSocialUser({
+      const identity = await verifyGoogleIdToken(credential);
+      const u = upsertSocialUser({
         email: identity.email,
         name: identity.name,
         provider: "google",
