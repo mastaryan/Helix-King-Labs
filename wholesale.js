@@ -1,11 +1,29 @@
 // Wholesale: request/approve flow, gated pricing, order windows, minimums.
 function createWholesale(deps) {
   const { store, saveStore, send, readBody, isOpsUser, products, getPayments, verifyCaptcha, loadOutbox, saveOutbox, queueMail } = deps;
+  // Blocked email TLDs (Ryan 2026-10-10): all African nations, Middle East, Russia.
+  // Checked against the domain's TLD so subdomains (mail.example.ng) are caught too.
+  const BLOCKED_TLDS = new Set([
+    // Africa
+    "dz","ao","bj","bw","bf","bi","cm","cv","cf","td","km","cg","cd","dj","eg","gq",
+    "er","et","ga","gm","gh","gn","gw","ci","ke","ls","lr","ly","mg","mw","ml","mr",
+    "mu","ma","mz","na","ne","ng","rw","st","sn","sc","sl","so","za","ss","sd","sz",
+    "tz","tg","tn","ug","zm","zw",
+    // Middle East
+    "sa","ae","qa","kw","bh","om","ye","iq","ir","sy","jo","lb","il","ps","tr","cy",
+    // Russia
+    "ru","su","xn--p1ai",
+  ]);
+  function emailTldBlocked(email) {
+    const domain = String(email || "").split("@")[1] || "";
+    const tld = domain.split(".").pop().toLowerCase();
+    return BLOCKED_TLDS.has(tld);
+  }
+  // SKUs excluded from wholesale (non-peptide / topical / CBD lines) — Ryan 2026-10-08
+  const WHOLESALE_HIDDEN_SKUS = new Set(["ALK30","H7","FSS30","SEL10","SMX10","T25","LO25","JJ1","LC30","CRN30","SCBD","CBD30"]);
   // Wholesale payment rules (Ryan 2026-10-08): orders under $500 can use
   // Cash App, Venmo, or crypto. Orders $500+ are crypto only.
   const WHOLESALE_CASHAPP_LIMIT = 500;
-  // SKUs excluded from wholesale (non-peptide / topical / CBD lines) — Ryan 2026-10-08
-  const WHOLESALE_HIDDEN_SKUS = new Set(["ALK30","H7","FSS30","SEL10","SMX10","T25","LO25","JJ1","LC30","CRN30","SCBD","CBD30"]);
   function getRequests() {
     if (!Array.isArray(store.wholesaleRequests)) store.wholesaleRequests = [];
     return store.wholesaleRequests;
@@ -55,8 +73,8 @@ function createWholesale(deps) {
       if (verifyCaptcha && !verifyCaptcha(body)) {
         return send(res, 400, { error: "captcha", message: "Wrong answer — try again." });
       }
-      // Block .ru domains (Ryan: hard block).
-      if (/\.ru$/i.test(email)) {
+      // Block African, Middle Eastern, and Russian email domains (Ryan 2026-10-10).
+      if (emailTldBlocked(email)) {
         return send(res, 400, { error: "domain_blocked", message: "We can't approve wholesale accounts from that email domain." });
       }
       const requests = getRequests();
