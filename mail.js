@@ -85,14 +85,78 @@ async function sendMail({ to, subject, text, html }) {
 }
 
 
+// Product keyword → research guide mapping. Matched against line id + name (lowercased).
+// Guides live at https://helixkinglabs.com/guides/<file>
+const GUIDE_MAP = [
+  { keys: ["bpc-157"], file: "bpc-157-research-guide.html", title: "BPC-157 Research Guide" },
+  { keys: ["tb-500", "wolverine"], file: "tb-500-research-guide.html", title: "TB-500 Research Guide" },
+  { keys: ["ghk-cu", "glow"], file: "ghk-cu-research-guide.html", title: "GHK-Cu Research Guide" },
+  { keys: ["kpv", "klow"], file: "kpv-research-guide.html", title: "KPV Research Guide" },
+  { keys: ["tesamorelin"], file: "tesamorelin-research-guide.html", title: "Tesamorelin Research Guide" },
+  { keys: ["mots-c", "mots c"], file: "mots-c-research-guide.html", title: "MOTS-c Research Guide" },
+  { keys: ["nad"], file: "nad-research-guide.html", title: "NAD+ Research Guide" },
+  { keys: ["ss-31", "ss31"], file: "ss-31-research-guide.html", title: "SS-31 Research Guide" },
+  { keys: ["retatrutide", "pgl-gic1"], file: "retatrutide-research-guide.html", title: "Retatrutide Research Guide" },
+  { keys: ["tirzepatide", "pgl-gi1"], file: "tirzepatide-research-guide.html", title: "Tirzepatide Research Guide" },
+  { keys: ["semaglutide", "pgl-g1"], file: "semaglutide-research-guide.html", title: "Semaglutide Research Guide" },
+  { keys: ["eloralintide", "pgl-el1"], file: "eloralintide-research-guide.html", title: "Eloralintide Research Guide" },
+  { keys: ["cagrilintide", "cgl-1", "cgl1"], file: "tirzepatide-research-guide.html", title: "Tirzepatide Research Guide" },
+  { keys: ["cjc-1295", "cjc1295"], file: "cjc-1295-research-guide.html", title: "CJC-1295 Research Guide" },
+  { keys: ["hcg"], file: "hcg-research-guide.html", title: "HCG Research Guide" },
+  { keys: ["bac water", "bac-water"], file: "bac-water-reconstitution-guide.html", title: "BAC Water & Reconstitution Guide" },
+];
+
+// Returns up to 2 most relevant guides for an order's line items.
+function guidesForOrder(order) {
+  const q = order.quote || {};
+  const lines = q.lines || order.lines || [];
+  const origin = "https://helixkinglabs.com";
+  const seen = new Set();
+  const out = [];
+  for (const l of lines) {
+    if (out.length >= 2) break;
+    const hay = ((l.id || "") + " " + (l.name || "")).toLowerCase();
+    for (const g of GUIDE_MAP) {
+      if (out.length >= 2) break;
+      if (seen.has(g.file)) continue;
+      if (g.keys.some((k) => hay.includes(k))) {
+        seen.add(g.file);
+        out.push({ title: g.title, url: origin + "/guides/" + g.file });
+      }
+    }
+  }
+  return out;
+}
+
 function orderHtml(order) {
   const q = order.quote || {};
-  const total = "$" + Number(q.total || 0).toFixed(2);
+  const total = "$" + Number(q.total != null ? q.total : order.total || 0).toFixed(2);
   const origin = "https://helixkinglabs.com";
-  const lines = (q.lines || []).map((l) => {
-    return "<tr><td>" + (l.name || "") + " " + (l.size || "") + " × " + l.qty + "</td></tr>";
+  const lines = (q.lines || order.lines || []).map((l) => {
+    const img = l.image ? origin + (String(l.image).startsWith("/") ? l.image : "/" + l.image) : "";
+    const imgCell = img
+      ? `<td style="width:72px;padding:12px 0 12px 12px;vertical-align:top"><img src="${img}" alt="" width="60" height="60" style="display:block;width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid #2a2a2a"></td>`
+      : `<td style="width:12px"></td>`;
+    return `<tr>${imgCell}<td style="padding:12px;color:#ffffff;font-size:14px;vertical-align:middle">` +
+      `<div style="font-weight:bold">${l.name || ""} ${l.size || ""}</div>` +
+      `<div style="color:#999;font-size:12px;margin-top:2px">Qty ${l.qty || 1}</div></td></tr>`;
   }).join("");
-  return '<div style="font-family:Arial,sans-serif;max-width:600px"><h2>Helix King Labs</h2><p>Order ' + order.id + ' · Total <strong>' + total + '</strong></p><table cellpadding="6">' + lines + '</table><p style="color:#888;font-size:12px">Research use only.</p></div>';
+  const guides = guidesForOrder(order);
+  const guideBlock = guides.length
+    ? `<tr><td colspan="2" style="padding:16px 12px 4px"><p style="margin:0 0 8px;color:#c9a227;font-size:13px;font-weight:bold;letter-spacing:1px">LEARN MORE</p>` +
+      guides.map((g) => `<p style="margin:0 0 6px"><a href="${g.url}" style="color:#c9a227;font-size:14px">📖 ${g.title}</a></p>`).join("") +
+      `</td></tr>`
+    : "";
+  return `<div style="background:#0a0a0a;padding:24px 12px;font-family:Arial,sans-serif">` +
+    `<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#111111;border:1px solid #2a2a2a;border-radius:12px;overflow:hidden">` +
+    `<tr><td style="padding:24px 20px 8px;text-align:center">` +
+    `<p style="margin:0;color:#c9a227;font-size:20px;font-weight:bold;letter-spacing:3px">HELIX KING LABS</p>` +
+    `<p style="margin:8px 0 0;color:#ffffff;font-size:16px">Order <strong>${order.id}</strong></p>` +
+    `<p style="margin:4px 0 0;color:#999;font-size:14px">Total <strong style="color:#ffffff">${total}</strong></p>` +
+    `</td></tr>` +
+    `<tr><td style="padding:8px 8px 0"><table cellpadding="0" cellspacing="0" border="0" width="100%">${lines}${guideBlock}</table></td></tr>` +
+    `<tr><td style="padding:16px 20px 24px;text-align:center"><p style="margin:0;color:#666;font-size:11px">Research use only. 18+.</p></td></tr>` +
+    `</table></div>`;
 }
 
 function orderMail(order, kind, deps) {
@@ -213,4 +277,30 @@ function expiryNudgeMail(order, deps) {
     attempts: 0,
   };
 }
-module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml, orderMail, underpaymentMail, abandonmentMail, expiryNudgeMail, emailFooter };
+// Concise ops notification when a new order is placed. Sent to orders@helixkinglabs.com.
+function opsOrderMail(order) {
+  const q = order.quote || {};
+  const total = "$" + Number(q.total != null ? q.total : order.total || 0).toFixed(2);
+  const lines = (q.lines || order.lines || []).map((l) => `${l.name || ""} ${l.size || ""} × ${l.qty}`).join("\n") || "See the desk for lines.";
+  const method = order.paymentMethod || "unknown";
+  const text = `New order ${order.id}\n\nCustomer: ${order.email || "(no email)"}\nTotal: ${total}\nPayment: ${method}\n\n${lines}\n\nDesk: https://helixkinglabs.com/ops`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#111111;padding:20px;border-radius:8px">` +
+    `<p style="color:#c9a227;font-size:18px;font-weight:bold;margin:0 0 12px">New order ${order.id}</p>` +
+    `<p style="color:#ffffff;font-size:14px;margin:0 0 4px">Customer: ${order.email || "(no email)"}</p>` +
+    `<p style="color:#ffffff;font-size:14px;margin:0 0 4px">Total: <strong>${total}</strong></p>` +
+    `<p style="color:#ffffff;font-size:14px;margin:0 0 12px">Payment: ${method}</p>` +
+    `<pre style="color:#ccc;font-size:13px;background:#0a0a0a;padding:12px;border-radius:6px;white-space:pre-wrap">${lines}</pre>` +
+    `<p><a href="https://helixkinglabs.com/ops" style="color:#c9a227">Open the ops desk →</a></p></div>`;
+  return {
+    to: "orders@helixkinglabs.com",
+    subject: `New order ${order.id} (${total}) — Helix King Labs`,
+    text,
+    html,
+    kind: "ops_new_order",
+    orderId: order.id,
+    created: new Date().toISOString(),
+    status: "queued",
+    attempts: 0,
+  };
+}
+module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml, orderMail, underpaymentMail, abandonmentMail, expiryNudgeMail, emailFooter, guidesForOrder, opsOrderMail };
