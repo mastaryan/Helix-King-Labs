@@ -2134,12 +2134,56 @@ async function api(req, res, url) {
   if (method === "GET" && route === "/api/ops/export") {
     if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
     const kind = url.searchParams.get("kind") || "orders";
-    const csv = kind === "inventory" ? inventoryCsvExport() : ordersCsvExport();
+    const csv = kind === "inventory" ? inventoryCsvExport() : kind === "customers" ? customersCsvExport() : ordersCsvExport();
     res.writeHead(200, {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="helix-${kind}.csv"`,
     });
     return res.end(csv);
+  }
+
+  if (method === "GET" && route === "/api/ops/integrations") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    const outbox = loadOutbox().messages || [];
+    return send(res, 200, {
+      nowpayments: {
+        configured: !!process.env.NOWPAYMENTS_API_KEY,
+        // Auto-forward-to-wallet is a NOWPayments dashboard setting, not API-visible.
+        autoForward: null,
+        note: "Only 'finished' marks an order PAID. IPN + 3-min recheck cover missed callbacks.",
+      },
+      resend: {
+        configured: mailer.resendConfigured(),
+        recent: outbox.slice(-12).reverse().map((m) => ({
+          to: m.to, subject: m.subject, status: m.status || "sent", at: m.at || m.created,
+        })),
+      },
+      ga: {
+        configured: false,
+        propertyId: "G-6HZJNLG29P",
+        note: "Set GA_PROPERTY_ID + service-account key to pull sessions, conversion, top pages, sources, funnel via the GA Data API.",
+      },
+      contentsquare: { projectId: "1068524", live: true },
+      discord: {
+        connected: !!process.env.DISCORD_WIDGET_URL,
+        widgetUrl: process.env.DISCORD_WIDGET_URL || null,
+        invite: "https://discord.gg/duGpW96r3a",
+        inviteSources: [],
+        note: "Set DISCORD_WIDGET_URL (server widget JSON) for member counts. Invite-source tracking needs the bot.",
+      },
+    });
+  }
+
+  if (method === "POST" && route === "/api/ops/users/wholesale") {
+    if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
+    let body;
+    try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
+    const u = (store.users || []).find((x) => String(x.id) === String(body.id));
+    if (!u) return send(res, 404, { error: "not_found" });
+    u.wholesaleApproved = body.approved !== false;
+    saveStore(store);
+    audit(user, "wholesale", `${u.email} -> ${u.wholesaleApproved ? "approved" : "revoked"}`);
+    return send(res, 200, { ok: true, approved: u.wholesaleApproved });
   }
 
   if (method === "POST" && route === "/api/ops/inventory") {
@@ -2429,6 +2473,8 @@ function deskPayload() {
       available: Number(it.available != null ? it.available : it.stock || 0),
       unit_cost: cost,
       price,
+      wholesalePrice: it.wholesalePrice != null ? Number(it.wholesalePrice) : null,
+      shopVisible: shopVisibleOf(it),
       margin,
       certificate: it.certificateStatus || "pending",
       low: Number(it.available != null ? it.available : it.stock || 0) < 3,
@@ -2497,6 +2543,8 @@ function deskPayload() {
       name: u.name,
       company: u.company || "",
       researchField: u.researchField || "",
+      phone: u.phone || "",
+      wholesaleApproved: !!u.wholesaleApproved,
       orders: (store.orders || []).filter((o) => o.userId === u.id).length,
     })),
     disputes: store.disputes || [],
@@ -2509,6 +2557,7 @@ function deskPayload() {
       created: a.created || "",
       earned: Math.round(referredOrders(a.code).reduce((sum, o) => sum + Number(o.affiliatePayout || 0), 0) * 100) / 100,
       tax: a.tax ? { ...a.tax, taxId: decTaxId(a.tax.taxIdEnc) || "unavailable", taxIdEnc: undefined } : null,
+      contactComplete: !!(a.tax && a.tax.legalName && a.tax.address),
       payoutMethod: a.payoutMethod || null,
       payoutDetail: a.payoutDetail || null,
     })),
@@ -2530,6 +2579,15 @@ function inventoryCsvExport() {
   const lines = ["sku,name,size,lot,on_hand,cost,price,certificate"];
   for (const it of products.items.filter(shopVisibleOf)) {
     lines.push([it.sku, it.name, it.size, it.lot || "", it.stock || 0, it.cost == null ? "" : it.cost, it.price == null ? "" : it.price, it.certificateStatus || "pending"].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","));
+  }
+  return lines.join("\n");
+}
+
+function customersCsvExport() {
+  const lines = ["id,email,name,company,researchField,phone,orders,wholesaleApproved"];
+  for (const u of store.users || []) {
+    const n = (store.orders || []).filter((o) => o.userId === u.id).length;
+    lines.push([u.id, u.email, u.name || "", u.company || "", u.researchField || "", u.phone || "", n, u.wholesaleApproved ? "yes" : "no"].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","));
   }
   return lines.join("\n");
 }
