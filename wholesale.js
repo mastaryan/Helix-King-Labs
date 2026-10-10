@@ -1,6 +1,6 @@
 // Wholesale: request/approve flow, gated pricing, order windows, minimums.
 function createWholesale(deps) {
-  const { store, saveStore, send, readBody, isOpsUser, products, getPayments } = deps;
+  const { store, saveStore, send, readBody, isOpsUser, products, getPayments, verifyCaptcha, loadOutbox, saveOutbox, queueMail } = deps;
   // Wholesale payment rules (Ryan 2026-10-08): orders under $500 can use
   // Cash App, Venmo, or crypto. Orders $500+ are crypto only.
   const WHOLESALE_CASHAPP_LIMIT = 500;
@@ -52,6 +52,13 @@ function createWholesale(deps) {
       if (!name || !email || !/^\S+@\S+\.\S+$/.test(email)) {
         return send(res, 400, { error: "name_email_required" });
       }
+      if (verifyCaptcha && !verifyCaptcha(body)) {
+        return send(res, 400, { error: "captcha", message: "Wrong answer — try again." });
+      }
+      // Block .ru domains (Ryan: hard block).
+      if (/\.ru$/i.test(email)) {
+        return send(res, 400, { error: "domain_blocked", message: "We can't approve wholesale accounts from that email domain." });
+      }
       const requests = getRequests();
       const existing = requests.find((r) => r.email === email);
       if (existing) {
@@ -62,6 +69,19 @@ function createWholesale(deps) {
         note: note || null, status: "pending", at: new Date().toISOString(),
       });
       saveStore(store);
+      // Branded 48-hour confirmation email.
+      try {
+        const mail = {
+          to: email,
+          subject: "Wholesale request received — Helix King Labs",
+          text: `Helix King Labs\n\nHi ${name},\n\nYour wholesale access request is in. We review every application by hand — expect a decision within 48 hours.\n\nWhat happens next:\n• We verify your business details\n• You'll get an approval email with wholesale pricing access\n• Questions? Reply to this email or reach us at wholesale@helixkinglabs.com\n\nThanks for your interest in Helix King Labs.\n\n— The Helix King Labs Team\nhelixkinglabs.com\n\nResearch use only.`,
+          source: "wholesale-request-confirm",
+          created: new Date().toISOString(),
+          status: "queued",
+        };
+        if (queueMail) queueMail(mail);
+        else if (loadOutbox && saveOutbox) { const box = loadOutbox(); box.messages.push(mail); saveOutbox(box); }
+      } catch {}
       return send(res, 200, { ok: true, status: "pending" });
     }
 
@@ -141,16 +161,24 @@ function createWholesale(deps) {
         return send(res, 400, { error: "crypto_only_over_limit", limit: WHOLESALE_CASHAPP_LIMIT, total: Math.round(total * 100) / 100 });
       }
       // Create commitment (group buy style)
+      const orderTotal = Math.round(total * 100) / 100;
       const order = {
         id: "WS-" + Date.now().toString(36).toUpperCase(),
         userId: user.id,
         email: user.email,
         wholesale: true,
         lines: validated,
-        total: Math.round(total * 100) / 100,
+        total: orderTotal,
+        quote: {
+          lines: validated,
+          merchandise: orderTotal,
+          shipping: 0,
+          total: orderTotal,
+        },
         status: "committed",
         paymentMethod,
         at: now,
+        created: now,
       };
       if (paymentMethod === "venmo" || paymentMethod === "cashapp") {
         order.payment = {
@@ -165,8 +193,8 @@ function createWholesale(deps) {
         // Crypto: create NOWPayments invoice immediately
         try {
           const payments = getPayments ? getPayments() : null;
-          if (payments && payments.createNowPayment) {
-            const inv = await payments.createNowPayment({ id: order.id, quote: { total: order.total } }, body.network);
+          if (payments && payments.createNowPaymentDirect) {
+            const inv = await payments.createNowPaymentDirect({ id: order.id, quote: { total: order.total } }, body.network);
             order.payment = inv;
             if (["payment_failed", "key_missing"].includes(inv.status)) {
               return send(res, 400, { error: "payment_unavailable", message: inv.message || "Crypto payment is not available right now." });
