@@ -453,6 +453,8 @@ function createFulfillment(deps) {
       const order = (store.orders || []).find((o) => o.id === orderId && o.userId === user.id);
       if (!order) return send(res, 404, { error: "not_found" });
       if (order.status !== "not_paid" && !(order.wholesale && order.status === "committed")) return send(res, 400, { error: "not_awaiting_payment" });
+      // Crypto is confirmed only by NOWPayments (IPN + API re-check). Never by screenshot.
+      if (order.paymentMethod === "crypto") return send(res, 400, { error: "crypto_auto_confirms" });
       let body;
       try {
         body = await readBody(req, 12_000_000);

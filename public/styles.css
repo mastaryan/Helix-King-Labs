@@ -707,7 +707,7 @@ input:focus, select:focus { border-color: var(--silver-2); }
 .steps li.done { border-color: #4caf7d; color: #4caf7d; }
 .paybox { border: 1px solid #2a2a2e; border-radius: 10px; padding: 16px; margin: 16px 0; }
 .paybox h3 { margin: 0 0 8px; }
-.codeaddr { font-family: monospace; word-break: break-all; background: #101012; padding: 10px 12px; border-radius: 8px; }
+.codeaddr { font-family: monospace; word-break: break-all; overflow-wrap: anywhere; background: #101012; padding: 10px 12px; border-radius: 8px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 20px 0; }
 @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } .steps { flex-direction: column; } }
 
@@ -863,3 +863,24 @@ body.has-ops-sidebar main#app {
 .upsell-row>div:nth-child(2){flex:1}
 .upsell-row p{margin:4px 0 0}
 .upsell-row>div:last-child{text-align:right;display:grid;gap:8px;justify-items:end}
+
+/* ---- Mobile pass (Oct 2026) ----
+   iOS Safari zooms into inputs under 16px; WCAG/Apple tap targets are 44px. */
+@media (max-width: 820px) {
+  input:not([type=checkbox]):not([type=radio]), select, textarea { font-size: 16px; }
+  .nav-toggle, .btn, button.btn, a.btn, .dose, .paycard, #qtyMinus, #qtyPlus, .legal-print { min-height: 44px; }
+  .nav-toggle, #qtyMinus, #qtyPlus { min-width: 44px; }
+  #acctLink, .site-header nav a, .nav a { display: inline-flex; align-items: center; min-height: 44px; padding-left: 6px; padding-right: 6px; }
+  label.check { min-height: 44px; display: flex; align-items: center; gap: 10px; }
+  label.check input[type=checkbox], label.check input[type=radio] { width: 22px; height: 22px; flex: 0 0 auto; }
+  .badge { min-height: 32px; display: inline-flex; align-items: center; }
+  footer a { display: inline-block; padding: 8px 0; }
+  .table, table:not(.responsive) { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+  img, video { max-width: 100%; height: auto; }
+  /* Crypto payment page */
+  .np-pay .card { padding: 18px !important; margin: 16px auto !important; }
+  .np-pay img[alt="Deposit address QR code"], .np-pay img[alt="Deposit QR code"] { width: min(220px, 60vw) !important; height: auto !important; display: block; margin: 0 auto; }
+  .np-pay #depAddr, .np-pay #depAmt { font-size: 16px !important; min-width: 0; }
+  .np-pay .steps { padding-left: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .np-pay h1 { font-size: clamp(24px, 7vw, 36px); overflow-wrap: anywhere; }
+}

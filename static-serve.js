@@ -81,12 +81,25 @@ function createStaticServe({ PUBLIC, MIME, products, copyDeck, familyVisibleOf, 
         body: "<p>Research-use materials only. Not for human or animal consumption.</p>",
         schema: {
           "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: (copyDeck.faq || []).map((f) => ({
-            "@type": "Question",
-            name: f.q,
-            acceptedAnswer: { "@type": "Answer", text: f.a },
-          })),
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": origin + "/#org",
+              name: "Helix King Labs",
+              url: origin + "/",
+              logo: origin + "/img/logo.jpg",
+              email: "info@helixkinglabs.com",
+            },
+            { "@type": "WebSite", name: "Helix King Labs", url: origin + "/", publisher: { "@id": origin + "/#org" } },
+            {
+              "@type": "FAQPage",
+              mainEntity: (copyDeck.faq || []).map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            },
+          ],
         },
       };
     }
@@ -111,6 +124,14 @@ function createStaticServe({ PUBLIC, MIME, products, copyDeck, familyVisibleOf, 
         canonical: origin + "/shop",
         h1: "Research catalog",
         body: `<ul>${cards}</ul>`,
+        schema: {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: origin + "/" },
+            { "@type": "ListItem", position: 2, name: "Catalog", item: origin + "/shop" },
+          ],
+        },
       };
     }
     if (pathname.startsWith("/product/")) {
@@ -124,25 +145,45 @@ function createStaticServe({ PUBLIC, MIME, products, copyDeck, familyVisibleOf, 
         sku: it.sku,
         price: Number(it.price),
         priceCurrency: "USD",
-        availability: Number(it.available || it.stock || 0) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        availability: Number(it.available != null ? it.available : it.stock || 0) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        itemCondition: "https://schema.org/NewCondition",
         url: origin + "/product/" + (fam.slug || fam.id),
       }));
       const sizes = items.map((it) => `${escHtml(it.size)} · $${escHtml(it.price)}`).join("</li><li>");
       const desc = String(fam.blurb || fam.name + " research material.").replace(/\s+/g, " ").trim();
+      const img = (live[0] && live[0].image) || fam.image || "";
+      const imgUrl = img ? origin + (String(img).startsWith("/") ? "" : "/") + String(img) : null;
       return {
         title: fam.name + " | Helix King Labs",
+        ogImage: imgUrl,
+        ogType: "product",
         description: desc.slice(0, 160),
         canonical: origin + "/product/" + (fam.slug || fam.id),
         h1: fam.name,
         body: `<p>${escHtml(desc)}</p><p>All products listed on this site are for research purposes only.</p><ul><li>${sizes}</li></ul>`,
         schema: {
           "@context": "https://schema.org",
-          "@type": "Product",
-          name: fam.name,
-          ...(COMPOUND_NAMES[fam.id] ? { alternateName: COMPOUND_NAMES[fam.id] } : {}),
-          brand: { "@type": "Brand", name: "Helix King Labs" },
-          description: desc,
-          offers: offers,
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: origin + "/" },
+                { "@type": "ListItem", position: 2, name: "Catalog", item: origin + "/shop" },
+                { "@type": "ListItem", position: 3, name: fam.name, item: origin + "/product/" + (fam.slug || fam.id) },
+              ],
+            },
+            {
+              "@type": "Product",
+              name: fam.name,
+              url: origin + "/product/" + (fam.slug || fam.id),
+              ...(imgUrl ? { image: [imgUrl] } : {}),
+              ...(COMPOUND_NAMES[fam.id] ? { alternateName: COMPOUND_NAMES[fam.id] } : {}),
+              brand: { "@type": "Brand", name: "Helix King Labs" },
+              description: desc,
+              // Offers only from real list prices; no reviews or ratings are emitted.
+              ...(offers.length ? { offers } : {}),
+            },
+          ],
         },
       };
     }
@@ -181,6 +222,11 @@ function createStaticServe({ PUBLIC, MIME, products, copyDeck, familyVisibleOf, 
     };
   }
 
+  // Account, cart, checkout, ops and one-time-link pages never belong in search.
+  function isPrivatePath(p) {
+    return /^\/(account|cart|checkout|ops|library|welcome|unsubscribe|reset|reset-2fa|magic|group-buys?|tracking|affiliates|wholesale)(\/|$)/.test(p);
+  }
+
   function injectDocument(buf, pathname, status) {
     const model = pageModel(pathname) || {
       title: "Not found — Helix King Labs",
@@ -199,12 +245,23 @@ function createStaticServe({ PUBLIC, MIME, products, copyDeck, familyVisibleOf, 
       /(<link rel="canonical" href=")[^"]*(")/,
       "$1" + escHtml(model.canonical) + "$2"
     );
+    const setMeta = (attr, key, val) => {
+      const re = new RegExp('(<meta ' + attr + '="' + key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + '" content=")[^"]*(")');
+      html = html.replace(re, "$1" + escHtml(val) + "$2");
+    };
+    setMeta("property", "og:title", model.title);
+    setMeta("property", "og:description", model.description);
+    setMeta("property", "og:url", model.canonical);
+    setMeta("name", "twitter:title", model.title);
+    setMeta("name", "twitter:description", model.description);
+    if (model.ogType) setMeta("property", "og:type", model.ogType);
+    if (model.ogImage) { setMeta("property", "og:image", model.ogImage); setMeta("name", "twitter:image", model.ogImage); setMeta("property", "og:image:alt", model.h1); }
     const schema = model.schema
       ? `<script type="application/ld+json" id="hkl-schema">${JSON.stringify(model.schema).replace(/</g, "\\u003c")}</script>`
       : "";
     const block = `${schema}<main id="app"><article class="page wrap"><h1>${escHtml(model.h1)}</h1>${model.body}</article></main>`;
     html = html.replace('<main id="app"></main>', block);
-    if (status === 404 || pathname === "/group-buy" || pathname === "/group-buys") html = html.replace('content="index,follow', 'content="noindex,follow');
+    if (status === 404 || isPrivatePath(pathname)) html = html.replace('content="index,follow', 'content="noindex,follow');
     return html;
   }
 
@@ -290,7 +347,9 @@ function createStaticServe({ PUBLIC, MIME, products, copyDeck, familyVisibleOf, 
           ""
         );
       }
-      res.writeHead(status, secHandle.htmlHeaders(status, nonce));
+      const hdrs = secHandle.htmlHeaders(status, nonce);
+      if (isPrivatePath(pathname)) hdrs["X-Robots-Tag"] = "noindex, nofollow";
+      res.writeHead(status, hdrs);
       res.end(html);
     });
   }
