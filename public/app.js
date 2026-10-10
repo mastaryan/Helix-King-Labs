@@ -157,7 +157,7 @@
       const h = a.getAttribute("href");
       a.classList.toggle("active", h === p || (h !== "/" && p.startsWith(h)));
     });
-    $("#acctLink").textContent = state.user ? state.user.email.split("@")[0] : "Account"; window.HKL_ACCT?.();
+    $("#acctLink").textContent = state.user ? state.user.email.split("@")[0] : "Account"; window.HKL_ACCT_BUILD?.(); window.HKL_ACCT?.();
     document.querySelectorAll('[data-nav="ops"]').forEach((a) => {
       const on = !!(state.user && state.user.isOps);
       a.classList.toggle("is-hidden", !on);
@@ -441,7 +441,7 @@
                 <button type="button" id="qtyPlus"${onHand(p)<=0?" disabled":""}>+</button>
               </div>
               <p class="line-total" id="lineTotal"></p>
-              ${isPending(p)?`<button class="btn" disabled>Waiting for testing to complete</button>`:onHand(p)<=0?`<button class="btn" disabled>Sold out</button><button class="btn ghost notify-btn" id="notifyBtn" data-s="${esc(p.sku||p.id)}" style="margin-top:8px">Join waitlist</button><div id="notifyWrap"></div>`:!state.user?`<a class="btn" href="/account" data-link>Sign in to add</a>`:`<button class="btn" id="addBtn">Add single · ${money(p.price)}</button>`}
+              ${isPending(p)?`<button class="btn" disabled>Waiting for testing to complete</button>`:onHand(p)<=0?`<button class="btn notify-btn" id="notifyBtn" data-s="${esc(p.sku||p.id)}">Join waitlist</button><div id="notifyWrap"></div>`:!state.user?`<a class="btn" href="/account" data-link>Sign in to add</a>`:`<button class="btn" id="addBtn">Add single · ${money(p.price)}</button>`}
             </div>
             ${onHand(p) >= 15 && p.kitPrice ? `<div>
               <div class="kicker">Kit of 10</div>
@@ -1192,9 +1192,9 @@
     const out = await api("/api/capture", { method: "POST", body: { email, source, consent: !!consent } });
     state.captureOk = true;
     localStorage.setItem("hkl_capture", "1");
-    toast(out && out.subscribed === false ? "Entered without subscribing." : "You are on the list. Opening the library.");
+    toast(out && out.subscribed === false ? "Entered without subscribing." : "You're on the list — watch your inbox for new lot alerts.");
     dismissPopup();
-    go("/library");
+    if (location.pathname !== "/") go("/");
   }
 
   async function loadBase() {
