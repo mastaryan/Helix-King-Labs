@@ -2,7 +2,7 @@
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 function orderStatusLabel(status) {
-  return { awaiting_settlement: "Awaiting payment", settled: "Paid", shipped: "Shipped", delivered: "Delivered", voided: "Cancelled" }[status] || status || "";
+  return { not_paid: "Not paid", paid: "Paid", shipped: "Shipped", delivered: "Delivered", voided: "Cancelled" }[status] || status || "";
 }
 
 function trackUrl(carrier, num) {
@@ -30,12 +30,12 @@ function orderTimeline(o) {
   const at = (kind) => { const e = events.find((e) => e.kind === kind); return e ? orderShortDate(e.at) : ""; };
   const steps = [
     { label: "Order placed", date: at("placed") || orderShortDate(o.created) },
-    { label: "Payment confirmed", date: at("settled"), waiting: "Waiting on payment" },
+    { label: "Payment confirmed", date: at("paid"), waiting: "Waiting on payment" },
     { label: "Shipped", date: at("shipped"), waiting: "Being prepared" },
   ];
   const stateOf = (i) => {
     if (st === "shipped") return "done";
-    if (st === "settled") return i <= 1 ? "done" : "now";
+    if (st === "paid") return i <= 1 ? "done" : "now";
     return i === 0 ? "done" : i === 1 ? "now" : "";
   };
   return `<ol class="order-tl">${steps.map((s, i) => {
@@ -63,10 +63,10 @@ function receiptView(o) {
   const pay = o.payment || {};
   const st = o.status || "";
   const ship = o.ship || {};
-  const unpaid = st === "awaiting_settlement" || (isWs && st === "committed" && !pay.invoiceUrl);
+  const unpaid = st === "not_paid" || (isWs && st === "committed" && !pay.invoiceUrl);
   const voided = st === "voided";
   const steps = ["Placed", "Paid", "Shipped", "Delivered"];
-  const stepDone = (n) => (n === 0 ? true : n === 1 ? ["settled", "shipped", "delivered"].includes(st) : n === 2 ? ["shipped", "delivered"].includes(st) : st === "delivered");
+  const stepDone = (n) => (n === 0 ? true : n === 1 ? ["paid", "shipped", "delivered"].includes(st) : n === 2 ? ["shipped", "delivered"].includes(st) : st === "delivered");
   const timeline = voided
     ? `<div class="paybox"><h3>Did you miss something?</h3>
       <p>This order was released before payment was confirmed, so the items went back on the shelf. Nothing was charged beyond what you sent.</p>
@@ -92,7 +92,7 @@ function receiptView(o) {
     payBox = `<div class="paybox"><h3>Complete your payment</h3>
       <p>Send <b>${HKL.money(q.total)}</b> on ${app} to <b>${handle}</b> and put <b>${esc(o.id)}</b> in the note.</p>
       <p class="muted">Mark the note exactly — it is how the payment is matched. Nothing ships until it is confirmed.</p></div>`;
-  } else if (st === "settled") {
+  } else if (st === "paid") {
     payBox = `<div class="paybox" style="border-color:#2a7"><h3>✓ Thank you — payment received!</h3>
       <p>Order <b>${esc(o.id)}</b> is confirmed and being prepared. A receipt has been emailed to you.</p>
       <p><button class="btn ghost" type="button" onclick="window.print()">Print receipt</button>
@@ -115,7 +115,7 @@ function receiptView(o) {
     ? `<div class="paybox"><h3>Shipped${o.carrier ? " · " + esc(o.carrier) : ""}</h3>
       <p class="codeaddr">${tUrl ? `<a href="${tUrl}" target="_blank" rel="noopener">${esc(o.tracking || "")}</a>` : esc(o.tracking || "")} <button class="btn ghost" type="button" id="copyTrack">Copy</button></p></div>`
     : "";
-  const eventLabel = { placed: "Order placed", settled: "Payment confirmed", shipped: "Shipped", delivered: "Delivered", voided: "Order cancelled", address: "Shipping address updated", note: "Note" };
+  const eventLabel = { placed: "Order placed", paid: "Payment confirmed", shipped: "Shipped", delivered: "Delivered", voided: "Order cancelled", address: "Shipping address updated", note: "Note" };
   const feed = (o.events || []).map((e) => `<p class="muted">${orderWhen(e.at)} — ${eventLabel[e.kind] || e.kind}</p>`).join("");
   const lines = (q.lines || []).map((l) => `<tr><td>${esc(l.name)} ${esc(l.size)}</td><td>× ${l.qty}</td><td>${HKL.money(l.line)}</td></tr>`).join("");
   return `<section class="page wrap">
