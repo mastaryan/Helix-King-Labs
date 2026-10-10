@@ -231,6 +231,12 @@
     return `<form id="notifyForm" data-sku="${esc(p.sku || p.id)}" class="notify-form">
       <p class="notify-title">Get notified when ${esc(p.name)} ${esc(p.size)} is back.</p>
       <input type="email" name="email" placeholder="Email" required value="${esc(userEmail || "")}" />
+      <textarea name="note" placeholder="What are you researching? (10+ characters)" required minlength="10" rows="2" style="width:100%"></textarea>
+      <div class="captcha-row" style="display:flex;gap:8px;align-items:center;margin:8px 0">
+        <span id="captchaQ" class="muted">Loading…</span>
+        <input type="number" name="captchaAnswer" placeholder="?" required style="width:64px" />
+        <input type="hidden" name="captchaId" id="captchaId" />
+      </div>
       <label class="check"><input type="checkbox" name="consent" required /> Email me when it's back in stock. One email, no marketing list.</label>
       <div class="notify-actions">
         <button class="btn" type="submit">Notify me</button>
@@ -261,6 +267,19 @@
       } catch (err) { p = { sku: sku, name: sku, size: "" }; }
       var userEmail = (HKL.state && HKL.state.user && HKL.state.user.email) || "";
       wrap.innerHTML = notifyFormHtml(p, userEmail);
+      // Load CAPTCHA
+      var api = HKL.api;
+      if (api) {
+        api("/api/captcha").then(function (c) {
+          var q = document.getElementById("captchaQ");
+          var cid = document.getElementById("captchaId");
+          if (q) q.textContent = c.question || "";
+          if (cid) cid.value = c.id || "";
+        }).catch(function () {
+          var q = document.getElementById("captchaQ");
+          if (q) q.textContent = "CAPTCHA unavailable — try again.";
+        });
+      }
       trackEvent("notify_click", { sku: sku });
     });
 
@@ -286,7 +305,7 @@
       var msg = document.getElementById("notifyMsg");
       var sku = form.getAttribute("data-s");
       try {
-        await api("/api/waitlist", { method: "POST", body: { email: fd.get("email"), sku: sku, consent: !!fd.get("consent") } });
+        await api("/api/waitlist", { method: "POST", body: { email: fd.get("email"), sku: sku, note: fd.get("note"), consent: !!fd.get("consent"), captchaId: fd.get("captchaId"), captchaAnswer: fd.get("captchaAnswer") } });
         trackEvent("notify_submit", { sku: sku });
         if (msg) msg.textContent = "You're on the list. We'll email you once when it's back.";
         else toast("You're on the notify list.");

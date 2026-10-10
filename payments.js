@@ -76,6 +76,77 @@ function createPayments(deps) {
     });
   }
 
+  // Direct payment API (no hosted invoice) — returns pay address for on-site deposit screen.
+  // payCurrency: "usdc" (ERC-20) for Ethereum, "usdcsol" for Solana.
+  function createNowPaymentDirect(order, network) {
+    const key = process.env.NOWPAYMENTS_API_KEY;
+    if (!key) {
+      return Promise.resolve({ provider: "nowpayments", status: "key_missing", message: "Payment key is not on the server." });
+    }
+    const origin = (getPublicOrigin && getPublicOrigin()) || "https://helixkinglabs.com";
+    const payCurrency = network === "solana" ? "usdcsol" : "usdc";
+    const payload = JSON.stringify({
+      price_amount: order.quote.total,
+      price_currency: "usd",
+      pay_currency: payCurrency,
+      order_id: order.id,
+      order_description: "Helix King Labs research order " + order.id,
+      ipn_callback_url: origin + "/api/payments/nowpayments",
+    });
+    return new Promise((resolve) => {
+      const req = https.request(
+        {
+          hostname: "api.nowpayments.io",
+          path: "/v1/payment",
+          method: "POST",
+          headers: {
+            "x-api-key": key,
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let raw = "";
+          res.on("data", (c) => (raw += c));
+          res.on("end", () => {
+            try {
+              const data = JSON.parse(raw);
+              if (data.pay_address) {
+                resolve({
+                  provider: "nowpayments",
+                  status: "awaiting_payment",
+                  paymentId: data.payment_id || null,
+                  payAddress: data.pay_address,
+                  payAmount: data.pay_amount,
+                  payCurrency: (data.pay_currency || payCurrency).toUpperCase(),
+                  priceAmount: data.price_amount,
+                  priceCurrency: "USD",
+                  network: network === "solana" ? "Solana" : "Ethereum",
+                  expiresAt: data.expiration_estimate_date || null,
+                });
+              } else {
+                resolve({
+                  provider: "nowpayments",
+                  status: "payment_failed",
+                  message: data.message || "Payment creation failed.",
+                });
+              }
+            } catch {
+              resolve({ provider: "nowpayments", status: "payment_failed", message: "Payment service error." });
+            }
+          });
+        }
+      );
+      req.setTimeout(10000, () => {
+        req.destroy();
+        resolve({ provider: "nowpayments", status: "payment_failed", message: "Payment service timeout." });
+      });
+      req.on("error", () => resolve({ provider: "nowpayments", status: "payment_failed", message: "Payment service unavailable." }));
+      req.write(payload);
+      req.end();
+    });
+  }
+
   function applyPaymentStatus(order, status, body) {
     body = body || {};
     order.payment = Object.assign({}, order.payment, {
@@ -196,6 +267,7 @@ function createPayments(deps) {
 
   // Expose for checkout flow and scheduled recheck
   handle.createNowPayment = createNowPayment;
+  handle.createNowPaymentDirect = createNowPaymentDirect;
   handle.applyPaymentStatus = applyPaymentStatus;
   handle.recheckPendingCrypto = recheckPendingCrypto;
   return handle;

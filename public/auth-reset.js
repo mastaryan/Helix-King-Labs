@@ -30,29 +30,38 @@
   window.HKL_ACCT = function () {
     const HKL = window.HKL || {};
     const link = document.getElementById("acctLink");
-    if (!link || !HKL.state || !HKL.state.user || link.dataset.dd) return;
-    link.dataset.dd = "1";
+    if (!link || !HKL.state || !HKL.state.user) return;
+    // Remove any existing dropdown to avoid duplicates from re-renders.
+    const existing = link.closest(".acct-dd");
+    if (existing && existing.dataset.wired === "1") return;
+    if (existing) existing.replaceWith(link);
     const wrap = document.createElement("span");
     wrap.className = "acct-dd";
+    wrap.dataset.wired = "1";
     link.parentNode.insertBefore(wrap, link);
     wrap.appendChild(link);
     const menu = document.createElement("div");
     menu.className = "acct-menu hide";
     menu.innerHTML = `<a href="/account">My account</a><button id="signOutBtn" type="button">Sign out</button>`;
     wrap.appendChild(menu);
-    link.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); menu.classList.toggle("hide"); });
-    document.addEventListener("click", (e) => { if (!wrap.contains(e.target)) menu.classList.add("hide"); });
-    // On touch devices the menu otherwise sits open while scrolling ("hovering").
+    const close = () => menu.classList.add("hide");
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      menu.classList.toggle("hide");
+    });
+    document.addEventListener("click", (e) => { if (!wrap.contains(e.target)) close(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
     let lastY = window.scrollY;
     window.addEventListener("scroll", () => {
-      if (Math.abs(window.scrollY - lastY) > 8) menu.classList.add("hide");
+      if (Math.abs(window.scrollY - lastY) > 8) close();
       lastY = window.scrollY;
     }, { passive: true });
-    window.addEventListener("hkl:route", () => menu.classList.add("hide"));
+    window.addEventListener("hkl:route", close);
     menu.querySelector("#signOutBtn").onclick = async () => {
       try { await HKL.api("/api/auth/logout", { method: "POST" }); } catch (x) {}
       location.href = "/";
     };
-    menu.querySelector("a").addEventListener("click", (e) => { e.preventDefault(); menu.classList.add("hide"); location.href = "/account"; });
+    menu.querySelector("a").addEventListener("click", (e) => { e.preventDefault(); close(); location.href = "/account"; });
   };
 })();
