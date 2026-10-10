@@ -1461,6 +1461,7 @@ async function api(req, res, url) {
       order.payment = {
         provider: paymentMethod,
         handle: paymentMethod === "venmo" ? "fibkingpeps" : "FibKingPep",
+        payerHandle: String(body.payerHandle || "").trim().slice(0, 60) || null,
         status: "awaiting_confirmation",
         surcharge: 0,
         amount: quote.total,
@@ -1944,6 +1945,19 @@ async function api(req, res, url) {
       audit(user, "order", order.id + " address");
       saveStore(store);
       return send(res, 200, { ok: true, order: publicOrder(order) });
+    }
+    if (action === "payer-handle") {
+      if (!["not_paid", "committed"].includes(order.status)) {
+        return send(res, 409, { error: "locked", message: "The payment handle can only be set before payment is confirmed." });
+      }
+      const handle = String(body.payerHandle || "").trim().slice(0, 60);
+      if (!handle) return send(res, 400, { error: "handle_required" });
+      order.payment = order.payment || {};
+      order.payment.payerHandle = handle;
+      order.events = order.events || [];
+      order.events.push({ at: new Date().toISOString(), kind: "payer_handle", by: user.email });
+      saveStore(store);
+      return send(res, 200, { ok: true });
     }
     if (action === "restore") {
       if (order.status !== "voided") {
