@@ -162,6 +162,7 @@ function createEmailList(deps) {
     writeSubscribersCsv,
     audit,
     isOpsUser,
+    verifyCaptcha,
   } = deps;
 
   async function emailListHandle(req, res, url, user) {
@@ -310,14 +311,17 @@ function createEmailList(deps) {
       }
       const email = String(body.email || "").toLowerCase().trim();
       const sku = String(body.sku || "").trim().slice(0, 40);
+      const note = String(body.note || "").trim().slice(0, 500);
       if (!validEmail(email)) return send(res, 400, { error: "email" });
       if (!sku) return send(res, 400, { error: "sku" });
       if (!body.consent) return send(res, 400, { error: "consent_required" });
+      if (note.length < 10) return send(res, 400, { error: "note_too_short", message: "Tell us what you're researching (10+ characters)." });
+      if (verifyCaptcha && !verifyCaptcha(body)) return send(res, 400, { error: "captcha", message: "Wrong answer — try again." });
       store.waitlist = store.waitlist || [];
       const exists = store.waitlist.some((w) => w.email === email && w.sku === sku);
       if (!exists) {
         const unsubToken = token().slice(0, 16);
-        store.waitlist.push({ email, sku, created: new Date().toISOString(), consent: true, unsubToken });
+        store.waitlist.push({ email, sku, note, created: new Date().toISOString(), consent: true, unsubToken });
         saveStore(store);
         // Confirmation email
         const box = loadOutbox();

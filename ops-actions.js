@@ -21,10 +21,10 @@ function createOpsActions(deps) {
       const idx = (store.orders || []).findIndex((o) => o.id === id);
       if (idx < 0) return send(res, 404, { error: "not_found" }), true;
       const order = store.orders[idx];
-      if (order.status === "delivered") return send(res, 400, { error: "use_void" }), true;
+      if (order.status !== "voided") return send(res, 400, { error: "only_voided", message: "Only voided orders can be deleted. Void it first." }), true;
       restoreStock(order);
       store.orders.splice(idx, 1);
-      audit(user, "order", id + " deleted (was " + order.status + ")");
+      audit(user, "order", id + " deleted (was voided)");
       saveStore(store);
       return send(res, 200, { ok: true }), true;
     }

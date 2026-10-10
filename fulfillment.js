@@ -122,6 +122,7 @@ function createFulfillment(deps) {
       price: p.price,
       wholesalePrice: p.wholesalePrice != null ? Number(p.wholesalePrice) : null,
       rosyBoxCost: p.rosyBoxCost != null ? Number(p.rosyBoxCost) : null,
+      shopVisible: p.shopVisible !== false,
       stock: Math.max(0, Number(p.stock || 0)),
       blendedCost: blendedUnitCost(p),
       lots: lots.map((l, i) => ({
@@ -451,7 +452,7 @@ function createFulfillment(deps) {
       const orderId = route.split("/")[3] || "";
       const order = (store.orders || []).find((o) => o.id === orderId && o.userId === user.id);
       if (!order) return send(res, 404, { error: "not_found" });
-      if (order.status !== "awaiting_settlement") return send(res, 400, { error: "not_awaiting_payment" });
+      if (order.status !== "awaiting_settlement" && !(order.wholesale && order.status === "committed")) return send(res, 400, { error: "not_awaiting_payment" });
       let body;
       try {
         body = await readBody(req, 12_000_000);

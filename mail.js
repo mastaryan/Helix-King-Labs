@@ -21,8 +21,17 @@ function configured() {
 function emailFooter(team) {
   const teamName = team === "orders" ? "Helix King Orders Team" : "Helix King Research Team";
   return {
-    text: `\n\n—\nThanks,\n${teamName}\nhelixkinglabs.com\nTelegram: https://t.me/HKL_RESEARCH\nInstagram: @HelixKingLabs`,
-    html: `<hr style="border:none;border-top:1px solid #ddd;margin:20px 0"><p>Thanks,<br><strong>${teamName}</strong><br><a href="https://helixkinglabs.com">helixkinglabs.com</a><br><a href="https://t.me/HKL_RESEARCH">Telegram: @HKL_RESEARCH</a><br><a href="https://instagram.com/HelixKingLabs">Instagram: @HelixKingLabs</a></p>`,
+    text: `\n\n—\nThanks,\n${teamName}\nhelixkinglabs.com\nTelegram: https://t.me/HKL_RESEARCH\nInstagram: @HelixKingLabs\nWhatsApp: https://wa.me/12026424575`,
+    html: `<div style="margin-top:32px;padding-top:20px;border-top:2px solid #1a1a1a;text-align:center;font-family:Arial,sans-serif">
+      <p style="margin:0 0 8px;font-size:16px;font-weight:bold;color:#1a1a1a">Helix King Labs</p>
+      <p style="margin:0 0 12px;font-size:13px;color:#666">Premium research peptides · Tested lots · Honest prices</p>
+      <p style="margin:0;font-size:13px">Thanks,<br><strong>${teamName}</strong><br>
+      <a href="https://helixkinglabs.com" style="color:#1a1a1a">helixkinglabs.com</a> ·
+      <a href="https://t.me/HKL_RESEARCH" style="color:#1a1a1a">Telegram</a> ·
+      <a href="https://instagram.com/HelixKingLabs" style="color:#1a1a1a">Instagram</a> ·
+      <a href="https://wa.me/12026424575" style="color:#1a1a1a">WhatsApp</a></p>
+      <p style="margin:12px 0 0;font-size:11px;color:#999">Research use only. 18+.</p>
+    </div>`,
   };
 }
 
@@ -90,8 +99,9 @@ function orderHtml(order) {
 function orderMail(order, kind, deps) {
   const q = order.quote || {};
   const pay = order.payment || {};
-  const total = "$" + Number(q.total || 0).toFixed(2);
-  const lines = ((q.lines || []).map((l) => `${l.name || ""} ${l.size || ""} × ${l.qty}`).join("\n")) || "See the desk for lines.";
+  const total = "$" + Number(q.total != null ? q.total : order.total || 0).toFixed(2);
+  const qLines = q.lines || order.lines || [];
+  const lines = (qLines.map((l) => `${l.name || ""} ${l.size || ""} × ${l.qty}`).join("\n")) || "See the desk for lines.";
   let payText = "Payment instructions are on the order.";
   if (pay.payAddress) payText = `Pay ${pay.payAmount} ${pay.payCurrency} on ${pay.network || "the stated network"} to ${pay.payAddress}. Do not send a different coin or network.`;
   else if (order.paymentMethod === "venmo") payText = `Venmo @fibkingpeps ${total}. Put ${order.id} in the note.`;
@@ -150,11 +160,29 @@ function abandonmentMail(order, deps, isFirstOrder) {
   const total = "$" + Number(order.quote && order.quote.total || 0).toFixed(2);
   const couponLine = isFirstOrder ? `\n\nPsst — as a first-time customer, use code HELIX10 for 10% off your first order.` : "";
   const footer = emailFooter("orders");
+  const lines = (order.quote && order.quote.lines) || order.lines || [];
+  const productGrid = lines.map((l) => {
+    const img = l.image ? origin + l.image : "";
+    const name = (l.name || "") + " " + (l.size || "");
+    return `<div style="display:inline-block;width:140px;margin:8px;text-align:center;vertical-align:top">
+      ${img ? `<img src="${img}" width="120" style="border-radius:8px" alt="${name}" />` : ""}
+      <p style="margin:8px 0 0;font-size:13px;font-weight:bold">${name}</p>
+      <p style="margin:4px 0 0;font-size:12px;color:#666">× ${l.qty}</p>
+    </div>`;
+  }).join("");
   return {
     to: order.email,
     subject: `Still thinking it over? Your cart is waiting — Helix King Labs`,
     text: `Hi there,\n\nYou started checkout for ${order.id} (${total}) but didn't finish. Your items are still in your cart:\n${origin}/cart${couponLine}\n\nStock is held for 60 minutes after checkout starts — after that, items go back on the shelf.\n\n— Helix King Labs${footer.text}`,
-    html: `<p>Hi there,</p><p>You started checkout for <b>${order.id}</b> (${total}) but didn't finish. Your items are still waiting:</p><p><a href="${origin}/cart">Return to your cart</a>${isFirstOrder ? `</p><p>Psst — as a first-time customer, use code <b>HELIX10</b> for 10% off your first order.` : ""}</p><p><small>Stock is held for 60 minutes after checkout starts — after that, items go back on the shelf.</small></p><p>— Helix King Labs</p>${footer.html}`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <p style="font-size:16px">Hi there,</p>
+      <p>You started checkout for <b>${order.id}</b> (${total}) but didn't finish. Your items are still waiting:</p>
+      <div style="text-align:center;margin:20px 0">${productGrid}</div>
+      <p style="text-align:center"><a href="${origin}/cart" style="display:inline-block;padding:12px 28px;background:#1a1a1a;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold">Return to your cart</a></p>
+      ${isFirstOrder ? `<p style="text-align:center;background:#f5f5f5;padding:12px;border-radius:6px">Psst — as a first-time customer, use code <b>HELIX10</b> for 10% off your first order.</p>` : ""}
+      <p><small style="color:#888">Stock is held for 60 minutes after checkout starts — after that, items go back on the shelf.</small></p>
+      ${footer.html}
+    </div>`,
     kind: "abandonment",
     orderId: order.id,
     created: new Date().toISOString(),
