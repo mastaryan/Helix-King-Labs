@@ -52,6 +52,11 @@
           <label>Business / lab name<input name="wbusiness" maxlength="120" /></label>
           <label>Telegram <span class="muted">(optional)</span><input name="wtelegram" placeholder="@handle" maxlength="80" /></label>
           <label>Note <span class="muted">(optional)</span><input name="wnote" placeholder="What are you looking to stock?" maxlength="500" /></label>
+          <div class="captcha-row" style="display:flex;gap:8px;align-items:center;margin:8px 0">
+            <span id="wsCaptchaQ" class="muted">Loading…</span>
+            <input type="number" name="captchaAnswer" placeholder="?" required style="width:64px" />
+            <input type="hidden" name="captchaId" id="wsCaptchaId" />
+          </div>
           <button class="btn" type="submit">Request wholesale access</button>
           <p id="wsReqNote" class="hard"></p>
         </form>
@@ -63,6 +68,16 @@
     if (!form) return;
     ga4("wholesale_view_request");
     const note = document.getElementById("wsReqNote");
+    // Load CAPTCHA
+    api("/api/captcha").then((c) => {
+      const q = document.getElementById("wsCaptchaQ");
+      const cid = document.getElementById("wsCaptchaId");
+      if (q) q.textContent = c.question || "";
+      if (cid) cid.value = c.id || "";
+    }).catch(() => {
+      const q = document.getElementById("wsCaptchaQ");
+      if (q) q.textContent = "CAPTCHA unavailable — try again.";
+    });
     form.onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(form);
@@ -70,6 +85,7 @@
         const r = await api("/api/wholesale/request", { method: "POST", body: {
           name: fd.get("wname"), email: fd.get("wemail"), business: fd.get("wbusiness"),
           telegram: fd.get("wtelegram"), note: fd.get("wnote"),
+          captchaId: fd.get("captchaId"), captchaAnswer: fd.get("captchaAnswer"),
         }});
         ga4("wholesale_request_submit");
         note.textContent = r.duplicate ? "You've already requested access — status: " + (r.status || "pending") + "." : "Request received. We'll review and notify you.";
@@ -166,7 +182,7 @@
           </div>
         </article>`).join("")}
       </div>
-      <div class="card" id="wsSummary" style="margin-top:24px;padding:16px;position:sticky;bottom:16px;background:var(--bg-2);border:2px solid var(--line-2);max-height:40vh;overflow:auto" hidden>
+      <div class="card" id="wsSummary" style="margin-top:24px;padding:16px;background:var(--bg-2);border:2px solid var(--line-2)" hidden>
         <h3 style="margin-top:0">Order summary</h3>
         <div id="wsLines"><p class="muted">Select a strength and quantity to commit.</p></div>
         <div style="font-size:20px;margin-top:12px">Total: <b id="wsGrandTotal">$0.00</b></div>

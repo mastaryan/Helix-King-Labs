@@ -39,8 +39,8 @@
       order = (d.orders || []).find(function (o) { return o.id === id; });
     } catch (e) { return; }
     if (!order) return;
-    if (order.status !== "awaiting_settlement") return;
-    if (order.paymentMethod !== "venmo" && order.paymentMethod !== "cashapp") return;
+    const isUnpaid = order.status === "awaiting_settlement" || (order.wholesale && order.status === "committed");
+    if (!isUnpaid) return;
     var paybox = document.querySelector(".paybox");
     if (!paybox) return;
     var wrap = document.createElement("div");

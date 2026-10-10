@@ -59,7 +59,7 @@ function copyText(t, btn) {
 
 function receiptView(o) {
   const isWs = !!o.wholesale;
-  const q = o.quote || (isWs ? { lines: o.lines || [], total: o.total } : {});
+  const q = o.quote || (isWs ? { lines: o.lines || [], total: o.total, merchandise: o.total, shipping: 0 } : {});
   const pay = o.payment || {};
   const st = o.status || "";
   const ship = o.ship || {};
