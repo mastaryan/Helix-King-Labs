@@ -271,6 +271,7 @@ async function load() {
   state.desk = await api("/api/ops/desk");
   try { state.integrations = await api("/api/ops/integrations"); } catch { state.integrations = null; }
   try { state.certs = await api("/api/certificates"); } catch { state.certs = null; }
+  try { state.lots = (await api("/api/ops/lots")).lots || []; } catch { state.lots = []; }
 }
 async function boot() {
   try {

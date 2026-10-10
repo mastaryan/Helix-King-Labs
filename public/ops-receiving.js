@@ -88,6 +88,7 @@
     if (!st.lots) {
       try { st.lots = (await api("/api/ops/lots")).lots || []; }
       catch { st.lots = []; }
+      if (state.tab === "receiving") draw();
     }
   }
   const origRender = render;
