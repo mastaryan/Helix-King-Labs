@@ -1877,8 +1877,8 @@ const hx = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (ch) => ({"&":"
       googleBtn.onclick = async () => {
         const form = $("#regForm");
         const fd = form ? new FormData(form) : null;
-        if (!fd || !fd.get("age") || !fd.get("terms")) {
-          $("#regErr").textContent = "Confirm age and terms before Google.";
+        if (!fd || !fd.get("age") || !fd.get("terms") || !fd.get("researchAck")) {
+          $("#regErr").textContent = "Confirm age, terms, and research use before Google.";
           return;
         }
         try {
@@ -1894,8 +1894,8 @@ const hx = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (ch) => ({"&":"
       appleBtn.onclick = async () => {
         const form = $("#regForm");
         const fd = form ? new FormData(form) : null;
-        if (!fd || !fd.get("age") || !fd.get("terms")) {
-          $("#regErr").textContent = "Confirm age and terms before Apple.";
+        if (!fd || !fd.get("age") || !fd.get("terms") || !fd.get("researchAck")) {
+          $("#regErr").textContent = "Confirm age, terms, and research use before Apple.";
           return;
         }
         try {
