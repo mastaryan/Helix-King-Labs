@@ -1841,6 +1841,20 @@ async function api(req, res, url) {
     return send(res, 200, { orders: mine });
   }
 
+  if (method === "DELETE" && route.startsWith("/api/orders/")) {
+    if (!user) return send(res, 401, { error: "account_required" });
+    const id = decodeURIComponent(route.split("/")[3] || "");
+    const idx = store.orders.findIndex((o) => o.id === id && o.userId === user.id);
+    if (idx < 0) return send(res, 404, { error: "not_found" });
+    const st = store.orders[idx].status;
+    if (st !== "cancelled" && st !== "voided" && st !== "delivered")
+      return send(res, 400, { error: "not_deletable" });
+    const gone = store.orders.splice(idx, 1)[0];
+    saveStore(store);
+    audit(user, "order_delete", `${gone.id} (${st}) deleted by customer`);
+    return send(res, 200, { ok: true, id: gone.id });
+  }
+
   if (method === "POST" && route.startsWith("/api/orders/")) {
     if (!user) return send(res, 401, { error: "account_required" });
     const parts = route.split("/");
@@ -2004,7 +2018,12 @@ async function api(req, res, url) {
 
   if (method === "GET" && route === "/api/ops/desk") {
     if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
-    return send(res, 200, deskPayload());
+    try {
+      return send(res, 200, deskPayload());
+    } catch (err) {
+      console.error("deskPayload crash:", err);
+      return send(res, 500, { error: "desk_crash", detail: String((err && err.message) || err).slice(0, 200) });
+    }
   }
 
   if (method === "GET" && route === "/api/ops/backup") {
@@ -2457,6 +2476,14 @@ function audit(user, action, detail) {
 }
 
 function deskPayload() {
+  try {
+    return deskPayloadInner();
+  } catch (err) {
+    console.error("deskPayload failed:", err && err.message, err && err.stack);
+    throw err;
+  }
+}
+function deskPayloadInner() {
   const orders = (store.orders || []).slice().reverse();
   const awaiting = orders.filter((o) => o.status === "not_paid").length;
   const holds = orders.filter((o) => o.fulfillment === "hold" || o.status === "not_paid").length;
