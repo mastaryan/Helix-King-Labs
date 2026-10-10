@@ -839,6 +839,7 @@ body.has-ops-sidebar main#app {
 .mt-grid{margin-top:16px;display:grid;gap:8px}
 .acct-dd{position:relative;display:inline-block}
 .acct-menu{position:absolute;right:0;top:100%;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;min-width:140px;z-index:50;display:grid}
+.acct-menu.hide{display:none}
 .acct-menu a,.acct-menu button{padding:10px 14px;text-align:left;background:none;border:none;cursor:pointer;color:inherit;font:inherit}
 .acct-menu a:hover,.acct-menu button:hover{background:var(--bg-3)}
 .forgot{font-size:.85em;color:var(--muted)}
