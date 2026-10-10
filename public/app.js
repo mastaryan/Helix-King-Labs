@@ -1606,7 +1606,7 @@
             .catch(() => {});
         }
       } else if (p === "/ops") {
-        go("/ops/catalog");
+        location.href = "/ops";
         return;
       }else if(p.startsWith("/ops/orders/")){HKL_FULFILL.routeOpsOrder(p,app,state)} else if (p === "/ops/catalog") {
         if (!state.user || !state.user.isOps) {
