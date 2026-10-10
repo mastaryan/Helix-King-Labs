@@ -27,41 +27,68 @@
     };
   };
 
+  // Account dropdown: single delegated wiring (runs once, survives re-renders).
+  // HKL_ACCT is called on every nav; the actual listeners are attached only once.
   window.HKL_ACCT = function () {
     const HKL = window.HKL || {};
+    if (!HKL.state || !HKL.state.user) return;
+    if (document.__hklAcctWired) return;
+    document.__hklAcctWired = true;
+
+    const closeAll = () => {
+      document.querySelectorAll(".acct-menu").forEach((m) => m.classList.add("hide"));
+    };
+
+    // Toggle on account link click (delegated — works after header re-renders).
+    document.addEventListener("click", (e) => {
+      const link = e.target && e.target.closest ? e.target.closest("#acctLink") : null;
+      if (link) {
+        e.preventDefault();
+        e.stopPropagation();
+        const wrap = link.closest(".acct-dd");
+        const menu = wrap ? wrap.querySelector(".acct-menu") : document.querySelector(".acct-menu");
+        if (!menu) return;
+        const willOpen = menu.classList.contains("hide");
+        closeAll();
+        if (willOpen) menu.classList.remove("hide");
+        return;
+      }
+      // Click anywhere else closes the menu (unless inside it).
+      const inMenu = e.target && e.target.closest ? e.target.closest(".acct-menu") : null;
+      if (!inMenu) closeAll();
+    });
+
+    // Sign out (delegated).
+    document.addEventListener("click", async (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest("#signOutBtn") : null;
+      if (!btn) return;
+      e.preventDefault();
+      closeAll();
+      try { await HKL.api("/api/auth/logout", { method: "POST" }); } catch (x) {}
+      location.href = "/";
+    });
+
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAll(); });
+    let lastY = window.scrollY;
+    window.addEventListener("scroll", () => {
+      if (Math.abs(window.scrollY - lastY) > 8) closeAll();
+      lastY = window.scrollY;
+    }, { passive: true });
+    window.addEventListener("hkl:route", closeAll);
+  };
+
+  // Build the dropdown shell around #acctLink (idempotent).
+  window.HKL_ACCT_BUILD = function () {
     const link = document.getElementById("acctLink");
-    if (!link || !HKL.state || !HKL.state.user) return;
-    // Remove any existing dropdown to avoid duplicates from re-renders.
-    const existing = link.closest(".acct-dd");
-    if (existing && existing.dataset.wired === "1") return;
-    if (existing) existing.replaceWith(link);
+    if (!link || link.closest(".acct-dd")) return;
     const wrap = document.createElement("span");
     wrap.className = "acct-dd";
-    wrap.dataset.wired = "1";
+    wrap.style.position = "relative";
     link.parentNode.insertBefore(wrap, link);
     wrap.appendChild(link);
     const menu = document.createElement("div");
     menu.className = "acct-menu hide";
     menu.innerHTML = `<a href="/account">My account</a><button id="signOutBtn" type="button">Sign out</button>`;
     wrap.appendChild(menu);
-    const close = () => menu.classList.add("hide");
-    link.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      menu.classList.toggle("hide");
-    });
-    document.addEventListener("click", (e) => { if (!wrap.contains(e.target)) close(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
-    let lastY = window.scrollY;
-    window.addEventListener("scroll", () => {
-      if (Math.abs(window.scrollY - lastY) > 8) close();
-      lastY = window.scrollY;
-    }, { passive: true });
-    window.addEventListener("hkl:route", close);
-    menu.querySelector("#signOutBtn").onclick = async () => {
-      try { await HKL.api("/api/auth/logout", { method: "POST" }); } catch (x) {}
-      location.href = "/";
-    };
-    menu.querySelector("a").addEventListener("click", (e) => { e.preventDefault(); close(); location.href = "/account"; });
   };
 })();
