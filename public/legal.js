@@ -179,6 +179,11 @@
             <p>Every list email carries a one-click unsubscribe link. Clicking it removes your address from the list immediately and turns off the marketing flag on your account if you have one. You can also write ${mail()} and ask to be removed. We do not sell the email list.</p>`,
         },
         {
+          id: "community",
+          title: "Community spaces",
+          body: `<p>We run community spaces on Telegram, WhatsApp, and Discord. Joining is voluntary. What you post there is visible to other members — do not share order numbers, payment details, or personal information in public channels. We may use aggregate counts (member totals, join sources) for operations. Community platforms have their own privacy policies: activity inside Discord, Telegram, or WhatsApp is governed by those platforms as well as this notice.</p>`,
+        },
+        {
           id: "share",
           title: "Sharing",
           body: `<p>We share information with processors that run infrastructure we select: hosting, email delivery, Google (Sign-In and Analytics), and NOWPayments when you choose crypto. We do not sell personal information for money.</p>
