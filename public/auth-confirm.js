@@ -1,6 +1,6 @@
-/* Helix King Labs — post-Google-redirect age/terms confirmation.
-   After Google redirect sign-in, if the user hasn't confirmed age/terms,
-   show a modal. Uses window.HKL for state, api, toast. */
+/* Helix King Labs — Google sign-in via GIS popup.
+   Uses the Identity Services popup flow: Google returns the ID token directly
+   to our callback, we POST it to /api/auth/google. No redirect, no fragments. */
 (function () {
   async function signInGoogle(age, terms) {
     const HKL = window.HKL || {};
@@ -10,27 +10,35 @@
       return HKL.api("/api/auth/google", { method: "POST", body: { age: !!age, terms: !!terms } });
     }
     await HKL.loadScript("https://accounts.google.com/gsi/client", "hkl-gsi");
-    try {
-      sessionStorage.setItem("hkl_google_confirm", JSON.stringify({ age: !!age, terms: !!terms }));
-    } catch {}
-    window.google.accounts.id.initialize({
-      client_id: state.auth.googleClientId,
-      login_uri: window.location.origin + "/api/auth/google/redirect",
-      ux_mode: "redirect",
-      auto_select: false,
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const done = (fn) => (v) => { if (!settled) { settled = true; fn(v); } };
+      const ok = done(resolve), fail = done(reject);
+      try {
+        window.google.accounts.id.initialize({
+          client_id: state.auth.googleClientId,
+          callback: async (resp) => {
+            if (!resp || !resp.credential) { fail(new Error("google_no_credential")); return; }
+            try {
+              const out = await HKL.api("/api/auth/google", {
+                method: "POST",
+                body: { credential: resp.credential, age: !!age, terms: !!terms },
+              });
+              ok(out);
+            } catch (err) { fail(err); }
+          },
+          auto_select: false,
+          ux_mode: "popup",
+        });
+        window.google.accounts.id.prompt((n) => {
+          if (n && (n.isNotDisplayed() || n.isSkippedMoment() || n.isDismissedMoment())) {
+            fail(new Error("google_cancelled"));
+          }
+        });
+        // Safety: if Google never calls back, don't hang forever.
+        setTimeout(() => fail(new Error("google_timeout")), 120000);
+      } catch (err) { fail(err); }
     });
-    window.google.accounts.id.prompt((n) => {
-      if (n && (n.isNotDisplayed?.() || n.isSkippedMoment?.())) {
-        const u = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-        u.searchParams.set("client_id", state.auth.googleClientId);
-        u.searchParams.set("redirect_uri", window.location.origin + "/api/auth/google/redirect");
-        u.searchParams.set("response_type", "id_token");
-        u.searchParams.set("scope", "openid email profile");
-        u.searchParams.set("nonce", Math.random().toString(36).slice(2));
-        window.location.href = u.toString();
-      }
-    });
-    return new Promise(() => {});
   }
   window.HKL_SIGNIN_GOOGLE = signInGoogle;
 
