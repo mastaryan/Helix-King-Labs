@@ -404,7 +404,7 @@ function createFulfillment(deps) {
         if (!Number.isFinite(n) || n < 0) return send(res, 400, { error: "unit_cost" });
         lot.unitCost = n;
       }
-      if (body.certificate === "accepted" || body.certificate === "pending") lot.certificate = body.certificate;
+      if (body.certificate === "accepted" || body.certificate === "pending" || body.certificate === "rejected") lot.certificate = body.certificate;
       if (Number(item.stock || 0) > 0) item.everStocked = true;
       item.available = Math.max(0, Number(item.stock || 0) - Number(item.reserved || 0));
       syncLotDerived(item);
