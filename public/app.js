@@ -219,7 +219,7 @@
     const n = onHand(p);
     const threshold = Number(p.stockThreshold) || 5;
     const status = n <= 0 ? "out" : n < threshold ? "low" : "ok";
-    if (status === "out") return `<span class="badge stock out">Notify me</span>`;
+    if (status === "out") return `<span class="badge stock out">Sold out</span>`;
     if (status === "low") return `<span class="badge stock low">Low</span>`;
     return "";
   }
@@ -255,7 +255,7 @@
             .join("")}
         </div>
         <div class="badges">
-          ${pending ? `<span class="badge stock out">Unavailable</span>` : worst ? stockBadge(worst) : ""}
+          ${pending ? `<span class="badge stock out">Unavailable</span>` : allOut && worst ? `<a href="/product/${f.slug}?sku=${encodeURIComponent(worst.sku)}" data-link class="badge stock out" style="text-decoration:none">Sold out</a>` : worst ? stockBadge(worst) : ""}
         </div>
         ${priceBlock(from, range)}
       </div>
@@ -436,12 +436,12 @@
             <div>
               <div class="kicker">Single vial</div>
               <div class="qty">
-                <button type="button" id="qtyMinus">−</button>
-                <input id="qty" type="number" min="1" max="9" value="1" style="width:72px;min-width:72px;text-align:center" />
-                <button type="button" id="qtyPlus">+</button>
+                <button type="button" id="qtyMinus"${onHand(p)<=0?" disabled":""}>−</button>
+                <input id="qty" type="number" min="1" max="9" value="1" style="width:72px;min-width:72px;text-align:center"${onHand(p)<=0?" disabled":""} />
+                <button type="button" id="qtyPlus"${onHand(p)<=0?" disabled":""}>+</button>
               </div>
               <p class="line-total" id="lineTotal"></p>
-              ${isPending(p)?`<button class="btn" disabled>Waiting for testing to complete</button>`:onHand(p)<=0?`<button class="btn notify-btn" id="notifyBtn" data-s="${esc(p.sku||p.id)}">Notify me</button><div id="notifyWrap"></div>`:!state.user?`<a class="btn" href="/account" data-link>Sign in to add</a>`:`<button class="btn" id="addBtn">Add single · ${money(p.price)}</button>`}
+              ${isPending(p)?`<button class="btn" disabled>Waiting for testing to complete</button>`:onHand(p)<=0?`<button class="btn" disabled>Sold out</button><button class="btn ghost notify-btn" id="notifyBtn" data-s="${esc(p.sku||p.id)}" style="margin-top:8px">Join waitlist</button><div id="notifyWrap"></div>`:!state.user?`<a class="btn" href="/account" data-link>Sign in to add</a>`:`<button class="btn" id="addBtn">Add single · ${money(p.price)}</button>`}
             </div>
             ${onHand(p) >= 15 && p.kitPrice ? `<div>
               <div class="kicker">Kit of 10</div>
@@ -581,7 +581,12 @@
         </aside>
         <div>
           <div class="coa-cards">
-            ${shown.map((l) => `<a class="coa-card" href="/certificates/${encodeURIComponent(l.code)}" data-link>
+            ${shown.map((l) => {
+              // Find in-stock product for this lot (by SKU or name/size match).
+              const prod = (state.catalog && state.catalog.items || []).find((p) =>
+                (p.sku === l.sku || p.code === l.code) && onHand(p) > 0
+              );
+              return `<a class="coa-card" href="/certificates/${encodeURIComponent(l.code)}" data-link>
               <div class="coa-photo">${l.image ? `<img src="${l.image}" alt="${l.name} ${l.size}">` : ""}</div>
               <div class="coa-card-meta">
                 <b>${l.name}</b>
@@ -591,10 +596,10 @@
                 <span>${l.reportId ? "Report " + l.reportId : "Report ID pending"}</span>
                 <div class="coa-pills">
                   <em class="ok">Pass</em>
-                  <em>${l.cap === "Spray" ? "Nasal spray" : (l.cap || "Black") + " cap"}</em>
                 </div>
+                ${prod ? `<span class="btn" style="margin-top:8px;display:inline-block" onclick="event.preventDefault();event.stopPropagation();location.href='/product/${prod.slug || prod.family || ""}'">View product</span>` : ""}
               </div>
-            </a>`).join("")}
+            </a>`; }).join("")}
           </div>
           ${shown.length ? "" : `<p class="lede">No published lot matches that search.</p>`}
         </div>
@@ -730,12 +735,13 @@
       <p>Quality is the point. Lots are held to a written testing panel. Certificates publish on this domain when a lot is accepted. The QR on the vial opens here — not a third-party lab page.</p>
       <p>We are proud to support U.S. research buyers. Helix King Labs is not a clinic and not a pharmacy. Nothing on this site is a treatment, a protocol, or a claim to diagnose, cure, or prevent disease.</p>
       <div class="social-row" aria-label="Contact">
+        <a href="https://wa.me/12026424575" rel="noopener noreferrer" aria-label="WhatsApp" style="font-weight:700"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3zm3.5 12.5c-.2.5-1.1 1-1.6 1-.4.1-1 .1-1.6-.1-.4-.1-1-.3-1.7-.7-.6-.3-1.2-.7-1.7-1.2-.4-.4-.8-.9-1-1.4-.2-.5-.3-1-.1-1.4.1-.4.6-.9 1-1.2.4-.3.8-.4 1.1-.3.3.1.7.3 1 .6.1.1.3.1.4 0l.7-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.3.3.3.6v1.5c0 .4-.1.7-.3 1z"/></svg></span>WhatsApp — fastest</a>
         <a href="mailto:info@helixkinglabs.com" aria-label="Email"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></span>Email</a>
-        <a href="tel:+12026424575" aria-label="Phone"><span class="soc" aria-hidden="true">Tel</span>202-642-4575</a>
         <a href="https://t.me/+gk0d_zGjGORkNDc5" rel="noopener noreferrer" aria-label="Telegram"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 5 3 12l6 2 2 6 3-4 5 4z"/></svg></span>Telegram</a>
         <a href="https://www.instagram.com/HelixKingLabs/" rel="noopener noreferrer" aria-label="Instagram"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/></svg></span>Instagram</a>
         <a href="https://x.com/HelixKingLabs" rel="noopener noreferrer" aria-label="X"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></span>X</a>
       </div>
+      <p class="muted">Product, order, and shipping questions only — no usage or dosing guidance over WhatsApp.</p>
     </section>`;
   }
 
@@ -901,8 +907,8 @@
         const draw = amt > 0 ? amt / conc : 0;
         const units = draw * 100;
         out.innerHTML = `<p>Material strength</p><strong>${conc.toFixed(2)} mg/mL</strong>
-          ${amt > 0 ? `<p>Volume for ${amt} mg</p><strong>${draw.toFixed(3)} mL</strong><p>Syringe units (U-100)</p><strong>${units.toFixed(1)} units</strong>` : ""}
-          <p>Concentration = milligrams on the vial ÷ milliliters of diluent. Units assume a U-100 insulin syringe (100 units per mL). Research arithmetic only. Nothing on this page is a use instruction.</p>`;
+          ${amt > 0 ? `<p>Volume for ${amt} mg</p><strong>${draw.toFixed(3)} mL</strong><p>Units (U-100)</p><strong>${units.toFixed(1)} units</strong>` : ""}
+          <p>Concentration = milligrams on the vial ÷ milliliters of diluent. Units assume a U-100 scale (100 units per mL). Research arithmetic only. Nothing on this page is a use instruction.</p>`;
       };
       ["cMg", "cMl", "cAmt"].forEach((id) => {
         const el = $("#" + id);
@@ -990,7 +996,7 @@
       </section>`;
     }
     if (!state.cart.length) {
-      return `<section class="page wrap"><h1>Cart</h1><p class="lede">Empty. Start with PGL-GIC1.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
+      return `<section class="page wrap"><h1>Cart</h1><p class="lede">Empty.</p><a class="btn" href="/shop" data-link>Open catalog</a></section>`;
     }
     const lines = quote
       ? quote.lines
@@ -1048,13 +1054,16 @@
       }
       <p class="lede">One 10% on the cart. HELIX10 applies on a first order over $99. An affiliate code replaces it. Free shipping over $199 after discounts.</p>
       <form id="payForm" class="tool-form">
-        <input name="shipName" required value="${esc((state.user && state.user.name) || "")}" placeholder="Ship-to name" />
-        <input name="phone" value="${esc((state.user && state.user.phone) || "")}" placeholder="Phone" />
-        <input name="line1" required value="${esc((state.user && state.user.address && state.user.address.line1) || "")}" placeholder="Street" />
+        <input name="shipName" required value="${esc((state.user && state.user.name) || "")}" placeholder="Ship-to name" autocomplete="name" />
+        <input name="phone" value="${esc((state.user && state.user.phone) || "")}" placeholder="Phone (10 digits)" inputmode="tel" autocomplete="tel" pattern="[0-9+() .-]{10,}" title="Enter a valid US phone number" />
+        <input name="line1" required value="${esc((state.user && state.user.address && state.user.address.line1) || "")}" placeholder="Street" autocomplete="street-address" />
         <input name="line2" value="${esc((state.user && state.user.address && state.user.address.line2) || "")}" placeholder="Suite, optional" />
-        <input name="city" required value="${esc((state.user && state.user.address && state.user.address.city) || "")}" placeholder="City" />
-        <input name="region" value="${esc((state.user && state.user.address && state.user.address.region) || "")}" placeholder="State" />
-        <input name="postal" value="${esc((state.user && state.user.address && state.user.address.postal) || "")}" placeholder="Postal code" />
+        <input name="city" required value="${esc((state.user && state.user.address && state.user.address.city) || "")}" placeholder="City" autocomplete="address-level2" />
+        <select name="region" required aria-label="State">
+          <option value="">State</option>
+          ${["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"].map((s) => `<option value="${s}"${state.user && state.user.address && state.user.address.region === s ? " selected" : ""}>${s}</option>`).join("")}
+        </select>
+        <input name="postal" required value="${esc((state.user && state.user.address && state.user.address.postal) || "")}" placeholder="ZIP (5 digits)" inputmode="numeric" autocomplete="postal-code" pattern="[0-9]{5}" maxlength="5" title="Enter a 5-digit ZIP code" />
         <input name="company" required value="${esc((state.user && state.user.company) || "")}" placeholder="Company name" />
         <select name="researchField" required aria-label="Research field">
           ${["Independent Researcher","Molecular Biology","Biochemistry","Peptide Chemistry","Chemical Biology","Biotechnology Research","Academic Research","Pharmacology"].map((f) => `<option ${state.user && state.user.researchField === f ? "selected" : ""}>${f}</option>`).join("")}
@@ -1087,17 +1096,16 @@
     el.innerHTML = `
       <div class="gate-card">
         <img src="/img/logo.jpg" alt="Helix King Labs" />
-        <div class="kicker">Door</div>
-        <p class="gate-title" id="gateTitle">Confirm before the catalog.</p>
-        <p>18+ and permitted use. Email optional. List prices are shown after this gate. An account is required to purchase.</p>
+        <div class="kicker">Welcome</div>
+        <p class="gate-title" id="gateTitle">Welcome to Helix King Labs.</p>
+        <p>Premium research peptides, tested lots, honest prices. 18+ and permitted use only. An account is required to purchase.</p>
         <form id="gateForm">
           <label class="check"><input type="checkbox" name="age" required /> I am 18 or older.</label>
           <label class="check"><input type="checkbox" name="terms" required /> I accept the permitted-use terms. Research materials stay in the lab. This is not a clinic or a pharmacy.</label>
-          <input type="email" name="email" placeholder="Email (optional)" />
+          <input type="email" name="email" placeholder="Email" />
           <label class="check"><input type="checkbox" name="consent" /> Email me lot alerts, restocks, and group buys. Optional — uncheck to skip the list.</label>
           <div class="mt-grid">
             <button class="btn" type="submit">Enter Helix King Labs</button>
-            ${state.auth.google || state.auth.demo ? `<button class="btn ghost" type="button" id="gateGoogle">Continue with Google</button>` : ""}
             ${state.auth.apple ? `<button class="btn ghost" type="button" id="gateApple">Continue with Apple</button>` : ""}
           </div>
           <div class="err" id="gateErr"></div>
@@ -1228,33 +1236,7 @@
     };
   }
 
-  async function signInGoogle(age, terms) {
-    if (!state.auth.google || !state.auth.googleClientId) {
-      if (!state.auth.demo) throw new Error("google_not_configured");
-      return api("/api/auth/google", { method: "POST", body: { age: !!age, terms: !!terms, ...socialFields() } });
-    }
-    await loadScript("https://accounts.google.com/gsi/client", "hkl-gsi");
-    const credential = await new Promise((resolve, reject) => {
-      window.google.accounts.id.initialize({
-        client_id: state.auth.googleClientId,
-        callback: (res) => (res && res.credential ? resolve(res.credential) : reject(new Error("google_token"))),
-        ux_mode: "popup",
-        auto_select: false,
-      });
-      window.google.accounts.id.prompt((n) => {
-        if (n && (n.isNotDisplayed && n.isNotDisplayed() || n.isSkippedMoment && n.isSkippedMoment())) {
-          reject(new Error("google_cancelled"));
-        }
-      });
-    });
-    return api("/api/auth/google", {
-      method: "POST",
-      body: { credential, age: !!age, terms: !!terms, ...socialFields() },
-    });
-  }
-
   async function signInApple(age, terms) {
-    if (!state.auth.apple || !state.auth.appleClientId) throw new Error("apple_not_configured");
     await loadScript(
       "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js",
       "hkl-apple"
@@ -1952,7 +1934,7 @@
           return;
         }
         try {
-          const out = await signInGoogle(true, true);
+          const out = await window.HKL_SIGNIN_GOOGLE(true, true);
           state.user = out.user;
           state.gateOk = true;
           localStorage.setItem("hkl_gate", "1");
@@ -2109,7 +2091,7 @@
           return;
         }
         try {
-          await finishSocial(await signInGoogle(true, true));
+          await finishSocial(await window.HKL_SIGNIN_GOOGLE(true, true));
         } catch (err) {
           $("#regErr").textContent =
             err.message === "google_cancelled" ? "Google window closed." : "Google sign-in failed.";
@@ -2136,7 +2118,7 @@
     if (googleLoginBtn) {
       googleLoginBtn.onclick = async () => {
         try {
-          await finishSocial(await signInGoogle(false, false));
+          await finishSocial(await window.HKL_SIGNIN_GOOGLE(false, false));
         } catch (err) {
           $("#loginErr").textContent =
             err.message === "confirmations_required"
@@ -2465,12 +2447,15 @@
     }
 
     if (window.HKL_PLACES) window.HKL_PLACES();
+
+
     const payForm = $("#payForm");
     if (payForm) {
       payForm.addEventListener("change", (e) => {
         if (e.target && e.target.name === "paymentMethod") {
           state.payMethod = e.target.value;
-          render();
+          const payNet = $("#payNet");
+          if (payNet) payNet.classList.toggle("hide", e.target.value === "venmo" || e.target.value === "cashapp");
         }
       });
       payForm.addEventListener("submit", async (e) => {
@@ -2485,6 +2470,7 @@
               company: fd.get("company"),
               researchField: fd.get("researchField"),
               researchAck: !!fd.get("researchAck"),
+              termsAck: !!fd.get("termsAck"),
               paymentMethod: fd.get("paymentMethod"),
               network: fd.get("network"),
               shipName: fd.get("shipName"),
@@ -2496,6 +2482,12 @@
           const pay = order.payment || {};
           state.cart = [];
           saveCart();
+          // On-site crypto deposit screen (no redirect off-site).
+          if (pay.payAddress) {
+            if (window.HKL_DEPOSIT) window.HKL_DEPOSIT(order, pay);
+            else location.href = "/account/receipt/" + order.id;
+            return;
+          }
           if (pay.invoiceUrl) { location.href = pay.invoiceUrl; return; }
           const box = $("#orderDone");
           if (box) {
