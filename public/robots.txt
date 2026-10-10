@@ -1,23 +1,25 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /ops
 Disallow: /account
 Disallow: /cart
 Disallow: /checkout
-Disallow: /ops
 Disallow: /admin
 Disallow: /affiliates
 Disallow: /library
 Disallow: /tools/label
 Disallow: /tracking
-Disallow: /api/
 Disallow: /group-buy
 Disallow: /group-buys
+Disallow: /wholesale
+Disallow: /welcome
+Disallow: /unsubscribe
+Disallow: /magic
+Disallow: /reset
+Disallow: /reset-2fa
 
 User-agent: GPTBot
 Allow: /
 
-User-agent: Googlebot
-Allow: /
-
 Sitemap: https://helixkinglabs.com/sitemap.xml
-Host: helixkinglabs.com

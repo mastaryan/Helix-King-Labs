@@ -17,7 +17,7 @@
     const bac = state.catalog.items.find((x) => (x.id === "BAC10" || x.id === "BAC3") && (x.available == null || x.available > 0));
     if (!bac) return "";
     return `<div class="upsell"><div class="kicker">Pairs well with</div><div class="upsell-row">`
-      + `<img src="${bac.image || ""}" alt="" /><div><b>BAC Water</b>`
+      + `<img loading="lazy" decoding="async" src="${bac.image || ""}" alt="${(bac.name || "Product") + " " + (bac.size || "")}" /><div><b>BAC Water</b>`
       + `<p class="muted">Sterile mixing support for research workflows.</p></div>`
       + `<div><div>${money(bac.price)}</div><button type="button" class="btn ghost" data-upsell-add="${bac.id}">Add</button></div>`
       + `</div></div>`;

@@ -1,6 +1,7 @@
 "use strict";
 
 const crypto = require("node:crypto");
+const defense = require("./defense");
 
 const FROM = process.env.SMTP_FROM || "orders@helixkinglabs.com";
 const ORIGIN = (process.env.HKL_PUBLIC_ORIGIN || "https://helixkinglabs.com").replace(/\/$/, "");
@@ -111,14 +112,15 @@ function takeChallenge(store, key) {
 
 // Resolve the logged-in user from the hkl_sid session cookie.
 // Self-contained so auth routes don't need server.js changes.
-function sessionUserFromCookie(req, store) {
+// isOps(user) is optional; used to apply the shorter ops session timeouts.
+function sessionUserFromCookie(req, store, isOps) {
   const jar = {};
   for (const part of String((req.headers && req.headers.cookie) || "").split(";")) {
     const i = part.indexOf("=");
     if (i > 0) { try { jar[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim()); } catch (_) {} }
   }
   const sid = jar.hkl_sid;
-  const sess = sid && (store.sessions || []).find((s) => s.id === sid && s.exp > Date.now());
+  const sess = sid && defense.findSession(store, sid, (uid) => !!(isOps && isOps((store.users || []).find((x) => x.id === uid))));
   return (sess && (store.users || []).find((x) => x.id === sess.userId)) || null;
 }
 
@@ -150,6 +152,8 @@ function verifyAssertion(publicKey, authenticatorData, clientDataJSON, signature
 }
 
 function requestOrigin(req) {
+  const pub = String(process.env.HKL_PUBLIC_ORIGIN || "").replace(/\/$/, "");
+  if (pub) return pub;
   const host = req.headers.host || "localhost";
   const proto = req.headers["x-forwarded-proto"] || (String(host).includes("localhost") ? "http" : "https");
   return proto + "://" + host;
@@ -168,12 +172,15 @@ async function pwReset(req, res, url, ctx) {
   const { method } = req;
   const route = url.pathname;
   const { store, saveStore, setSession, publicUser, validEmail, hashPassword, loadOutbox, saveOutbox, mailer, limited, ip } = ctx;
+  const alert = ctx.alert || (() => {});
+  const isOpsUser = (u) => !!(u && publicUser(u).isOps);
+  const alertRate = (key, routeName) => alert("rate_limit_" + key, ip + " hit the " + key + " limit on " + routeName, { key: ip });
   const send = (code, obj) => { res.writeHead(code, { "Content-Type": "application/json" }); res.end(JSON.stringify(obj)); return true; };
   const readBody = () => new Promise((resolve, reject) => {
-    let raw = ""; req.on("data", (c) => (raw += c)); req.on("end", () => { try { resolve(JSON.parse(raw || "{}")); } catch { reject(new Error("bad")); } }); req.on("error", reject);
+    let raw = ""; req.on("data", (c) => { raw += c; if (raw.length > 20000) { req.destroy(); reject(new Error("too_large")); } }); req.on("end", () => { try { resolve(JSON.parse(raw || "{}")); } catch { reject(new Error("bad")); } }); req.on("error", reject);
   });
   if (method === "POST" && route === "/api/auth/password/forgot") {
-    if (limited(ip, "forgot", 6, 15 * 60 * 1000)) return send(429, { error: "rate" });
+    if (limited(ip, "forgot", 6, 15 * 60 * 1000)) { alertRate("forgot", route); return send(429, { error: "rate" }); }
     let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
     const email = String(body.email || "").toLowerCase().trim();
     if (!validEmail(email)) return send(400, { error: "email" });
@@ -198,17 +205,23 @@ async function pwReset(req, res, url, ctx) {
     if (pw.length < 8) return send(400, { error: "password_length" });
     const u = store.users.find((x) => x.email === email);
     if (!u) return send(400, { error: "token" });
+    if (pw.length > 72) return send(400, { error: "password_length" });
     const h = hashPassword(pw);
     u.salt = h.salt; u.derived = h.derived;
+    // Password reset kills every existing session; setSession issues a fresh one.
+    store.sessions = (store.sessions || []).filter((s) => s.userId !== u.id);
     saveStore(store);
+    alert("password_reset", u.email + " reset password from IP " + ip, { key: u.email });
+    // Ops accounts never get a session from an email link alone: sign in with password + TOTP.
+    if (publicUser(u).isOps) return send(200, { ok: true, signIn: true });
     setSession(res, u.id);
     return send(200, { user: publicUser(u) });
   }
   // Set (or change) a password for the currently logged-in user.
   // No email round-trip: the session cookie proves identity.
   if (method === "POST" && route === "/api/auth/password/set") {
-    if (limited(ip, "pwset", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
-    const u = sessionUserFromCookie(req, store);
+    if (limited(ip, "pwset", 10, 15 * 60 * 1000)) { alertRate("pwset", route); return send(429, { error: "rate" }); }
+    const u = sessionUserFromCookie(req, store, isOpsUser);
     if (!u) return send(401, { error: "auth" });
     let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
     const pw = String(body.password || "");
@@ -225,8 +238,8 @@ async function pwReset(req, res, url, ctx) {
   // The customer is logged out everywhere and must choose a new password on next sign-in.
   // The temp password is returned once — share it with the customer, it is never shown again.
   if (method === "POST" && route === "/api/ops/users/password-reset") {
-    if (limited(ip, "ops-pwreset", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
-    const me = sessionUserFromCookie(req, store);
+    if (limited(ip, "ops-pwreset", 10, 15 * 60 * 1000)) { alertRate("ops-pwreset", route); return send(429, { error: "rate" }); }
+    const me = sessionUserFromCookie(req, store, isOpsUser);
     if (!me || !publicUser(me).isOps) return send(403, { error: "ops_only" });
     let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
     const id = String(body.id || "").trim();
@@ -243,11 +256,12 @@ async function pwReset(req, res, url, ctx) {
     target.mustChangePassword = true;
     store.sessions = (store.sessions || []).filter((s) => s.userId !== target.id);
     saveStore(store);
+    alert("password_reset", "Ops " + me.email + " reset password for " + target.email + " from IP " + ip, { key: target.email });
     return send(200, { ok: true, email: target.email, tempPassword: temp });
   }
   // Logged-in: security flags for the frontend (password set? forced change pending?).
   if (method === "GET" && route === "/api/auth/security") {
-    const me = sessionUserFromCookie(req, store);
+    const me = sessionUserFromCookie(req, store, isOpsUser);
     if (!me) return send(401, { error: "auth" });
     return send(200, { ok: true, hasPassword: !!(me.salt && me.derived), mustChangePassword: !!me.mustChangePassword });
   }
@@ -255,8 +269,8 @@ async function pwReset(req, res, url, ctx) {
   // current password — the fresh login with the temp password already proved identity.
   // Voluntary changes require the current password.
   if (method === "POST" && route === "/api/auth/password/change") {
-    if (limited(ip, "pwchange", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
-    const me = sessionUserFromCookie(req, store);
+    if (limited(ip, "pwchange", 10, 15 * 60 * 1000)) { alertRate("pwchange", route); return send(429, { error: "rate" }); }
+    const me = sessionUserFromCookie(req, store, isOpsUser);
     if (!me) return send(401, { error: "auth" });
     let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
     const pw = String(body.password || "");
@@ -269,20 +283,24 @@ async function pwReset(req, res, url, ctx) {
     me.mustChangePassword = false;
     if (me.provider === "magic") me.provider = "password";
     me.providers = Array.from(new Set([].concat(me.providers || [], ["password"])));
+    // Kill every other session for this user; keep the current one.
+    const keep = defense.sidHash((String(req.headers.cookie || "").match(/(?:^|;\s*)hkl_sid=([^;]+)/) || [])[1] || "");
+    store.sessions = (store.sessions || []).filter((s) => s.userId !== me.id || s.h === keep);
     saveStore(store);
+    alert("password_change", me.email + " changed password from IP " + ip, { key: me.email });
     return send(200, { ok: true });
   }
   // ---- Customer 2FA (TOTP) ----
   // GET /api/auth/2fa/status -> { enabled }
   if (method === "GET" && route === "/api/auth/2fa/status") {
-    const me = sessionUserFromCookie(req, store);
+    const me = sessionUserFromCookie(req, store, isOpsUser);
     if (!me) return send(401, { error: "auth" });
     return send(200, { enabled: !!me.totpEnabled });
   }
   // POST /api/auth/2fa/setup -> { secret, qr, uri } (does not enable yet)
   if (method === "POST" && route === "/api/auth/2fa/setup") {
     if (limited(ip, "2fa", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
-    const me = sessionUserFromCookie(req, store);
+    const me = sessionUserFromCookie(req, store, isOpsUser);
     if (!me) return send(401, { error: "auth" });
     me.totpPending = b32encode(crypto.randomBytes(20));
     saveStore(store);
@@ -297,7 +315,7 @@ async function pwReset(req, res, url, ctx) {
   // POST /api/auth/2fa/confirm { code } -> enables 2FA
   if (method === "POST" && route === "/api/auth/2fa/confirm") {
     if (limited(ip, "2fa", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
-    const me = sessionUserFromCookie(req, store);
+    const me = sessionUserFromCookie(req, store, isOpsUser);
     if (!me) return send(401, { error: "auth" });
     let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
     if (!me.totpPending || !totpOk(me.totpPending, body.code)) return send(401, { error: "code" });
@@ -312,7 +330,7 @@ async function pwReset(req, res, url, ctx) {
   // POST /api/auth/2fa/disable { password } -> disables 2FA
   if (method === "POST" && route === "/api/auth/2fa/disable") {
     if (limited(ip, "2fa", 10, 15 * 60 * 1000)) return send(429, { error: "rate" });
-    const me = sessionUserFromCookie(req, store);
+    const me = sessionUserFromCookie(req, store, isOpsUser);
     if (!me) return send(401, { error: "auth" });
     let body; try { body = await readBody(); } catch { return send(400, { error: "bad_request" }); }
     if (me.derived && !checkPasswordLocal(body.password, me.salt, me.derived)) return send(401, { error: "credentials" });

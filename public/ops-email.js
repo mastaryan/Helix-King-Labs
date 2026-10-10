@@ -1,3 +1,4 @@
+const hxOpsEmail = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (ch) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 /* Helix King Labs — ops email list + broadcast UI. Loaded before app.js; uses window.HKL at runtime. */
 (function () {
   function render(box, d) {
@@ -8,7 +9,7 @@
     const ob = (d && d.outbox) || [];
     box.innerHTML = `<h2>Email list</h2><p class="lede">${rows.length} addresses. Written to data/subscribers.csv. Outbox queued in data/outbox.json.</p>` +
       (rows.length
-        ? `<table class="table"><thead><tr><th>Email</th><th>Source</th><th>When</th></tr></thead><tbody>${rows.map((c)=>`<tr><td>${c.email}</td><td>${c.source||""}</td><td>${(c.created||"").slice(0,19)}</td></tr>`).join("")}</tbody></table>`
+        ? `<table class="table"><thead><tr><th>Email</th><th>Source</th><th>When</th></tr></thead><tbody>${rows.map((c)=>`<tr><td>${hxOpsEmail(c.email)}</td><td>${hxOpsEmail(c.source||"")}</td><td>${(c.created||"").slice(0,19)}</td></tr>`).join("")}</tbody></table>`
         : `<p class="muted">No subscribers yet.</p>`) +
       `<h2>Broadcast</h2><p class="lede">Send one message to all ${rows.length} subscribers. Each gets its own unsubscribe link. Queued through the outbox.</p>
       <form id="broadcastForm" class="tool-form">

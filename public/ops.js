@@ -314,7 +314,7 @@ async function boot() {
     });
     draw();
   } catch (err) {
-    $("#boot").innerHTML = `Couldn't open the desk. ${esc(err.error || err.message || "")}`;
+    $("#boot").innerHTML = `Couldn't open the desk. ${esc(err.detail || err.error || err.message || "")}`;
   }
 }
 document.addEventListener("DOMContentLoaded", boot);

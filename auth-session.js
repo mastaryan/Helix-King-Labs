@@ -6,8 +6,9 @@
 
 const crypto = require("node:crypto");
 const https = require("node:https");
+const defense = require("./defense");
 
-function createAuthSession({ store, saveStore, validEmail, SESSION_HOURS, SECURE_COOKIES, GOOGLE_CLIENT_ID, APPLE_CLIENT_ID, APPLE_ENABLED, AUTH_DEMO, PUBLIC_ORIGIN }) {
+function createAuthSession({ store, saveStore, validEmail, SESSION_HOURS, SECURE_COOKIES, GOOGLE_CLIENT_ID, APPLE_CLIENT_ID, APPLE_ENABLED, AUTH_DEMO, PUBLIC_ORIGIN, onLogin }) {
   const jwksCache = { google: null, apple: null };
   function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
     const derived = crypto.scryptSync(password, salt, 32).toString("hex");
@@ -30,7 +31,7 @@ function createAuthSession({ store, saveStore, validEmail, SESSION_HOURS, SECURE
     const map = {};
     raw.split(";").forEach((p) => {
       const i = p.indexOf("=");
-      if (i > 0) map[p.slice(0, i).trim()] = decodeURIComponent(p.slice(i + 1).trim());
+      if (i > 0) { try { map[p.slice(0, i).trim()] = decodeURIComponent(p.slice(i + 1).trim()); } catch (_) {} }
     });
     return map;
   }
@@ -38,7 +39,8 @@ function createAuthSession({ store, saveStore, validEmail, SESSION_HOURS, SECURE
   function sessionOf(req) {
     const sid = cookieOf(req).hkl_sid;
     if (!sid) return null;
-    return store.sessions.find((s) => s.id === sid && s.exp > Date.now()) || null;
+    // Session ids are stored as SHA-256 hashes; idle + absolute timeouts apply.
+    return defense.findSession(store, sid, (uid) => isOpsUser(store.users.find((u) => u.id === uid))) || null;
   }
 
   function sessionUser(req) {
@@ -104,22 +106,33 @@ function createAuthSession({ store, saveStore, validEmail, SESSION_HOURS, SECURE
     };
   }
 
+  // Always issues a fresh id (rotation) and drops the caller's previous session,
+  // so a fixed/stolen cookie value is useless after a real login.
   function setSession(res, userId) {
     const id = token();
-    const exp = Date.now() + SESSION_HOURS * 3600 * 1000;
-    store.sessions = store.sessions.filter((s) => s.exp > Date.now());
-    store.sessions.push({ id, userId, exp });
+    const now = Date.now();
+    const u = store.users.find((x) => x.id === userId);
+    const lim = defense.sessionLimits(isOpsUser(u));
+    const exp = now + lim.absolute;
+    const req = res && res._hklReq;
+    const prev = req ? cookieOf(req).hkl_sid : null;
+    const prevH = prev ? defense.sidHash(prev) : null;
+    // Drop expired, legacy plaintext (pre-hash) and the replaced session.
+    store.sessions = (store.sessions || []).filter((s) => s.exp > now && s.h && s.h !== prevH);
+    store.sessions.push({ h: defense.sidHash(id), userId, exp, created: now, last: now });
     saveStore(store);
+    if (onLogin) { try { onLogin(u, req); } catch (_) {} }
     const secure = SECURE_COOKIES ? "; Secure" : "";
     res.setHeader(
       "Set-Cookie",
-      `hkl_sid=${id}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_HOURS * 3600}${secure}`
+      `hkl_sid=${id}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${Math.floor(lim.absolute / 1000)}${secure}`
     );
   }
 
   function clearSession(req, res) {
     const sid = cookieOf(req).hkl_sid;
-    store.sessions = store.sessions.filter((s) => s.id !== sid);
+    const h = defense.sidHash(sid);
+    store.sessions = (store.sessions || []).filter((s) => s.h !== h);
     saveStore(store);
     const secure = SECURE_COOKIES ? "; Secure" : "";
     res.setHeader("Set-Cookie", `hkl_sid=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${secure}`);

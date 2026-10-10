@@ -78,7 +78,9 @@
         at: new Date().toISOString(),
       });
       // Beacon is fire-and-forget, works on pagehide
-      if (navigator.sendBeacon) {
+      var ok = false;
+      try { var c = window.HKL_CONSENT && window.HKL_CONSENT.get(); ok = !!(c && c.analytics); } catch (e) {}
+      if (ok && !trackingExcluded && navigator.sendBeacon) {
         navigator.sendBeacon("/api/track/exit", data);
       }
       ga4("page_exit", { page: location.pathname, time_spent: timeSpent, cart_items: cartCount });

@@ -125,5 +125,9 @@ function captureAffFromUrl() {
     const code = String(ref).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 16);
     if (code.length < 3 || code === "HELIX10") return;
     window.HKL.state.aff = code;
-    localStorage.setItem("hkl_aff", code);
+    var c = window.HKL_CONSENT && window.HKL_CONSENT.get();
+    try {
+      if (c && c.marketing) localStorage.setItem("hkl_aff", code);
+      else sessionStorage.setItem("hkl_aff", code);
+    } catch (e) {}
   }

@@ -44,6 +44,8 @@
     if (!order) return;
     const isUnpaid = order.status === "not_paid" || (order.wholesale && order.status === "committed");
     if (!isUnpaid) return;
+    // Crypto confirms automatically via NOWPayments; never offer screenshot upload.
+    if (order.paymentMethod === "crypto") return;
     var paybox = document.querySelector(".paybox");
     if (!paybox) return;
     // Don't double-mount if a previous wrap is still in the DOM

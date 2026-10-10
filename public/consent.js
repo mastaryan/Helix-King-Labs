@@ -187,7 +187,7 @@
     box.innerHTML =
       '<p><strong>Cookies, your call.</strong> Necessary cookies keep the cart, the account, and checkout working. ' +
       'Analytics cookies help us understand visits. Marketing cookies run ad pixels that measure our campaigns. ' +
-      'Nothing optional loads until you allow it. <a href="/privacy" data-link>Privacy notice</a>.</p>' +
+      'Nothing optional loads until you allow it. You can change or withdraw your choice any time under <b>Cookie settings</b> in the footer. <a href="/privacy" data-link>Privacy notice</a>.</p>' +
       '<div class="consent-toggles hidden" id="cToggles">' +
       '<label class="consent-row"><span><strong>Necessary</strong><br><small>Cart, account, checkout. Always on.</small></span><input type="checkbox" checked disabled></label>' +
       '<label class="consent-row"><span><strong>Analytics</strong><br><small>Google Analytics, Contentsquare visit replay.</small></span><input type="checkbox" id="cAn"' + (cur.analytics ? " checked" : "") + "></label>" +
@@ -195,7 +195,7 @@
       "</div>" +
       '<div class="consent-actions">' +
       '<button class="btn" type="button" id="cAll">Accept all</button>' +
-      '<button class="btn ghost" type="button" id="cNec">Necessary only</button>' +
+      '<button class="btn" type="button" id="cNec">Reject all</button>' +
       '<button class="btn ghost" type="button" id="cCustom">Customize</button>' +
       '<button class="btn hidden" type="button" id="cSave">Save choices</button>' +
       "</div>";
