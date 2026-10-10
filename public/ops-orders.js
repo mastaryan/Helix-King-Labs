@@ -17,6 +17,7 @@
     let rows = all.filter((o) => {
       if (kind !== "all" && orderKind(o) !== kind) return false;
       if (f === "open") return ["not_paid", "paid", "committed"].includes(o.status);
+      if (f === "not_paid") return ["not_paid", "committed"].includes(o.status);
       return o.status === f;
     });
     if (q) rows = rows.filter((o) =>
@@ -124,9 +125,11 @@
     d.querySelectorAll("[data-act]").forEach((btn) => {
       btn.onclick = async () => {
         const act = btn.dataset.act;
+        const trackVal = $("#dTrack") ? $("#dTrack").value.trim() : "";
+        const carrierVal = $("#dCarrier") ? $("#dCarrier").value.trim() : "";
         const map = {
           paid: { title: "Mark paid", consequence: "The customer is told their payment cleared. Stock stays held. This cannot be undone by the customer.", danger: false },
-          shipped: { title: "Mark shipped", consequence: "Tracking goes live for the customer. Make sure carrier + tracking are saved first.", danger: false },
+          shipped: { title: "Mark shipped", consequence: trackVal && carrierVal ? "Tracking goes live for the customer." : "⚠️ NO TRACKING SAVED. The customer will see 'shipped' with no tracking number. Add carrier + tracking first, or confirm you want to ship without it.", danger: !(trackVal && carrierVal) },
           voided: { title: "Void order", consequence: "The order is cancelled, held stock is released back to inventory, and the customer is notified.", danger: true },
           note: null,
         };
