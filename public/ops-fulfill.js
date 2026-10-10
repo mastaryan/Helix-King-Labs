@@ -25,12 +25,12 @@
     var shipView = ship.line1
       ? `${esc(ship.name || "")}<br>${esc(ship.line1)}${ship.line2 ? "<br>" + esc(ship.line2) : ""}<br>${esc(ship.city)}, ${esc(ship.region)} ${esc(ship.postal)}`
       : "Missing.";
-    var statuses = ["awaiting_settlement", "settled", "shipped", "delivered", "voided"];
+    var statuses = ["not_paid", "paid", "shipped", "delivered", "voided"];
     return `<div class="ops-order-detail">
       <p><a href="/ops/catalog" data-link>← Back to orders</a></p>
       <h2>Order ${esc(o.id)}</h2>
       <p class="lede">${esc(o.email)}${o.company ? " · " + esc(o.company) : ""} · ${esc(o.paymentMethod || "")} · ${money(q.total)}</p>
-      ${o.paymentProof ? `<div class="paybox" style="border-color:#c80"><h3>Payment proof uploaded</h3><p class="muted">Uploaded ${esc((o.paymentProof.uploadedAt || "").slice(0, 16))}. Review it below, then set the status to settled.</p><p><a href="/api/ops/proofs/${encodeURIComponent(o.id)}" target="_blank" rel="noopener"><img src="/api/ops/proofs/${encodeURIComponent(o.id)}" alt="Payment proof" style="max-width:100%;border:1px solid var(--line-2);border-radius:6px" /></a></p></div>` : ""}
+      ${o.paymentProof ? `<div class="paybox" style="border-color:#c80"><h3>Payment proof uploaded</h3><p class="muted">Uploaded ${esc((o.paymentProof.uploadedAt || "").slice(0, 16))}. Review below, then set the status to PAID.</p><p>${(o.paymentProof.files || []).map((f) => `<a href="/api/ops/proofs/${encodeURIComponent(o.id)}?f=${encodeURIComponent(f)}" target="_blank" rel="noopener"><img src="/api/ops/proofs/${encodeURIComponent(o.id)}?f=${encodeURIComponent(f)}" alt="Payment proof" style="max-width:220px;margin:4px;border:1px solid var(--line-2);border-radius:6px" /></a>`).join("") || `<a href="/api/ops/proofs/${encodeURIComponent(o.id)}" target="_blank" rel="noopener"><img src="/api/ops/proofs/${encodeURIComponent(o.id)}" alt="Payment proof" style="max-width:100%;border:1px solid var(--line-2);border-radius:6px" /></a>`}</p></div>` : ""}
       <div class="grid2">
         <div>
           <h3>Line items</h3>
