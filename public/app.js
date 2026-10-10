@@ -740,6 +740,7 @@
         <a href="https://t.me/+gk0d_zGjGORkNDc5" rel="noopener noreferrer" aria-label="Telegram"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 5 3 12l6 2 2 6 3-4 5 4z"/></svg></span>Telegram</a>
         <a href="https://www.instagram.com/HelixKingLabs/" rel="noopener noreferrer" aria-label="Instagram"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/></svg></span>Instagram</a>
         <a href="https://x.com/HelixKingLabs" rel="noopener noreferrer" aria-label="X"><span class="soc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></span>X</a>
+        <a href="https://discord.gg/duGpW96r3a" rel="noopener"><span class="soc"><svg viewBox="0 0 24 24"><path d="M19 5a14 14 0 0 0-4-1l-1 1a13 13 0 0 0-5 0L8 4a14 14 0 0 0-4 1C3 9 2 12 3 15a14 14 0 0 0 4 2l1-2a9 9 0 0 1-2-1h1a10 10 0 0 0 8 0h1a9 9 0 0 1-2 1l1 2a14 14 0 0 0 4-2c1-4 0-7-3-10zM9 13c-1 0-2-1-2-2s1-2 2-2 1 1 1 2-1 2-1 2zm7 0c-1 0-2-1-2-2s1-2 2-2 1 1 1 2-1 2-1 2z"/></svg></span>Discord</a>
       </div>
       <p class="muted">Product, order, and shipping questions only — no usage or dosing guidance over WhatsApp.</p>
     </section>`;
