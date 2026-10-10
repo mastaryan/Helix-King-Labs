@@ -1595,8 +1595,8 @@
                 box.innerHTML = `<h2>Orders</h2><p class="muted">No orders yet. When you place one, it shows up here with live status and tracking.</p>`;
                 return;
               }
-              const active = d.orders.filter((o) => o.status === "awaiting_settlement" || o.status === "settled");
-              const done = d.orders.filter((o) => o.status !== "awaiting_settlement" && o.status !== "settled");
+              const active = d.orders.filter((o) => o.status === "not_paid" || o.status === "paid");
+              const done = d.orders.filter((o) => o.status !== "not_paid" && o.status !== "paid");
               box.innerHTML = `<h2>Current orders</h2>` +
                 (active.length ? active.map((o) => card(o, true)).join("") : `<p class="muted">Nothing in progress right now.</p>`) +
                 `<h2 class="order-h2">Recent orders</h2>` +
@@ -1633,7 +1633,7 @@
                       <td>${o.fulfillment || o.status || ""}</td>
                       <td><input class="op-track" type="text" value="${o.tracking || ""}" placeholder="Tracking" /></td>
                       <td>
-                        <button type="button" class="btn ghost op-status" data-status="settled">Settled</button>
+                        <button type="button" class="btn ghost op-status" data-status="paid">Settled</button>
                         <button type="button" class="btn ghost op-status" data-status="shipped">Shipped</button>
                         <button type="button" class="btn ghost op-status" data-status="voided">Void</button>
                         <button type="button" class="btn ghost op-dispute">Dispute</button>
@@ -2491,10 +2491,8 @@
           if (pay.invoiceUrl) { location.href = pay.invoiceUrl; return; }
           const box = $("#orderDone");
           if (box) {
-            const total = money(order.quote && order.quote.total);
-            box.innerHTML = pay.provider === "venmo" || pay.provider === "cashapp"
-              ? `<div class="order-confirm"><h3>Order ${order.id} placed</h3><p class="grand">Total: ${total}</p><p>${pay.provider === "venmo" ? "Venmo <b>@fibkingpeps</b>" : "Cash App <b>$FibKingPep</b>"} ${total}. Put <b>${order.id}</b> in the note.</p><p class="muted">We confirm payment before shipping.</p><a class="btn" href="/account/receipt/${order.id}" data-link>View receipt</a></div>`
-              : `<p class="lede">Payment could not start. ${pay.message || "Try again or use Venmo."}</p>`;
+            if (window.HKL_CONFIRM) window.HKL_CONFIRM(order, pay);
+            else box.innerHTML = `<p class="lede">Payment could not start. ${pay.message || "Try again or use Venmo."}</p>`;
           }
         } catch (err) {
           toast(err.message || "Checkout failed");
