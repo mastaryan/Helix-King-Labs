@@ -181,7 +181,7 @@ function createWholesale(deps) {
       // Create commitment (group buy style)
       const orderTotal = Math.round(total * 100) / 100;
       const order = {
-        id: "WS-" + Date.now().toString(36).toUpperCase(),
+        id: "HKL-WS-" + Date.now().toString(36).toUpperCase(),
         userId: user.id,
         email: user.email,
         wholesale: true,
@@ -228,6 +228,17 @@ function createWholesale(deps) {
       const out = { id: order.id, total: order.total, paymentMethod };
       if (order.payment && order.payment.invoiceUrl) out.invoiceUrl = order.payment.invoiceUrl;
       if (order.payment && order.payment.handle) out.paymentHandle = order.payment.handle;
+      // Crypto: pass the full deposit details so the frontend can render the deposit screen.
+      if (paymentMethod === "crypto" && order.payment && order.payment.payAddress) {
+        out.deposit = {
+          payAddress: order.payment.payAddress,
+          payAmount: order.payment.payAmount,
+          payCurrency: order.payment.payCurrency,
+          network: order.payment.network,
+          expiresAt: order.payment.expiresAt || null,
+          paymentId: order.payment.paymentId || null,
+        };
+      }
       return send(res, 200, { ok: true, order: out });
     }
 

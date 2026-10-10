@@ -452,42 +452,71 @@ function createFulfillment(deps) {
       const orderId = route.split("/")[3] || "";
       const order = (store.orders || []).find((o) => o.id === orderId && o.userId === user.id);
       if (!order) return send(res, 404, { error: "not_found" });
-      if (order.status !== "awaiting_settlement" && !(order.wholesale && order.status === "committed")) return send(res, 400, { error: "not_awaiting_payment" });
+      if (order.status !== "not_paid" && !(order.wholesale && order.status === "committed")) return send(res, 400, { error: "not_awaiting_payment" });
       let body;
       try {
         body = await readBody(req, 12_000_000);
       } catch {
         return send(res, 400, { error: "bad_request" });
       }
-      const m = String(body.imageData || "").match(/^data:(image\/(jpeg|png|webp));base64,(.+)$/);
-      if (!m) return send(res, 400, { error: "image_data" });
-      const buf = Buffer.from(m[3], "base64");
-      if (!buf.length || buf.length > 8_000_000) return send(res, 400, { error: "image_size" });
+      const imgs = Array.isArray(body.images) ? body.images : (body.imageData ? [body.imageData] : []);
+      if (!imgs.length || imgs.length > 5) return send(res, 400, { error: "image_count" });
       const dir = path.join(DATA, "proofs");
       fs.mkdirSync(dir, { recursive: true });
       const safeId = String(order.id).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || "order";
-      const ext = m[2] === "png" ? "png" : m[2] === "webp" ? "webp" : "jpg";
-      for (const e of ["jpg", "png", "webp"]) {
-        const fp = path.join(dir, safeId + "." + e);
-        if (e !== ext && fs.existsSync(fp)) fs.unlinkSync(fp);
+      const saved = [];
+      for (let i = 0; i < imgs.length; i++) {
+        const m = String(imgs[i] || "").match(/^data:(image\/(jpeg|png|webp|heic|heif));base64,(.+)$/);
+        if (!m) return send(res, 400, { error: "image_data" });
+        const buf = Buffer.from(m[3], "base64");
+        if (!buf.length || buf.length > 8_000_000) return send(res, 400, { error: "image_size" });
+        const ext = m[2] === "png" ? "png" : m[2] === "webp" ? "webp" : m[2] === "heic" ? "heic" : m[2] === "heif" ? "heif" : "jpg";
+        const fname = safeId + "-" + (i + 1) + "." + ext;
+        // Clean up old single-file proofs and stale multi-files
+        for (const e of ["jpg", "png", "webp", "heic", "heif"]) {
+          for (const old of [path.join(dir, safeId + "." + e), path.join(dir, safeId + "-" + (i + 1) + "." + e)]) {
+            if (fs.existsSync(old)) fs.unlinkSync(old);
+          }
+        }
+        fs.writeFileSync(path.join(dir, fname), buf);
+        saved.push(fname);
       }
-      fs.writeFileSync(path.join(dir, safeId + "." + ext), buf);
-      order.paymentProof = { ext, uploadedAt: new Date().toISOString() };
+      order.paymentProof = { files: saved, uploadedAt: new Date().toISOString() };
+      // Back-compat: keep ext for single-file proofs
+      if (saved.length === 1) {
+        const ext1 = saved[0].split(".").pop();
+        order.paymentProof.ext = ext1;
+      }
       order.events = order.events || [];
       order.events.push({ at: new Date().toISOString(), kind: "proof_uploaded", by: user.email });
       saveStore(store);
       return send(res, 200, { ok: true }) || true;
     }
 
-    // Ops views a payment proof image.
+    // Ops views a payment proof image. Supports ?f=<filename> for multi-file proofs.
     if (method === "GET" && route.startsWith("/api/ops/proofs/")) {
       if (!isOpsUser(user)) return send(res, 403, { error: "ops_only" });
       const orderId = decodeURIComponent(route.split("/")[4] || "");
       const order = (store.orders || []).find((o) => o.id === orderId);
-      const ext = order && order.paymentProof && order.paymentProof.ext;
-      if (!ext) return send(res, 404, { error: "not_found" });
-      const fp = path.join(DATA, "proofs", String(orderId).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) + "." + ext);
+      const proof = order && order.paymentProof;
+      if (!proof) return send(res, 404, { error: "not_found" });
+      const safeId = String(orderId).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
+      let fname = String(url.searchParams.get("f") || "");
+      // Validate requested filename belongs to this order
+      if (fname) {
+        if (!/^[\w-]+\.(jpg|png|webp|heic|heif)$/i.test(fname) || !fname.startsWith(safeId)) {
+          return send(res, 400, { error: "bad_file" });
+        }
+      } else if (proof.files && proof.files.length) {
+        fname = proof.files[0];
+      } else if (proof.ext) {
+        fname = safeId + "." + proof.ext;
+      } else {
+        return send(res, 404, { error: "not_found" });
+      }
+      const fp = path.join(DATA, "proofs", fname);
       if (!fs.existsSync(fp)) return send(res, 404, { error: "not_found" });
+      const ext = fname.split(".").pop().toLowerCase();
       const data = fs.readFileSync(fp);
       res.writeHead(200, {
         "Content-Type": "image/" + (ext === "jpg" ? "jpeg" : ext),

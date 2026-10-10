@@ -190,4 +190,28 @@ function abandonmentMail(order, deps, isFirstOrder) {
     attempts: 0,
   };
 }
-module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml, orderMail, underpaymentMail, abandonmentMail, emailFooter };
+function expiryNudgeMail(order, deps) {
+  const origin = (deps && deps.origin) || "https://helixkinglabs.com";
+  const total = "$" + Number(order.quote && order.quote.total || 0).toFixed(2);
+  const footer = emailFooter("orders");
+  const pay = order.payment || {};
+  const addrLine = pay.payAddress ? `\n\nSend ${pay.payAmount} ${pay.payCurrency} to:\n${pay.payAddress}` : "";
+  return {
+    to: order.email,
+    subject: `Your payment window closes soon — ${order.id}`,
+    text: `Hi there,\n\nYour order ${order.id} (${total}) is still NOT PAID and the crypto payment window closes in about 15 minutes. After that, your items go back on the shelf.${addrLine}\n\nComplete it here:\n${origin}/account/receipt/${order.id}\n\n— Helix King Labs${footer.text}`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <p style="font-size:16px">Hi there,</p>
+      <p>Your order <b>${order.id}</b> (${total}) is still <b>NOT PAID</b> and the crypto payment window closes in about <b>15 minutes</b>. After that, your items go back on the shelf.</p>
+      ${pay.payAddress ? `<p style="background:#f5f5f5;padding:12px;border-radius:6px;font-family:monospace;font-size:13px;word-break:break-all">Send ${pay.payAmount} ${pay.payCurrency} to:<br><b>${pay.payAddress}</b></p>` : ""}
+      <p style="text-align:center"><a href="${origin}/account/receipt/${order.id}" style="display:inline-block;padding:12px 28px;background:#1a1a1a;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold">Complete my payment</a></p>
+      ${footer.html}
+    </div>`,
+    kind: "expiry_nudge",
+    orderId: order.id,
+    created: new Date().toISOString(),
+    status: "queued",
+    attempts: 0,
+  };
+}
+module.exports = { sendMail, configured, resendConfigured, smtpConfigured, orderHtml, orderMail, underpaymentMail, abandonmentMail, expiryNudgeMail, emailFooter };

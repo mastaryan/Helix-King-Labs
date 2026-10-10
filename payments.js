@@ -160,7 +160,14 @@ function createPayments(deps) {
       expectedAmount: body.price_amount != null ? body.price_amount : order.payment && order.payment.expectedAmount,
     });
     if (order.status === "voided") return { ok: true, skipped: "voided", status: order.status };
-    const paid = status === "finished" || status === "confirmed";
+    // Only "finished" means the funds are actually in the merchant wallet.
+    // "confirmed" = blockchain confirmed but not yet delivered — do NOT mark paid.
+    // Never auto-fulfill re-deposits or wrong-asset deposits (parent_payment_id set).
+    if (body.parent_payment_id) {
+      saveStore(store);
+      return { ok: true, status: order.status, skipped: "redeposit" };
+    }
+    const paid = status === "finished";
     const partial = status === "partially_paid";
 
     if (partial && !paid) {
@@ -171,13 +178,13 @@ function createPayments(deps) {
       return { ok: true, status: order.status, partial: true };
     }
 
-    if (paid && order.status !== "settled" && order.status !== "shipped") {
-      order.status = "settled";
+    if (paid && order.status !== "paid" && order.status !== "shipped") {
+      order.status = "paid";
       order.fulfillment = "ready";
       order.settledAt = new Date().toISOString();
       order.events = order.events || [];
-      order.events.push({ at: new Date().toISOString(), kind: "settled", by: "nowpayments" });
-      queueMail(orderMail(order, "settled"));
+      order.events.push({ at: new Date().toISOString(), kind: "paid", by: "nowpayments" });
+      queueMail(orderMail(order, "paid"));
     }
     saveStore(store);
     return { ok: true, status: order.status };
@@ -213,7 +220,7 @@ function createPayments(deps) {
     try {
       const now = Date.now();
       for (const order of store.orders || []) {
-        if (order.status !== "awaiting_settlement" || order.paymentMethod !== "crypto") continue;
+        if (order.status !== "not_paid" || order.paymentMethod !== "crypto") continue;
         const pid = order.payment && order.payment.paymentId;
         if (!pid) continue;
         const age = now - new Date(order.created || 0).getTime();
