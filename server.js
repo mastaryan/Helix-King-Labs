@@ -23,6 +23,17 @@ const { createOpsActions } = require("./ops-actions");
 const { createStaticServe } = require("./static-serve");
 const { createAuthSession } = require("./auth-session");
 const QRCode = require("qrcode");
+
+// Simple math CAPTCHA store (module scope — survives across requests).
+const captchaStore = new Map();
+function verifyCaptcha(body) {
+  const id = String(body.captchaId || "");
+  const ans = Number(body.captchaAnswer);
+  const rec = captchaStore.get(id);
+  if (!rec) return false;
+  captchaStore.delete(id);
+  return ans === rec.answer;
+}
 const mailer = require("./mail");
 
 const ROOT = __dirname;
@@ -489,13 +500,14 @@ let store = loadStore();
 const { hashPassword, checkPassword, token, cookieOf, sessionOf, sessionUser, isOpsUser, hasOrdered, affiliateOf, referredOrders, publicUser, setSession, clearSession, b64urlJson, decodeJwt, verifyGoogleIdToken, verifyAppleIdToken, authProviders, upsertSocialUser } = createAuthSession({ store, saveStore, validEmail, SESSION_HOURS, SECURE_COOKIES, GOOGLE_CLIENT_ID, APPLE_CLIENT_ID, APPLE_ENABLED, AUTH_DEMO, PUBLIC_ORIGIN });
 
 opsCatalogHandle = createOpsCatalog({ products, store, saveStore, send, readBody, isOpsUser, findProduct, writeInventoryCsv, writePricingCsv, attachCertificates, audit, PUBLIC, DATA, QRCode, sessionOf });
-emailListHandle = createEmailList({ store, saveStore, send, readBody, validEmail, token, requestOrigin: authx.requestOrigin, loadOutbox, saveOutbox, writeSubscribersCsv, audit, isOpsUser });
+emailListHandle = createEmailList({ store, saveStore, send, readBody, validEmail, token, requestOrigin: authx.requestOrigin, loadOutbox, saveOutbox, writeSubscribersCsv, audit, isOpsUser, verifyCaptcha });
 fulfillHandle = createFulfillment({ products, store, saveStore, send, readBody, isOpsUser, findProduct, attachCertificates, writeInventoryCsv, writePricingCsv, audit, PUBLIC, DATA, SHOP_VISIBLE_FAMILIES, affiliateOf, stockStatus, STOCK_THRESHOLD, getPublicOrigin: () => (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", getRequestOrigin: (req) => authx.requestOrigin(req), getEmailListHandle: () => emailListHandle });
 suggestHandle = createSuggestions({ store, saveStore, send, readBody, isOpsUser });
 wholesaleHandle = createWholesale({
   store, saveStore, send, readBody, isOpsUser, products,
   saveProducts: () => { fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2)); },
   getPayments: () => paymentsHandle,
+  verifyCaptcha, loadOutbox, saveOutbox, queueMail,
 });
 paymentsHandle=createPayments({store,saveStore,send,readBody,queueMail,orderMail:(o,k)=>mailer.orderMail(o,k),audit,getPublicOrigin:()=>PUBLIC_ORIGIN||"https://helixkinglabs.com"});
 secHandle=createSecurity({store,saveStore,send,readBody,limited,token,isOpsUser,authx,crypto,QRCode,loadOutbox,saveOutbox,mailer,setSession,publicUser});
@@ -1086,6 +1098,41 @@ async function api(req, res, url) {
     return send(res, 200, { user: publicUser(u), demo: true });
   }
 
+  if (method === "POST" && route === "/api/auth/google/redirect") {
+    if (limited(ip, "google", 16, 15 * 60 * 1000)) return send(res, 429, { error: "rate" });
+    let body;
+    try {
+      body = await readBody(req);
+    } catch {
+      body = {};
+    }
+    const credential = String(body.credential || "");
+    if (!GOOGLE_CLIENT_ID || !credential) {
+      res.writeHead(302, { Location: "/account?google=error" });
+      return res.end();
+    }
+    try {
+      const identity = await authx.verifyGoogleIdToken(credential);
+      const u = authx.upsertSocialUser({
+        email: identity.email,
+        name: identity.name,
+        provider: "google",
+        sub: identity.sub,
+        age: false,
+        terms: false,
+        company: "",
+        researchField: "Independent Researcher",
+      });
+      setSession(res, u.id);
+      const needsConfirm = !u.age || !u.terms;
+      res.writeHead(302, { Location: needsConfirm ? "/account?confirm=1" : "/shop" });
+      return res.end();
+    } catch (err) {
+      res.writeHead(302, { Location: "/account?google=error" });
+      return res.end();
+    }
+  }
+
   if (method === "POST" && route === "/api/auth/apple") {
     if (limited(ip, "apple", 16, 15 * 60 * 1000)) return send(res, 429, { error: "rate" });
     if (!APPLE_ENABLED) return send(res, 503, { error: "apple_parked" });
@@ -1128,6 +1175,27 @@ async function api(req, res, url) {
   if (method === "POST" && route === "/api/auth/logout") {
     clearSession(req, res);
     return send(res, 200, { ok: true });
+  }
+
+  if (method === "POST" && route === "/api/auth/confirm") {
+    if (!user) return send(res, 401, { error: "account_required" });
+    let body;
+    try { body = await readBody(req); } catch { body = {}; }
+    if (body.age === true) user.age = true;
+    if (body.terms === true) user.terms = true;
+    saveStore(store);
+    return send(res, 200, { ok: true, user: publicUser(user) });
+  }
+
+  // Simple math CAPTCHA (no external service). GET returns a question, POST verifies.
+  if (method === "GET" && route === "/api/captcha") {
+    const a = 1 + Math.floor(Math.random() * 9);
+    const b = 1 + Math.floor(Math.random() * 9);
+    const id = token().slice(0, 16);
+    captchaStore.set(id, { answer: a + b, at: Date.now() });
+    // Prune old entries.
+    for (const [k, v] of captchaStore) if (Date.now() - v.at > 10 * 60 * 1000) captchaStore.delete(k);
+    return send(res, 200, { id, question: `${a} + ${b} = ?` });
   }
 
   if (method === "POST" && route === "/api/auth/magic") {
@@ -1332,6 +1400,13 @@ async function api(req, res, url) {
     if (!ship.line1 || !ship.city || !ship.region || !ship.postal) {
       return send(res, 400, { error: "ship_to", message: "Ship-to needs a street, city, state, and postal code." });
     }
+    if (!/^[0-9]{5}$/.test(ship.postal)) {
+      return send(res, 400, { error: "ship_to", message: "Enter a valid 5-digit ZIP code." });
+    }
+    const phoneDigits = ship.phone.replace(/\D/g, "");
+    if (ship.phone && !(phoneDigits.length === 10 || (phoneDigits.length === 11 && phoneDigits[0] === "1"))) {
+      return send(res, 400, { error: "ship_to", message: "Enter a valid US phone number." });
+    }
     user.address = { line1: ship.line1, line2: ship.line2, city: ship.city, region: ship.region, postal: ship.postal };
     if (ship.phone) user.phone = ship.phone;
     if (ship.name) user.name = ship.name;
@@ -1370,9 +1445,10 @@ async function api(req, res, url) {
         note: order.id,
       };
     } else {
-      order.payment = await paymentsHandle.createNowPayment(order, body.network);
+      // Use direct payment API (on-site deposit screen, no hosted invoice redirect).
+      order.payment = await paymentsHandle.createNowPaymentDirect(order, body.network);
     }
-    if (paymentMethod === "crypto" && order.payment && ["payment_failed", "key_missing", "invoice_pending"].includes(order.payment.status)) {
+    if (paymentMethod === "crypto" && order.payment && ["payment_failed", "key_missing"].includes(order.payment.status)) {
       return send(res, 400, { error: "payment_unavailable", message: order.payment.message || "Crypto payment is not available. Use Venmo or Cash App." });
     }
     for (const line of quote.lines) {
@@ -2140,6 +2216,9 @@ async function api(req, res, url) {
         const n = Number(row.unit_cost);
         item.cost = Number.isFinite(n) ? n : null;
       }
+      if (row.shopVisible !== undefined) {
+        item.shopVisible = row.shopVisible !== false;
+      }
     }
     writePricingCsv();
     fs.writeFileSync(path.join(DATA, "products.json"), JSON.stringify(products, null, 2));
@@ -2261,9 +2340,9 @@ async function api(req, res, url) {
     }
     writeInventoryCsv();
     const stored = { ...order, stockDecremented: true, quote: { lines, total: order.total, shipping: 25, surcharge: 0 }, company: "", researchField: user.researchField || "" };
-    if (order.paymentMethod === "crypto") stored.payment = await paymentsHandle.createNowPayment(stored, body.network);
+    if (order.paymentMethod === "crypto") stored.payment = await paymentsHandle.createNowPaymentDirect(stored, body.network);
     else stored.payment = { provider: order.paymentMethod, handle: order.paymentMethod === "venmo" ? "fibkingpeps" : "FibKingPep", status: "awaiting_confirmation", amount: order.total, note: order.id };
-    if (order.paymentMethod === "crypto" && stored.payment && ["payment_failed", "key_missing", "invoice_pending"].includes(stored.payment.status)) {
+    if (order.paymentMethod === "crypto" && stored.payment && ["payment_failed", "key_missing"].includes(stored.payment.status)) {
       return send(res, 400, { error: "payment_unavailable", message: stored.payment.message || "Crypto payment is not available." });
     }
     order.payment = stored.payment;
