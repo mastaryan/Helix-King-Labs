@@ -24,18 +24,21 @@ function when(iso) {
   const d = new Date(iso);
   return d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
-function pill(status) {
+function pill(status, label) {
   const map = {
     awaiting_settlement: ["Unpaid", "wait"],
+    committed: ["Committed", "wait"],
     settled: ["Paid", "ok"],
     shipped: ["Shipped", "ok"],
+    delivered: ["Delivered", "ok"],
     voided: ["Void", "bad"],
+    disputed: ["Disputed", "bad"],
     hold: ["Hold", "wait"],
     ready: ["Ready", "ok"],
     hold_until_minimum: ["Group hold", "wait"],
   };
   const hit = map[status] || [status || "—", ""];
-  return `<span class="pill ${hit[1]}">${hit[0]}</span>`;
+  return `<span class="pill ${hit[1]}">${label || hit[0]}</span>`;
 }
 async function api(path, opts) {
   const res = await fetch(path, {
@@ -102,31 +105,80 @@ function overview() {
   </div>`;
 }
 
-function table(rows, compact) {
+function table(rows, statusLabel) {
   if (!rows.length) return `<p class="muted">Nothing in this view.</p>`;
-  return `<table><thead><tr><th>Order</th><th>Buyer</th><th>Ship</th><th>Pay</th><th>Status</th><th>Total</th></tr></thead><tbody>
-    ${rows.map((o) => `<tr class="pick ${state.order && state.order.id === o.id ? "on" : ""}" data-id="${o.id}">
-      <td>${o.id}<div class="muted">${when(o.created)}${o.channel === "group_buy" ? " · group" : ""}</div></td>
+  const sl = statusLabel || ((s) => s);
+  return `<table><thead><tr><th>Order</th><th>Buyer</th><th>Ship</th><th>Pay</th><th>Status</th><th>Total</th><th></th></tr></thead><tbody>
+    ${rows.map((o) => {
+      const canDelete = o.status === "voided";
+      return `<tr class="pick ${state.order && state.order.id === o.id ? "on" : ""}" data-id="${o.id}">
+      <td><b>${o.id}</b><div class="muted">${when(o.created || o.at)}${o.wholesale ? " · wholesale" : ""}${o.channel === "group_buy" ? " · group" : ""}</div></td>
       <td>${esc(o.email)}<div class="muted">${esc(o.company || o.name || "")}</div></td>
       <td>${shipLine(o)}</td>
-      <td>${o.paymentMethod || "—"}${o.paymentStatus ? `<div class="muted">${o.paymentStatus}</div>` : ""}</td>
-      <td>${pill(o.status)} ${pill(o.fulfillment)}</td>
-      <td>${money(o.total)}</td>
-    </tr>`).join("")}
+      <td>${o.paymentMethod || "—"}${o.paymentStatus ? `<div class="muted">${o.paymentStatus}</div>` : ""}${o.paymentProof ? `<div class="muted" style="color:#2a7">📎 proof</div>` : ""}</td>
+      <td>${pill(o.status, sl(o.status))} ${pill(o.fulfillment)}</td>
+      <td><b>${money(o.total)}</b></td>
+      <td>${canDelete ? `<button type="button" class="btn ghost" data-del-order="${o.id}" style="color:#c00;padding:4px 8px;font-size:12px">Delete</button>` : ""}</td>
+    </tr>`; }).join("")}
   </tbody></table>`;
 }
 
 function orders() {
   const all = state.desk.orders || [];
-  const f = state.filter;
-  const rows = all.filter((o) => {
-    if (f === "open") return o.status === "awaiting_settlement" || o.status === "settled";
+  const f = state.filter || "open";
+  const q = (state.orderSearch || "").toLowerCase().trim();
+  const sortKey = state.orderSort || "newest";
+  let rows = all.filter((o) => {
+    if (f === "open") return ["awaiting_settlement", "settled", "committed"].includes(o.status);
     if (f === "all") return true;
+    if (f === "wholesale") return !!o.wholesale;
+    if (f === "retail") return !o.wholesale;
     return o.status === f;
   });
-  return `<div class="filters">
-    ${["open", "awaiting_settlement", "settled", "shipped", "voided", "all"].map((id) => `<button data-f="${id}" class="${f === id ? "on" : ""}">${id === "open" ? "Open" : id === "all" ? "All" : id.replace("_", " ")}</button>`).join("")}
-  </div>${table(rows)}`;
+  if (q) {
+    rows = rows.filter((o) =>
+      String(o.id || "").toLowerCase().includes(q) ||
+      String(o.email || "").toLowerCase().includes(q) ||
+      String(o.company || o.name || "").toLowerCase().includes(q)
+    );
+  }
+  const sortFns = {
+    newest: (a, b) => new Date(b.created || b.at || 0) - new Date(a.created || a.at || 0),
+    oldest: (a, b) => new Date(a.created || a.at || 0) - new Date(b.created || b.at || 0),
+    totalHigh: (a, b) => (b.total || 0) - (a.total || 0),
+    totalLow: (a, b) => (a.total || 0) - (b.total || 0),
+  };
+  rows = rows.slice().sort(sortFns[sortKey] || sortFns.newest);
+  const statusLabel = (s) => ({
+    awaiting_settlement: "Awaiting payment",
+    committed: "Committed",
+    settled: "Paid ✓",
+    shipped: "Shipped",
+    delivered: "Delivered",
+    voided: "Voided",
+    disputed: "Disputed",
+  }[s] || s);
+  return `<div class="ops-orders-toolbar" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+    <div class="filters" style="display:flex;gap:6px;flex-wrap:wrap">
+      ${["open", "awaiting_settlement", "committed", "settled", "shipped", "delivered", "voided", "wholesale", "retail", "all"].map((id) => {
+        const label = id === "open" ? "Open" : id === "all" ? "All" :
+          id === "wholesale" ? "Wholesale" : id === "retail" ? "Retail" : statusLabel(id);
+        return `<button data-f="${id}" class="${f === id ? "on" : ""}">${label}</button>`;
+      }).join("")}
+    </div>
+    <input type="search" id="orderSearch" placeholder="Search ID, email, name…" value="${esc(state.orderSearch || "")}" style="padding:8px 12px;border:1px solid var(--line-2);border-radius:6px;min-width:220px" />
+    <select id="orderSort" style="padding:8px;border:1px solid var(--line-2);border-radius:6px">
+      <option value="newest"${sortKey === "newest" ? " selected" : ""}>Newest first</option>
+      <option value="oldest"${sortKey === "oldest" ? " selected" : ""}>Oldest first</option>
+      <option value="totalHigh"${sortKey === "totalHigh" ? " selected" : ""}>Highest total</option>
+      <option value="totalLow"${sortKey === "totalLow" ? " selected" : ""}>Lowest total</option>
+    </select>
+    <span class="muted">${rows.length} order${rows.length === 1 ? "" : "s"}</span>
+  </div>
+  <div class="ops-legend" style="margin-bottom:12px;font-size:13px;color:var(--muted)">
+    <b>Status guide:</b> Awaiting payment → customer hasn't paid yet · Committed → wholesale group order locked · Paid ✓ → payment confirmed, ready to ship · Shipped → tracking sent · Delivered → complete · Voided → cancelled, stock released
+  </div>
+  ${table(rows, statusLabel)}`;
 }
 
 function accounts() {
@@ -360,12 +412,44 @@ function draw() {
     }
     const f = e.target.closest("[data-f]");
     if (f) { state.filter = f.dataset.f; draw(); return; }
+    const del = e.target.closest("[data-del-order]");
+    if (del) {
+      e.stopPropagation();
+      const id = del.getAttribute("data-del-order");
+      const o = (state.desk.orders || []).find((x) => x.id === id);
+      if (!o || o.status !== "voided") { toast("Only voided orders can be deleted."); return; }
+      const typed = prompt(`Delete voided order ${id} permanently? Type the order ID to confirm.`);
+      if (typed !== id) { toast("Delete cancelled."); return; }
+      try {
+        await api("/api/ops/orders?id=" + encodeURIComponent(id), { method: "DELETE" });
+        state.desk.orders = (state.desk.orders || []).filter((x) => x.id !== id);
+        toast(`Order ${id} deleted.`);
+        draw();
+      } catch (err) { toast("Delete failed — try again."); }
+      return;
+    }
     const row = e.target.closest("[data-id]");
     if (!row) return;
     state.order = (state.desk.orders || []).find((o) => o.id === row.dataset.id) || null;
     state.tab = "orders";
     draw();
   };
+  // Search and sort (delegated, since the toolbar re-renders).
+  document.addEventListener("input", (e) => {
+    if (e.target && e.target.id === "orderSearch") {
+      state.orderSearch = e.target.value;
+      draw();
+      // Restore focus after redraw.
+      const s = document.getElementById("orderSearch");
+      if (s) { s.focus(); s.setSelectionRange(s.value.length, s.value.length); }
+    }
+  });
+  document.addEventListener("change", (e) => {
+    if (e.target && e.target.id === "orderSort") {
+      state.orderSort = e.target.value;
+      draw();
+    }
+  });
   const af = document.getElementById("affForm");
   if (af) af.onsubmit = async (ev) => {
     ev.preventDefault();

@@ -21,7 +21,24 @@
   function fmt(n) { return n == null ? "—" : money(n); }
 
   var skus = []; // lotView array from /api/ops/lots
-  var prices = {}; // sku -> {retail, wholesale, retailChanged, wholesaleChanged}
+  var prices = {}; // sku -> {retail, wholesale, retailChanged, wholesaleChanged, shopVisible, shopVisibleChanged}
+  var isDirty = false;
+
+  function markDirty() {
+    if (!isDirty) {
+      isDirty = true;
+      window.addEventListener("beforeunload", warnUnload);
+    }
+  }
+  function clearDirty() {
+    isDirty = false;
+    window.removeEventListener("beforeunload", warnUnload);
+  }
+  function warnUnload(e) {
+    e.preventDefault();
+    e.returnValue = "You have unsaved inventory changes. Leave anyway?";
+    return e.returnValue;
+  }
 
   function rosyOf(s) {
     if (s.rosyBoxCost != null) return s.rosyBoxCost;
@@ -38,6 +55,7 @@
 
   function lotRows(s) {
     var lots = s.lots && s.lots.length ? s.lots : [{ index: "new", lot: "", qtyReceived: 0, onHand: 0, unitCost: null, certificate: "pending" }];
+    var visible = s.shopVisible !== false;
     return lots.map(function (l, i) {
       var st = prices[s.sku];
       var cost = l.unitCost;
@@ -47,8 +65,9 @@
       var badge = l.status === "complete" ? '<span class="badge ok">Complete</span>'
         : l.status === "labels_needed" ? '<span class="badge warn">Labels needed</span>'
         : '<span class="badge err">COA needed</span>';
+      var eye = first ? `<button type="button" class="eye-toggle" data-sku="${esc(s.sku)}" data-visible="${visible ? "1" : "0"}" title="${visible ? "Visible on shop — click to hide" : "Hidden from shop — click to show"}" style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px">${visible ? "👁️" : "🚫"}</button>` : "";
       return `<tr data-sku="${esc(s.sku)}" data-lotindex="${l.index}">` +
-        (first ? `<td rowspan="${lots.length}"><b>${esc(s.sku)}</b></td><td rowspan="${lots.length}">${esc(s.name)} ${esc(s.size || "")}</td>` : "") +
+        (first ? `<td rowspan="${lots.length}"><b>${esc(s.sku)}</b><br/>${eye}</td><td rowspan="${lots.length}">${esc(s.name)} ${esc(s.size || "")}</td>` : "") +
         `<td><input class="m-lot" value="${esc(l.lot)}" placeholder="Lot code" style="width:110px" /></td>` +
         `<td><input class="m-hand" type="number" min="0" value="${l.onHand}" style="width:70px" />${low}</td>` +
         `<td><select class="m-cert"><option value="pending"${l.certificate !== "accepted" ? " selected" : ""}>pending</option><option value="accepted"${l.certificate === "accepted" ? " selected" : ""}>accepted</option></select><br/>${badge}</td>` +
@@ -263,6 +282,16 @@
       await api("/api/ops/wholesale/pricing", { method: "POST", body: { sku: sku, wholesalePrice: st.wholesale } });
       st.wholesaleChanged = false;
     }
+    if (st.shopVisibleChanged) {
+      await api("/api/ops/pricing", { method: "POST", body: { rows: [{ sku: sku, shopVisible: st.shopVisible }] } });
+      st.shopVisibleChanged = false;
+    }
+    // If nothing else is dirty, clear the unload warning.
+    var stillDirty = Object.keys(prices).some(function (k) {
+      var p = prices[k];
+      return p.retailChanged || p.wholesaleChanged || p.shopVisibleChanged;
+    });
+    if (!stillDirty) clearDirty();
     var changes = [];
     if (String(vals.lot || "") !== String(orig.lot || "")) changes.push("lot " + (orig.lot || "—") + "→" + (vals.lot || "—"));
     if (String(vals.onHand) !== String(orig.onHand)) changes.push("on-hand " + orig.onHand + "→" + vals.onHand);
@@ -302,11 +331,26 @@
       if (!tr) return;
       var sku = tr.getAttribute("data-sku");
       var st = prices[sku];
-      if (e.target.classList.contains("m-retail")) { st.retail = num(e.target.value); st.retailChanged = true; }
-      if (e.target.classList.contains("m-wholesale")) { st.wholesale = num(e.target.value); st.wholesaleChanged = true; }
+      if (e.target.classList.contains("m-retail")) { st.retail = num(e.target.value); st.retailChanged = true; markDirty(); }
+      if (e.target.classList.contains("m-wholesale")) { st.wholesale = num(e.target.value); st.wholesaleChanged = true; markDirty(); }
       refreshMargins();
     });
     tbl.addEventListener("click", function (e) {
+      var eye = e.target.closest(".eye-toggle");
+      if (eye) {
+        var sku = eye.getAttribute("data-sku");
+        var vis = eye.getAttribute("data-visible") === "1";
+        var next = !vis;
+        eye.setAttribute("data-visible", next ? "1" : "0");
+        eye.textContent = next ? "👁️" : "🚫";
+        eye.title = next ? "Visible on shop — click to hide" : "Hidden from shop — click to show";
+        eye.style.color = next ? "#2a7" : "#c00";
+        // Mark dirty — require Save.
+        var st = prices[sku];
+        if (st) { st.shopVisible = next; st.shopVisibleChanged = true; }
+        markDirty();
+        return;
+      }
       var btn = e.target.closest(".m-save");
       if (btn) saveRow(btn);
     });
