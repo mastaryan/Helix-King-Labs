@@ -35,6 +35,7 @@ function verifyCaptcha(body) {
   return ans === rec.answer;
 }
 const mailer = require("./mail");
+const defense = require("./defense");
 
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, "public");
@@ -440,7 +441,7 @@ function saveOutbox(o) {
 function writeSubscribersCsv() {
   const lines = ["email,source,created,library"];
   for (const c of store.captures || []) {
-    lines.push([c.email, c.source || "", c.created || "", c.library || "/library"].join(","));
+    lines.push([c.email, c.source || "", c.created || "", c.library || "/library"].map(csvCell).join(","));
   }
   fs.writeFileSync(SUB_CSV, lines.join("\n") + "\n");
 }
@@ -497,7 +498,14 @@ function saveStore(s) {
 }
 
 let store = loadStore();
-const { hashPassword, checkPassword, token, cookieOf, sessionOf, sessionUser, isOpsUser, hasOrdered, affiliateOf, referredOrders, publicUser, setSession, clearSession, b64urlJson, decodeJwt, verifyGoogleIdToken, verifyAppleIdToken, authProviders, upsertSocialUser } = createAuthSession({ store, saveStore, validEmail, SESSION_HOURS, SECURE_COOKIES, GOOGLE_CLIENT_ID, APPLE_CLIENT_ID, APPLE_ENABLED, AUTH_DEMO, PUBLIC_ORIGIN });
+// Throttled security alerts (ops/admin login, password reset/change, email change,
+// rate-limit hits, bad IPN signatures). queueMail is hoisted, safe to reference here.
+const securityAlert = defense.createAlerts({ store, saveStore, queueMail: (m) => queueMail(m) });
+const { hashPassword, checkPassword, token, cookieOf, sessionOf, sessionUser, isOpsUser, hasOrdered, affiliateOf, referredOrders, publicUser, setSession, clearSession, b64urlJson, decodeJwt, verifyGoogleIdToken, verifyAppleIdToken, authProviders, upsertSocialUser } = createAuthSession({ store, saveStore, validEmail, SESSION_HOURS, SECURE_COOKIES, GOOGLE_CLIENT_ID, APPLE_CLIENT_ID, APPLE_ENABLED, AUTH_DEMO, PUBLIC_ORIGIN, onLogin: (u, req) => {
+  if (u && publicUser(u).isOps) {
+    securityAlert("admin_login", u.email + " signed in from IP " + (req ? defense.clientIp(req) : "?") + " UA " + String((req && req.headers["user-agent"]) || "").slice(0, 120), { key: u.email });
+  }
+} });
 
 opsCatalogHandle = createOpsCatalog({ products, store, saveStore, send, readBody, isOpsUser, findProduct, writeInventoryCsv, writePricingCsv, attachCertificates, audit, PUBLIC, DATA, QRCode, sessionOf });
 emailListHandle = createEmailList({ store, saveStore, send, readBody, validEmail, token, requestOrigin: authx.requestOrigin, loadOutbox, saveOutbox, writeSubscribersCsv, audit, isOpsUser, verifyCaptcha });
@@ -509,7 +517,7 @@ wholesaleHandle = createWholesale({
   getPayments: () => paymentsHandle,
   verifyCaptcha, loadOutbox, saveOutbox, queueMail,
 });
-paymentsHandle=createPayments({store,saveStore,send,readBody,queueMail,orderMail:(o,k)=>mailer.orderMail(o,k),audit,getPublicOrigin:()=>PUBLIC_ORIGIN||"https://helixkinglabs.com"});
+paymentsHandle=createPayments({store,saveStore,send,readBody,queueMail,alert:securityAlert,orderMail:(o,k)=>mailer.orderMail(o,k),audit,getPublicOrigin:()=>PUBLIC_ORIGIN||"https://helixkinglabs.com"});
 secHandle=createSecurity({store,saveStore,send,readBody,limited,token,isOpsUser,authx,crypto,QRCode,loadOutbox,saveOutbox,mailer,setSession,publicUser});
 const { serveStatic, sitemapXml } = createStaticServe({ PUBLIC, MIME, products, copyDeck, familyVisibleOf, shopVisibleOf, secHandle, sessionUser, isOpsUser });
 opsActionsHandle=createOpsActions({store,saveStore,send,readBody,isOpsUser,restoreStock,audit,secHandle});
@@ -528,6 +536,11 @@ function limited(ip, key, max, windowMs) {
   return row.n > max;
 }
 
+// Alert (throttled) when a sensitive endpoint's rate limit is actually hit.
+function alertRateLimit(ip, key, route) {
+  securityAlert("rate_limit_" + key, ip + " hit the " + key + " limit on " + route, { key: ip });
+}
+
 function send(res, code, body, headers = {}) {
   const payload = typeof body === "string" ? body : JSON.stringify(body);
   res.writeHead(code, {
@@ -539,6 +552,7 @@ function send(res, code, body, headers = {}) {
     ...headers,
   });
   res.end(payload);
+  return true; // module handlers use `return send(...)` as "handled"
 }
 
 function readBody(req, limit = 200000) {
@@ -568,7 +582,7 @@ function readBody(req, limit = 200000) {
 }
 
 function validEmail(e) {
-  return typeof e === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length < 120;
+  return typeof e === "string" && /^[^\s@<>"'`()\\;,]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(e) && e.length < 120;
 }
 
 function volumeRate() {
@@ -796,7 +810,7 @@ function publicOrder(o) {
 }
 
 async function api(req, res, url) {
-  const ip=req.headers["cf-connecting-ip"]||req.socket.remoteAddress||"0";
+  const ip = defense.clientIp(req);
   const user = sessionUser(req);
   const method = req.method;
   const route = url.pathname;
@@ -936,7 +950,7 @@ async function api(req, res, url) {
   }
 
   if (method === "POST" && route === "/api/auth/register") {
-    if (limited(ip, "reg", 8, 15 * 60 * 1000)) return send(res, 429, { error: "rate" });
+    if (limited(ip, "reg", 8, 15 * 60 * 1000)) { alertRateLimit(ip, "reg", route); return send(res, 429, { error: "rate" }); }
     let body;
     try {
       body = await readBody(req);
@@ -948,7 +962,7 @@ async function api(req, res, url) {
     const name = String(body.name || "").slice(0, 80);
     const age = !!body.age;
     const terms = !!body.terms;
-    const company = String(body.company || "Independent research").trim().slice(0, 80);
+    const company = String(body.company || "Independent research").replace(/[<>"'`]/g, "").trim().slice(0, 80) || "Independent research";
     const researchField = String(body.researchField || "");
     const researchAck = !!body.researchAck;
     if (!age || !terms || !researchAck) return send(res, 400, { error: "confirmations_required" });
@@ -956,6 +970,7 @@ async function api(req, res, url) {
     if (!validEmail(email)) return send(res, 400, { error: "email" });
     if (password.length < 8 || password.length > 72) return send(res, 400, { error: "password" });
     if (store.users.some((u) => u.email === email)) return send(res, 409, { error: "exists" });
+    if (isOpsUser({ email })) return send(res, 403, { error: "reserved", message: "This address is reserved. Sign in with Google instead." });
     const { salt, derived } = hashPassword(password);
     const u = {
       id: token(),
@@ -980,7 +995,7 @@ async function api(req, res, url) {
   }
 
   if (method === "POST" && route === "/api/auth/login") {
-    if (limited(ip, "login", 12, 15 * 60 * 1000)) return send(res, 429, { error: "rate" });
+    if (limited(ip, "login", 12, 15 * 60 * 1000)) { alertRateLimit(ip, "login", route); return send(res, 429, { error: "rate" }); }
     let body;
     try {
       body = await readBody(req);
@@ -1199,7 +1214,7 @@ async function api(req, res, url) {
   }
 
   if (method === "POST" && route === "/api/auth/magic") {
-    if (limited(ip, "magic", 6, 15 * 60 * 1000)) return send(res, 429, { error: "rate" });
+    if (limited(ip, "magic", 6, 15 * 60 * 1000)) { alertRateLimit(ip, "magic", route); return send(res, 429, { error: "rate" }); }
     let body;
     try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
     const email = String(body.email || "").toLowerCase().trim();
@@ -1215,7 +1230,7 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true, sent: !!sent.sent });
   }
 
-  if(await authx.pwReset(req,res,url,{store,saveStore,setSession,publicUser,validEmail,hashPassword,loadOutbox,saveOutbox,mailer,limited,ip}))return;
+  if(await authx.pwReset(req,res,url,{store,saveStore,setSession,publicUser,validEmail,hashPassword,loadOutbox,saveOutbox,mailer,limited,ip,alert:securityAlert}))return;
   if (method === "POST" && route === "/api/auth/magic/consume") {
     let body;
     try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
@@ -1335,6 +1350,13 @@ async function api(req, res, url) {
       const email = body.email.toLowerCase().trim();
       if (!validEmail(email)) return send(res, 400, { error: "email" });
       if (email !== user.email && store.users.some((x) => x.email === email)) return send(res, 409, { error: "exists" });
+      // Ops role is granted by email: never let an account switch onto an ops address.
+      if (email !== user.email && isOpsUser({ email })) return send(res, 403, { error: "reserved" });
+      if (email !== user.email) {
+        securityAlert("email_change", user.email + " -> " + email + " (user " + user.id + ") from IP " + ip, { key: user.id });
+        audit(user, "email_change", user.email + " -> " + email);
+        try { queueMail({ to: user.email, subject: "Your Helix King Labs email was changed", text: "The sign-in email on your Helix King Labs account was changed to " + email + ". If this was not you, reply to this email right away.", created: new Date().toISOString() }); } catch {}
+      }
       user.email = email;
     }
     saveStore(store);
@@ -1363,7 +1385,7 @@ async function api(req, res, url) {
       return send(res, 400, { error: "bad_request" });
     }
     if (!user) return send(res, 401, { error: "account_required" });
-    const company = String(body.company || user.company || "").trim().slice(0, 80);
+    const company = String(body.company || user.company || "").replace(/[<>"'`]/g, "").trim().slice(0, 80);
     const researchField = String(body.researchField || user.researchField || "");
     if (!RESEARCH_FIELDS.includes(researchField)) return send(res, 400, { error: "research_field" });
     if (!body.researchAck) return send(res, 400, { error: "research_ack" });
@@ -1841,6 +1863,34 @@ async function api(req, res, url) {
     return send(res, 200, { orders: mine });
   }
 
+  if (method === "GET" && /^\/api\/orders\/[^/]+\/payment$/.test(route)) {
+    if (!user) return send(res, 401, { error: "account_required" });
+    const id = decodeURIComponent(route.split("/")[3] || "");
+    const order = store.orders.find((o) => o.id === id && o.userId === user.id);
+    if (!order) return send(res, 404, { error: "not_found" });
+    const p = order.payment || {};
+    const awaiting = order.status === "not_paid" || (order.wholesale && order.status === "committed");
+    if (awaiting && order.paymentMethod === "crypto" && p.paymentId && process.env.NOWPAYMENTS_API_KEY) {
+      const last = p.lastCheckedAt ? Date.parse(p.lastCheckedAt) : 0;
+      if (!last || Date.now() - last > 20000) {
+        try { await paymentsHandle.recheckOrder(order); } catch (err) { console.error("status recheck", order.id, err.message); }
+      }
+    }
+    const q = order.payment || {};
+    return send(res, 200, {
+      id: order.id,
+      status: order.status,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: q.paymentStatus || "waiting",
+      payAmount: q.payAmount || null,
+      payCurrency: q.payCurrency || null,
+      network: q.network || null,
+      actuallyPaid: q.actuallyPaid != null ? q.actuallyPaid : null,
+      expiresAt: q.expiresAt || null,
+      flagged: !!q.flag,
+    });
+  }
+
   if (method === "DELETE" && route.startsWith("/api/orders/")) {
     if (!user) return send(res, 401, { error: "account_required" });
     const id = decodeURIComponent(route.split("/")[3] || "");
@@ -2048,13 +2098,11 @@ async function api(req, res, url) {
     try { body = await readBody(req); } catch { return send(res, 400, { error: "bad_request" }); }
     const order = (store.orders || []).find((o) => o.id === body.id);
     if (!order) return send(res, 404, { error: "not_found" });
-    const paymentId = order.payment && order.payment.paymentId;
-    if (!paymentId) return send(res, 400, { error: "no_payment" });
+    if (!(order.payment && order.payment.paymentId)) return send(res, 400, { error: "no_payment" });
     if (!process.env.NOWPAYMENTS_API_KEY) return send(res, 503, { error: "key_missing" });
-    let data;
-    try { data = await fetchNowPayment(paymentId); } catch { return send(res, 502, { error: "recheck_failed" }); }
-    const result = applyPaymentStatus(order, String(data.payment_status || ""), data);
-    return send(res, 200, { ok: true, status: result.status, paymentStatus: data.payment_status || "" });
+    let result;
+    try { result = await paymentsHandle.recheckOrder(order); } catch { return send(res, 502, { error: "recheck_failed" }); }
+    return send(res, 200, { ok: true, status: result.status, paymentStatus: result.paymentStatus || "", skipped: result.skipped || null });
   }
 
   if (method === "POST" && route === "/api/ops/coupons") {
@@ -2562,7 +2610,7 @@ function deskPayloadInner() {
       })),
     })),
     captures: (store.captures || []).slice().reverse(),
-    opsEmails: [...OPS_EMAILS],
+    opsEmails: (store.users || []).filter((u) => isOpsUser(u)).map((u) => u.email),
     inventory,
     customers: (store.users || []).map((u) => ({
       id: u.id,
@@ -2594,10 +2642,16 @@ function deskPayloadInner() {
   };
 }
 
+// Quote and neutralize spreadsheet formulas (=, +, -, @, tab, CR) in exported cells.
+function csvCell(v) {
+  let t = String(v == null ? "" : v);
+  if (/^[=+\-@\t\r]/.test(t) && !/^-?\d+(\.\d+)?$/.test(t)) t = "'" + t;
+  return '"' + t.replace(/"/g, '""') + '"';
+}
 function ordersCsvExport() {
   const lines = ["id,email,company,field,rail,status,fulfillment,total,tracking,created"];
   for (const o of store.orders || []) {
-    lines.push([o.id, o.email, o.company || "", o.researchField || "", o.paymentMethod || "", o.status, o.fulfillment || "", (o.quote && o.quote.total) || "", o.tracking || "", o.created || ""].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","));
+    lines.push([o.id, o.email, o.company || "", o.researchField || "", o.paymentMethod || "", o.status, o.fulfillment || "", (o.quote && o.quote.total) || "", o.tracking || "", o.created || ""].map(csvCell).join(","));
   }
   return lines.join("\n");
 }
@@ -2605,7 +2659,7 @@ function ordersCsvExport() {
 function inventoryCsvExport() {
   const lines = ["sku,name,size,lot,on_hand,cost,price,certificate"];
   for (const it of products.items.filter(shopVisibleOf)) {
-    lines.push([it.sku, it.name, it.size, it.lot || "", it.stock || 0, it.cost == null ? "" : it.cost, it.price == null ? "" : it.price, it.certificateStatus || "pending"].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","));
+    lines.push([it.sku, it.name, it.size, it.lot || "", it.stock || 0, it.cost == null ? "" : it.cost, it.price == null ? "" : it.price, it.certificateStatus || "pending"].map(csvCell).join(","));
   }
   return lines.join("\n");
 }
@@ -2614,7 +2668,7 @@ function customersCsvExport() {
   const lines = ["id,email,name,company,researchField,phone,orders,wholesaleApproved"];
   for (const u of store.users || []) {
     const n = (store.orders || []).filter((o) => o.userId === u.id).length;
-    lines.push([u.id, u.email, u.name || "", u.company || "", u.researchField || "", u.phone || "", n, u.wholesaleApproved ? "yes" : "no"].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","));
+    lines.push([u.id, u.email, u.name || "", u.company || "", u.researchField || "", u.phone || "", n, u.wholesaleApproved ? "yes" : "no"].map(csvCell).join(","));
   }
   return lines.join("\n");
 }
@@ -2622,6 +2676,7 @@ function customersCsvExport() {
 
 const server = http.createServer(async (req, res) => {
   try {
+    res._hklReq = req; // lets setSession rotate the caller's previous session
     // Redirect www to apex for SEO (avoid duplicate content) — applies to every request.
     const reqHost = req.headers.host || "";
     if (reqHost.startsWith("www.")) {
@@ -2640,6 +2695,12 @@ const server = http.createServer(async (req, res) => {
           "Access-Control-Allow-Headers": "Content-Type",
         });
         return res.end();
+      }
+      // CSRF/Origin check on state-changing API requests (NOWPayments webhook exempt).
+      if (defense.csrfBlocked(req, url.pathname)) {
+        const cip = defense.clientIp(req);
+        securityAlert("csrf_blocked", req.method + " " + url.pathname + " origin=" + String(req.headers.origin || "-").slice(0, 100) + " ip=" + cip, { key: cip });
+        return send(res, 403, { error: "bad_origin" });
       }
       return await api(req, res, url);
     }
