@@ -773,6 +773,10 @@
           <h2>Research calculator</h2>
           <p>Vial milligrams divided by diluent milliliters. Concentration only.</p>
         </a>
+        <a class="tool-card" href="/tools/label" data-link>
+          <h2>Label maker</h2>
+          <p>Branded vial labels with lot QR codes. 3 mL and 10 mL sizes.</p>
+        </a>
       </div>
     </section>`;
   }
