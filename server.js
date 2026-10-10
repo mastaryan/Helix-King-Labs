@@ -1411,7 +1411,7 @@ async function api(req, res, url) {
     if (ship.phone) user.phone = ship.phone;
     if (ship.name) user.name = ship.name;
     const order = {
-      id: "HK-" + token().slice(0, 8).toUpperCase(),
+      id: "HKL-" + token().slice(0, 8).toUpperCase(),
       channel: "shop",
       userId: user.id,
       email: user.email,
@@ -1425,7 +1425,7 @@ async function api(req, res, url) {
       affiliateCode: quote.affiliateCode,
       affiliatePayout: quote.affiliatePayout,
       paymentMethod,
-      status: "awaiting_settlement",
+      status: "not_paid",
       fulfillment: "hold",
       settlement: paymentMethod,
       tracking: null,
@@ -1518,9 +1518,9 @@ async function api(req, res, url) {
     const order = (store.orders || []).find((o) => o.id === body.id);
     if (!order) return send(res, 404, { error: "not_found" });
     const next = String(body.status || order.status || "").toLowerCase();
-    const allowed = new Set(["awaiting_settlement", "settled", "shipped", "delivered", "voided"]);
+    const allowed = new Set(["not_paid", "paid", "shipped", "delivered", "voided"]);
     if (!allowed.has(next)) return send(res, 400, { error: "status" });
-    if (next === "shipped" && order.status !== "settled" && order.status !== "shipped") {
+    if (next === "shipped" && order.status !== "paid" && order.status !== "shipped") {
       return send(res, 400, { error: "settle_first" });
     }
     if (next === "delivered" && order.status !== "shipped" && order.status !== "delivered") {
@@ -1541,10 +1541,10 @@ async function api(req, res, url) {
       }
     }
     if (next === "shipped" && !order.shippedAt) order.shippedAt = new Date().toISOString();
-    if (next === "settled" && !order.settledAt) order.settledAt = new Date().toISOString();
+    if (next === "paid" && !order.settledAt) order.settledAt = new Date().toISOString();
     if (next === "voided" && !order.voidedAt) order.voidedAt = new Date().toISOString();
     if (next === "delivered" && !order.deliveredAt) order.deliveredAt = new Date().toISOString();
-    if (next === "settled") order.fulfillment = order.fulfillment === "shipped" ? "shipped" : "ready";
+    if (next === "paid") order.fulfillment = order.fulfillment === "shipped" ? "shipped" : "ready";
     if (next === "shipped") order.fulfillment = "shipped";
     if (next === "delivered") order.fulfillment = "delivered";
     if (next === "voided") order.fulfillment = "void";
@@ -1552,7 +1552,7 @@ async function api(req, res, url) {
     order.events.push({ at: new Date().toISOString(), kind: prev === next ? "note" : next, by: user.email });
     audit(user, "order", order.id + " " + next);
     saveStore(store);
-    if (prev !== next && (next === "settled" || next === "shipped" || next === "delivered" || next === "voided")) queueMail(mailer.orderMail(order, next, {origin: (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", deliveredText: fulfillHandle.deliveredText}));
+    if (prev !== next && (next === "paid" || next === "shipped" || next === "delivered" || next === "voided")) queueMail(mailer.orderMail(order, next, {origin: (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", deliveredText: fulfillHandle.deliveredText}));
     return send(res, 200, { ok: true, order });
   }
 
@@ -1855,7 +1855,7 @@ async function api(req, res, url) {
       return send(res, 400, { error: "bad_request" });
     }
     if (action === "address") {
-      if (order.status !== "awaiting_settlement") {
+      if (order.status !== "not_paid") {
         return send(res, 409, { error: "locked", message: "The address can only change before payment is confirmed." });
       }
       const ship = {
@@ -1898,7 +1898,7 @@ async function api(req, res, url) {
       return send(res, 200, { ok: true, lines });
     }
     if (action === "cancel") {
-      if (order.status !== "awaiting_settlement") {
+      if (order.status !== "not_paid") {
         return send(res, 409, { error: "locked", message: "Only unpaid orders can be cancelled." });
       }
       restoreStock(order);
@@ -1913,7 +1913,33 @@ async function api(req, res, url) {
       queueMail(mailer.orderMail(order, "voided", {origin: (typeof PUBLIC_ORIGIN !== "undefined" && PUBLIC_ORIGIN) || "https://helixkinglabs.com", deliveredText: fulfillHandle.deliveredText}));
       return send(res, 200, { ok: true, order: publicOrder(order) });
     }
+    if (action === "claim") {
+      // Customer says "I sent it" — flag it, but only IPN/blockchain marks PAID.
+      if (order.status !== "not_paid") {
+        return send(res, 409, { error: "locked", message: "This order is already " + order.status + "." });
+      }
+      order.payment = order.payment || {};
+      order.payment.claimedAt = new Date().toISOString();
+      order.events = order.events || [];
+      order.events.push({ at: new Date().toISOString(), kind: "payment_claimed", by: user.email });
+      saveStore(store);
+      return send(res, 200, { ok: true, order: publicOrder(order) });
+    }
     return send(res, 404, { error: "not_found" });
+  }
+
+  // QR code for crypto deposit addresses (local generation, no third party).
+  if (method === "GET" && route === "/api/qr") {
+    const data = String(url.searchParams.get("data") || "").slice(0, 512);
+    if (!data) return send(res, 400, { error: "no_data" });
+    try {
+      const QRCode = require("qrcode");
+      const png = await QRCode.toBuffer(data, { width: 440, margin: 1 });
+      res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "public, max-age=3600" });
+      return res.end(png);
+    } catch (err) {
+      return send(res, 500, { error: "qr_failed" });
+    }
   }
 
   if (method === "GET" && route === "/api/reviews") {
@@ -2321,7 +2347,7 @@ async function api(req, res, url) {
       surcharge: 0,
       total: Math.round((merchandise + 25) * 100) / 100,
       paymentMethod: ["venmo", "cashapp", "crypto"].includes(body.paymentMethod) ? body.paymentMethod : "crypto",
-      status: "awaiting_settlement",
+      status: "not_paid",
       fulfillment: "hold_until_minimum",
       created: new Date().toISOString(),
     };
@@ -2388,8 +2414,8 @@ function audit(user, action, detail) {
 
 function deskPayload() {
   const orders = (store.orders || []).slice().reverse();
-  const awaiting = orders.filter((o) => o.status === "awaiting_settlement").length;
-  const holds = orders.filter((o) => o.fulfillment === "hold" || o.status === "awaiting_settlement").length;
+  const awaiting = orders.filter((o) => o.status === "not_paid").length;
+  const holds = orders.filter((o) => o.fulfillment === "hold" || o.status === "not_paid").length;
   const inventory = products.items.filter(shopVisibleOf).map((it) => {
     const price = it.price;
     const cost = it.cost;
@@ -2416,7 +2442,7 @@ function deskPayload() {
       low: inventory.filter((r) => r.low).length,
       accounts: (store.users || []).length,
       list: (store.captures || []).length,
-      stale: (store.orders || []).filter((o) => o.status === "awaiting_settlement" && staleAge(o)).length,
+      stale: (store.orders || []).filter((o) => o.status === "not_paid" && staleAge(o)).length,
     },
     orders: orders.map((o) => ({
       id: o.id,
@@ -2647,7 +2673,17 @@ function dailyAffiliateMaintenance() {
 function sweepStaleOrders() {
   let released = 0;
   for (const order of store.orders || []) {
-    if (order.status !== "awaiting_settlement" || !staleAge(order)) continue;
+    if (order.status !== "not_paid") continue;
+    const age = Date.now() - new Date(order.created || 0).getTime();
+    if (!Number.isFinite(age)) continue;
+    // Nudge at 45 min for crypto (before the 60-min void): "payment window expiring".
+    if (order.paymentMethod === "crypto" && !order.wholesale && age >= 45 * 60 * 1000 && !order.nudgeSentAt) {
+      order.nudgeSentAt = new Date().toISOString();
+      queueMail(mailer.expiryNudgeMail(order, { origin: PUBLIC_ORIGIN || "https://helixkinglabs.com" }));
+      saveStore(store);
+      continue;
+    }
+    if (!staleAge(order)) continue;
     if (order.wholesale) continue;
     if (order.payment && order.payment.underpaidAt && Date.now() - new Date(order.payment.underpaidAt).getTime() < 7200000) continue;
     restoreStock(order);
