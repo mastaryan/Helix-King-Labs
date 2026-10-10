@@ -330,7 +330,14 @@
         try {
           const r = await api("/api/wholesale/order", { method: "POST", body: { lines, paymentMethod } });
           ga4("wholesale_purchase", { order_id: r.order.id, value: r.order.total, currency: "USD" });
-          // Crypto: redirect to NOWPayments invoice. Cash App/Venmo: show payment instructions.
+          // Crypto: render the on-site deposit screen. Cash App/Venmo: show payment instructions.
+          if (r.order && r.order.deposit && window.HKL_DEPOSIT) {
+            window.HKL_DEPOSIT({ id: r.order.id, quote: { total: r.order.total } }, r.order.deposit);
+            Object.keys(wsCart).forEach((k) => delete wsCart[k]);
+            wsPaintSummary();
+            document.querySelectorAll(".ws-qty").forEach((inp) => { inp.value = 0; });
+            return;
+          }
           if (r.order && r.order.invoiceUrl) {
             location.href = r.order.invoiceUrl;
             return;
